@@ -15,8 +15,9 @@ RUN composer install --no-dev --no-scripts --no-autoloader --no-interaction --pr
 
 # Código
 COPY . .
-RUN composer dump-autoload --optimize --no-dev \
- && mkdir -p storage/framework/cache/data storage/framework/sessions storage/framework/views storage/logs bootstrap/cache \
+# Crear directorios escribibles ANTES de dump-autoload (package:discover los necesita)
+RUN mkdir -p storage/framework/cache/data storage/framework/sessions storage/framework/views storage/logs bootstrap/cache \
+ && composer dump-autoload --optimize --no-dev \
  && chown -R www-data:www-data storage bootstrap/cache \
  && chmod -R 775 storage bootstrap/cache
 
