@@ -57,7 +57,7 @@ class LoanService
         // --- Fórmulas ---
         $valorSeguro       = $exonerado ? 0.0 : round($montoAprobado * $pctSeguro, 2);
         $montoDesembolsado = round($montoAprobado - $valorSeguro, 2);
-        $interes           = round($montoAprobado * $tasa, 2);        // SIEMPRE sobre aprobado
+        $interes           = round($montoAprobado * $tasa * $cuotas, 2);  // capital × tasa × N° cuotas (sobre aprobado)
         $totalRecaudar     = round($montoAprobado + $interes, 2);
         $valorCuota        = round($totalRecaudar / max($cuotas, 1), 2);
 
