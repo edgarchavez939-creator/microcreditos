@@ -1,0 +1,36 @@
+# Render Blueprint — backend Laravel del proyecto Microcreditos
+# Despliega el servicio web desde el subdirectorio backend/ usando su Dockerfile.
+services:
+  - type: web
+    name: microcreditos-api
+    runtime: docker
+    plan: free
+    rootDir: backend
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /api/health
+    autoDeploy: true
+    envVars:
+      - key: APP_ENV
+        value: production
+      - key: APP_DEBUG
+        value: "false"
+      - key: APP_KEY
+        sync: false          # genera con: php artisan key:generate --show
+      - key: DATABASE_URL
+        sync: false          # cadena de conexión de Neon
+      - key: DB_CONNECTION
+        value: pgsql
+      - key: DB_SSLMODE
+        value: require
+      - key: CACHE_STORE
+        value: database
+      - key: QUEUE_CONNECTION
+        value: sync
+      - key: SESSION_DRIVER
+        value: array
+      - key: JWT_SECRET
+        sync: false          # genera con: php artisan jwt:secret --show
+      - key: CORS_ALLOWED_ORIGINS
+        sync: false          # https://tu-app.vercel.app
+      - key: LOG_CHANNEL
+        value: stderr

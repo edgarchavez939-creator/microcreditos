@@ -1,0 +1,40 @@
+import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
+import { useAuthStore } from '@/stores/auth';
+import { API_BASE } from '@/lib/api/config';
+import { encolarOffline } from '@/lib/api/offlineQueue';
+
+export const api = axios.create({
+  baseURL: API_BASE,
+  headers: { 'Content-Type': 'application/json' },
+});
+
+api.interceptors.request.use((config) => {
+  const token = useAuthStore.getState().accessToken;
+  if (token) config.headers.Authorization = `Bearer ${token}`;
+  return config;
+});
+
+let refreshing: Promise<string | null> | null = null;
+
+api.interceptors.response.use(
+  (r) => r,
+  async (error: AxiosError) => {
+    const original = error.config as InternalAxiosRequestConfig & { _retry?: boolean };
+    if (!error.response && original && ['post', 'put', 'patch'].includes(original.method ?? '')) {
+      await encolarOffline(original);
+      return Promise.reject(new Error('OFFLINE_ENCOLADO'));
+    }
+    if (error.response?.status === 401 && original && !original._retry) {
+      original._retry = true;
+      refreshing ??= useAuthStore.getState().refresh();
+      const nuevo = await refreshing;
+      refreshing = null;
+      if (nuevo) {
+        original.headers.Authorization = `Bearer ${nuevo}`;
+        return api(original);
+      }
+      useAuthStore.getState().logout();
+    }
+    return Promise.reject(error);
+  }
+);
