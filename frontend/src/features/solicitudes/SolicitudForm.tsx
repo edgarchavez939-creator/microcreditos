@@ -35,7 +35,7 @@ export function SolicitudForm({ clienteId, areaId }: { clienteId: number; areaId
       </div>
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <label className="block text-sm font-medium">Tasa interés (0–1)</label>
+          <label className="block text-sm font-medium">Tasa interés mensual (0–1)</label>
           <input type="number" step="any" {...register('tasa_interes', { valueAsNumber: true })}
             className="mt-1 w-full rounded border px-3 py-2" />
         </div>
