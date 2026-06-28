@@ -34,7 +34,7 @@ export function calcularPreview(d: Partial<SolicitudForm>) {
   const pct = d.seguro_exonerado ? 0 : d.porcentaje_seguro ?? 0;
   const valorSeguro = Math.round(aprobado * pct * 100) / 100;
   const desembolsado = Math.round((aprobado - valorSeguro) * 100) / 100;
-  const interes = Math.round(aprobado * (d.tasa_interes ?? 0) * 100) / 100; // sobre aprobado
+  const interes = Math.round(aprobado * (d.tasa_interes ?? 0) * (d.numero_cuotas ?? 1) * 100) / 100; // capital × tasa × N° cuotas
   const totalRecaudar = Math.round((aprobado + interes) * 100) / 100;
   const cuota = d.numero_cuotas ? Math.round((totalRecaudar / d.numero_cuotas) * 100) / 100 : 0;
   return { valorSeguro, desembolsado, interes, totalRecaudar, cuota };
