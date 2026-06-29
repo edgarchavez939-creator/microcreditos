@@ -6,6 +6,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Pago extends Model
 {
+    // La tabla solo tiene created_at (no updated_at)
+    public const UPDATED_AT = null;
     protected $table = 'pagos';
     protected $fillable = [
         'cliente_id','solicitud_id','cuota_id','fecha','valor','metodo',
