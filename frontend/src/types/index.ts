@@ -10,6 +10,16 @@ export type EstadoSolicitud =
   | 'APROBADO' | 'RECHAZADO' | 'DESEMBOLSADO' | 'ACTIVO' | 'FINALIZADO' | 'CASTIGADO'
   | 'PAGADO' | 'EN_MORA' | 'REAMORTIZADO' | 'REFINANCIADO' | 'CANCELADO';
 
+export interface Cuota {
+  numero_cuota: number;
+  fecha_vencimiento: string;
+  valor: number;
+  valor_pagado: number;
+  saldo: number;
+  estado: 'PENDIENTE' | 'PARCIAL' | 'PAGADA' | 'VENCIDA';
+  dias_mora?: number;
+}
+
 export interface Solicitud {
   id: number; uuid: string; cliente_id: number; cliente?: string; estado: EstadoSolicitud;
   capital_solicitado: number; monto_aprobado: number; tasa_interes: number;
@@ -23,4 +33,5 @@ export interface Solicitud {
   saldo_refinanciado?: number;
   total_pagado?: number;
   saldo_pendiente?: number;
+  cuotas?: Cuota[];
 }

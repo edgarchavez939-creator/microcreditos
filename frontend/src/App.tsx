@@ -6,6 +6,7 @@ import { ReamortizacionPanel } from '@/features/renovaciones/ReamortizacionPanel
 import { Placeholder } from '@/components/Placeholder';
 import { ClientesPanel } from '@/features/clientes/ClientesPanel';
 import { AprobacionesPanel } from '@/features/aprobaciones/AprobacionesPanel';
+import { CarteraPanel } from '@/features/cartera/CarteraPanel';
 import type { Rol } from '@/types';
 
 interface MenuItem { id: string; label: string; roles: Rol[]; }
@@ -14,7 +15,7 @@ interface MenuItem { id: string; label: string; roles: Rol[]; }
 const MENU: MenuItem[] = [
   { id: 'solicitud',      label: 'Nueva solicitud',  roles: ['ADMINISTRADOR', 'SUPERVISOR', 'COBRADOR'] },
   { id: 'clientes',       label: 'Clientes',         roles: ['ADMINISTRADOR', 'SUPERVISOR', 'COBRADOR'] },
-  { id: 'pagos',          label: 'Pagos',            roles: ['ADMINISTRADOR', 'SUPERVISOR', 'COBRADOR'] },
+  { id: 'pagos',          label: 'Cartera y pagos',            roles: ['ADMINISTRADOR', 'SUPERVISOR', 'COBRADOR'] },
   { id: 'reamortizacion', label: 'Reamortización',   roles: ['ADMINISTRADOR', 'SUPERVISOR', 'COBRADOR'] },
   { id: 'mapa',           label: 'Mapa territorial', roles: ['ADMINISTRADOR', 'SUPERVISOR', 'COBRADOR'] },
   { id: 'aprobaciones',   label: 'Aprobaciones',     roles: ['ADMINISTRADOR', 'SUPERVISOR'] },
@@ -78,8 +79,7 @@ function Pantalla({ id }: { id: string }) {
     case 'clientes':
       return <ClientesPanel />;
     case 'pagos':
-      return <Placeholder titulo="Pagos" descripcion="Registro de pagos y abonos a cuotas."
-        permisos={['Registrar pago (efectivo, transferencia, Nequi, Daviplata)', 'Ver cuotas pendientes y saldo', 'Funciona offline y sincroniza al recuperar red']} />;
+      return <CarteraPanel />;
     case 'mapa':
       return <Placeholder titulo="Mapa territorial" descripcion="Visualización geográfica de clientes."
         permisos={['Ver clientes en el mapa con filtros (área, estado, mora)', 'Abrir ubicación en Google Maps', 'Navegar hacia el cliente']} />;

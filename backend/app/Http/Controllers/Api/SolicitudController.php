@@ -7,6 +7,7 @@ use App\Http\Resources\SolicitudResource;
 use App\Jobs\GenerarCronogramaJob;
 use App\Models\Solicitud;
 use App\Services\ApprovalService;
+use App\Services\DesembolsoService;
 use App\Services\LoanService;
 use Illuminate\Http\Request;
 
@@ -91,6 +92,18 @@ class SolicitudController extends Controller
         $this->authorize('approve', $solicitud);
         $data = $request->validate(['motivo' => ['required','string','min:5']]);
         $solicitud = $this->approvals->rechazar($solicitud, $request->user(), $data['motivo']);
+        return new SolicitudResource($solicitud);
+    }
+
+    public function desembolsar(Request $request, Solicitud $solicitud, DesembolsoService $svc)
+    {
+        $this->authorize('disburse', $solicitud);
+        $data = $request->validate([
+            'metodo' => ['required', 'in:EFECTIVO,TRANSFERENCIA,NEQUI,DAVIPLATA'],
+            'valor'  => ['nullable', 'numeric', 'gt:0'],
+            'fecha'  => ['nullable', 'date'],
+        ]);
+        $solicitud = $svc->desembolsar($solicitud, $data, $request->user());
         return new SolicitudResource($solicitud);
     }
 

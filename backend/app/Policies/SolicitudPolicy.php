@@ -46,4 +46,19 @@ class SolicitudPolicy
         if ($u->esSupervisor())    return $u->areas()->where('areas.id', $s->area_id)->exists();
         return $s->cobrador_id === $u->id;
     }
+
+    /** Desembolsar: supervisor del área o administrador. */
+    public function disburse(Usuario $u, Solicitud $s): bool
+    {
+        if ($u->esAdministrador()) return true;
+        return $u->esSupervisor() && $u->areas()->where('areas.id', $s->area_id)->exists();
+    }
+
+    /** Registrar pago: cobrador dueño, supervisor del área o administrador. */
+    public function pay(Usuario $u, Solicitud $s): bool
+    {
+        if ($u->esAdministrador()) return true;
+        if ($u->esSupervisor())    return $u->areas()->where('areas.id', $s->area_id)->exists();
+        return $s->cobrador_id === $u->id;
+    }
 }

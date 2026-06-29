@@ -3,6 +3,7 @@
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\AreaController;
 use App\Http\Controllers\Api\ClienteController;
+use App\Http\Controllers\Api\PagoController;
 use App\Http\Controllers\Api\ReamortizacionController;
 use App\Http\Controllers\Api\SolicitudController;
 use Illuminate\Support\Facades\Route;
@@ -30,6 +31,10 @@ Route::middleware('auth:api')->group(function () {
     Route::post('solicitudes/{solicitud}/aprobar', [SolicitudController::class, 'aprobar']);
     Route::post('solicitudes/{solicitud}/rechazar', [SolicitudController::class, 'rechazar']);
     Route::post('solicitudes/{solicitud}/cronograma', [SolicitudController::class, 'generarCronograma']);
+
+    // Desembolso y pagos (ciclo del dinero)
+    Route::post('solicitudes/{solicitud}/desembolsar', [SolicitudController::class, 'desembolsar']);
+    Route::post('pagos', [PagoController::class, 'store']);
 
     // --- Amortización / Reamortización / Refinanciación ---
     Route::get('solicitudes/{solicitud}/saldo', [ReamortizacionController::class, 'saldo']);
