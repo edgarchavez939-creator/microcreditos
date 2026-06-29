@@ -10,17 +10,25 @@ const METODOS = [
 ];
 
 export function CarteraPanel() {
-  const { data, isLoading } = useCreditos();
+  const [buscar, setBuscar] = useState('');
+  const { data, isLoading } = useCreditos(buscar);
 
   return (
     <div>
       <h2 className="mb-1 text-xl font-bold">Cartera y pagos</h2>
       <p className="mb-5 text-sm text-slate-500">Desembolsa créditos aprobados y registra los pagos de cada cuota.</p>
+
+      <div className="mb-4">
+        <input value={buscar} onChange={(e) => setBuscar(e.target.value)}
+          placeholder="Buscar por nombre, cédula o N° de crédito…"
+          className="input max-w-md" />
+      </div>
+
       {isLoading ? (
         <p className="text-sm text-slate-500">Cargando créditos…</p>
       ) : !data || data.length === 0 ? (
         <p className="card card-pad border-2 border-dashed border-slate-200 text-center text-sm text-slate-500 shadow-none ring-0">
-          No hay créditos operables. Aprueba una solicitud para verla aquí.
+          {buscar ? 'Sin resultados para esa búsqueda.' : 'No hay créditos operables. Aprueba una solicitud para verla aquí.'}
         </p>
       ) : (
         <div className="space-y-4">
@@ -104,7 +112,7 @@ function CreditoCard({ c }: { c: Solicitud }) {
 }
 
 function FichaCredito({ creditoId }: { creditoId: number }) {
-  const { data: credito, isLoading } = useCreditoDetalle(creditoId);
+  const { data: credito, isLoading, isError, error: qError } = useCreditoDetalle(creditoId);
   const pagar = useRegistrarPago();
   const [valor, setValor] = useState('');
   const [metodo, setMetodo] = useState('EFECTIVO');
@@ -112,8 +120,15 @@ function FichaCredito({ creditoId }: { creditoId: number }) {
   const [msg, setMsg] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  if (isLoading) return <p className="mt-2 text-sm text-slate-500">Cargando ficha…</p>;
+  if (isLoading) return <p className="mt-3 text-sm text-slate-500">Cargando ficha…</p>;
+  if (isError) {
+    const e = qError as { response?: { data?: { message?: string }; status?: number } };
+    return <p className="mt-3 alert-error">No se pudo cargar la ficha (
+      {e?.response?.status ?? 'error'}): {e?.response?.data?.message ?? 'intenta de nuevo.'}</p>;
+  }
   if (!credito) return null;
+
+  const sinCuotas = !credito.cuotas || credito.cuotas.length === 0;
 
   const onPagar = () => {
     setError(null); setMsg(null);
@@ -137,6 +152,11 @@ function FichaCredito({ creditoId }: { creditoId: number }) {
       {/* PLAN DE PAGOS */}
       <div>
         <h4 className="mb-2 text-sm font-semibold text-slate-700">Plan de pagos</h4>
+        {sinCuotas ? (
+          <p className="rounded-xl bg-amber-50 px-3.5 py-2.5 text-sm text-amber-800 ring-1 ring-amber-100">
+            Este crédito todavía no tiene cuotas generadas. El plan se crea automáticamente al desembolsar.
+          </p>
+        ) : (
         <div className="table-wrap">
           <table className="table-base">
             <thead>
@@ -163,6 +183,7 @@ function FichaCredito({ creditoId }: { creditoId: number }) {
             </tbody>
           </table>
         </div>
+        )}
       </div>
 
       {/* REGISTRAR PAGO */}

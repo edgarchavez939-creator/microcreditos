@@ -19,9 +19,10 @@ class ClienteController extends Controller
         $query = Cliente::query()->with(['area', 'cobrador'])->latest();
 
         if ($u->esCobrador()) {
-            $query->where('cobrador_id', $u->id);
+            $query->where(fn ($q) => $q->where('cobrador_id', $u->id)->orWhere('created_by', $u->id));
         } elseif ($u->esSupervisor()) {
-            $query->whereIn('area_id', $u->areas()->pluck('areas.id'));
+            $areas = $u->areas()->pluck('areas.id');
+            $query->where(fn ($q) => $q->whereIn('area_id', $areas)->orWhere('created_by', $u->id));
         }
 
         if ($buscar = $request->query('buscar')) {

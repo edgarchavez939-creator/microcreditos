@@ -5,11 +5,11 @@ import type { Solicitud } from '@/types';
 // Créditos sobre los que se puede operar (desembolsar o pagar)
 const OPERABLES = 'APROBADO,DESEMBOLSADO,ACTIVO,EN_MORA';
 
-export function useCreditos() {
+export function useCreditos(buscar = '') {
   return useQuery({
-    queryKey: ['cartera'],
+    queryKey: ['cartera', buscar],
     queryFn: async () =>
-      (await api.get<{ data: Solicitud[] }>('/solicitudes', { params: { estado: OPERABLES } })).data.data,
+      (await api.get<{ data: Solicitud[] }>('/solicitudes', { params: { estado: OPERABLES, buscar } })).data.data,
   });
 }
 

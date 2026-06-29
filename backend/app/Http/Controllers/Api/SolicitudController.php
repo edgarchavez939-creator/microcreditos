@@ -29,6 +29,18 @@ class SolicitudController extends Controller
             $query->whereIn('estado', $estados);
         }
 
+        // Búsqueda por N° de crédito, nombre o cédula del cliente
+        if ($buscar = $request->query('buscar')) {
+            $query->where(function ($q) use ($buscar) {
+                $q->where('numero_credito', 'ilike', "%{$buscar}%")
+                  ->orWhereHas('cliente', function ($c) use ($buscar) {
+                      $c->where('nombres', 'ilike', "%{$buscar}%")
+                        ->orWhere('apellidos', 'ilike', "%{$buscar}%")
+                        ->orWhere('numero_documento', 'ilike', "%{$buscar}%");
+                  });
+            });
+        }
+
         // Cobrador: solo sus solicitudes. Supervisor: sus áreas.
         $u = $request->user();
         if ($u->esCobrador()) {
