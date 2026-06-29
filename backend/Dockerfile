@@ -5,6 +5,9 @@ FROM php:8.3-fpm-alpine
 RUN apk add --no-cache nginx postgresql-dev libpng-dev libzip-dev oniguruma-dev gettext \
  && docker-php-ext-install pdo pdo_pgsql bcmath gd zip opcache
 
+# Límites para subir soportes (base64 en JSON)
+RUN { echo 'post_max_size=20M'; echo 'upload_max_filesize=20M'; echo 'memory_limit=256M'; } > /usr/local/etc/php/conf.d/uploads.ini
+
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
 WORKDIR /var/www

@@ -1,9 +1,15 @@
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { solicitudSchema, type SolicitudForm as TForm, calcularPreview } from './schema';
+import { solicitudSchema, aPayloadSolicitud, type SolicitudForm as TForm, calcularPreview } from './schema';
 import { useCrearSolicitud } from './hooks';
 import { money } from '@/lib/format';
 
+const MODALIDADES = [
+  { v: 'MENSUAL', t: 'Mensual' },
+  { v: 'QUINCENAL', t: 'Quincenal' },
+  { v: 'SEMANAL', t: 'Semanal' },
+  { v: 'DIARIO', t: 'Diario' },
+];
 
 export function SolicitudForm({ clienteId, areaId }: { clienteId: number; areaId: number }) {
   const crear = useCrearSolicitud();
@@ -11,7 +17,7 @@ export function SolicitudForm({ clienteId, areaId }: { clienteId: number; areaId
     resolver: zodResolver(solicitudSchema),
     defaultValues: {
       cliente_id: clienteId, area_id: areaId, seguro_exonerado: false,
-      porcentaje_seguro: 0.1, tasa_interes: 0.2, numero_cuotas: 10, modalidad: 'MENSUAL',
+      porcentaje_seguro: 10, tasa_interes: 10, numero_cuotas: 3, modalidad: 'MENSUAL',
     },
   });
 
@@ -19,31 +25,37 @@ export function SolicitudForm({ clienteId, areaId }: { clienteId: number; areaId
   const preview = calcularPreview(valores);
   const exonerado = watch('seguro_exonerado');
 
-  const onSubmit = (data: TForm) => crear.mutate(data);
+  const onSubmit = (data: TForm) => crear.mutate(aPayloadSolicitud(data));
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 max-w-lg">
+    <form onSubmit={handleSubmit(onSubmit)} className="card card-pad space-y-4 max-w-lg">
       <div>
-        <label className="block text-sm font-medium">Capital solicitado</label>
-        <input type="number" step="any" {...register('capital_solicitado', { valueAsNumber: true })}
-          className="input" />
+        <label className="label">Capital solicitado</label>
+        <input type="number" step="any" {...register('capital_solicitado', { valueAsNumber: true })} className="input" />
       </div>
       <div>
-        <label className="block text-sm font-medium">Monto aprobado</label>
-        <input type="number" step="any" {...register('monto_aprobado', { valueAsNumber: true })}
-          className="input" />
+        <label className="label">Monto aprobado</label>
+        <input type="number" step="any" {...register('monto_aprobado', { valueAsNumber: true })} className="input" />
       </div>
+
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <label className="block text-sm font-medium">Tasa interés mensual (0–1)</label>
-          <input type="number" step="any" {...register('tasa_interes', { valueAsNumber: true })}
-            className="input" />
+          <label className="label">Tasa interés mensual (%)</label>
+          <input type="number" step="0.1" {...register('tasa_interes', { valueAsNumber: true })} className="input" />
+          <p className="mt-1 text-xs text-slate-400">Ej: 10 = 10%</p>
         </div>
         <div>
-          <label className="block text-sm font-medium">N° cuotas</label>
-          <input type="number" {...register('numero_cuotas', { valueAsNumber: true })}
-            className="input" />
+          <label className="label">N° cuotas</label>
+          <input type="number" {...register('numero_cuotas', { valueAsNumber: true })} className="input" />
         </div>
+      </div>
+
+      <div>
+        <label className="label">Modalidad de pago</label>
+        <select {...register('modalidad')} className="input">
+          {MODALIDADES.map((m) => <option key={m.v} value={m.v}>{m.t}</option>)}
+        </select>
+        <p className="mt-1 text-xs text-slate-400">Define cada cuánto vence cada cuota del plan.</p>
       </div>
 
       <label className="flex items-center gap-2">
@@ -53,14 +65,14 @@ export function SolicitudForm({ clienteId, areaId }: { clienteId: number; areaId
 
       {!exonerado ? (
         <div>
-          <label className="block text-sm font-medium">% Seguro (0.05–0.10)</label>
-          <input type="number" step="0.01" {...register('porcentaje_seguro', { valueAsNumber: true })}
-            className="input" />
+          <label className="label">% Seguro (5–10)</label>
+          <input type="number" step="0.1" {...register('porcentaje_seguro', { valueAsNumber: true })} className="input" />
+          <p className="mt-1 text-xs text-slate-400">Ej: 8 = 8%</p>
           {errors.porcentaje_seguro && <p className="field-error">{errors.porcentaje_seguro.message}</p>}
         </div>
       ) : (
         <div>
-          <label className="block text-sm font-medium">Motivo de exoneración</label>
+          <label className="label">Motivo de exoneración</label>
           <textarea {...register('motivo_exoneracion')} className="input" />
           {errors.motivo_exoneracion && <p className="field-error">{errors.motivo_exoneracion.message}</p>}
         </div>
@@ -74,8 +86,7 @@ export function SolicitudForm({ clienteId, areaId }: { clienteId: number; areaId
         <div className="flex justify-between"><span>Valor cuota</span><b>{money(preview.cuota)}</b></div>
       </div>
 
-      <button type="submit" disabled={crear.isPending}
-        className="btn-primary">
+      <button type="submit" disabled={crear.isPending} className="btn-primary">
         {crear.isPending ? 'Guardando…' : 'Crear solicitud'}
       </button>
     </form>

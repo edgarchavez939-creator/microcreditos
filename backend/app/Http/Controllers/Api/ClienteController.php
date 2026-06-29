@@ -46,7 +46,7 @@ class ClienteController extends Controller
 
         $cliente = DB::transaction(function () use ($data, $u, $cobradorId) {
             $cliente = Cliente::create(array_merge(
-                collect($data)->except(['referencias', 'cobrador_id'])->toArray(),
+                collect($data)->except(['referencias', 'documentos', 'cobrador_id'])->toArray(),
                 ['cobrador_id' => $cobradorId, 'created_by' => $u->id, 'activo' => true]
             ));
 
@@ -54,6 +54,20 @@ class ClienteController extends Controller
                 if (! empty($ref['nombre'])) {
                     Referencia::create(array_merge($ref, ['cliente_id' => $cliente->id]));
                 }
+            }
+
+            // Soportes opcionales (imágenes/PDF) guardados como base64
+            foreach ($data['documentos'] ?? [] as $doc) {
+                \App\Models\Documento::create([
+                    'cliente_id'       => $cliente->id,
+                    'categoria'        => 'OTRO',
+                    's3_key'           => null,
+                    'nombre_original'  => $doc['nombre'],
+                    'mime'             => $doc['mime'],
+                    'tamano_bytes'     => $doc['tamano'],
+                    'contenido_base64' => $doc['contenido_base64'],
+                    'subido_por'       => $u->id,
+                ]);
             }
             return $cliente;
         });
@@ -72,7 +86,7 @@ class ClienteController extends Controller
     {
         $this->authorize('update', $cliente);
         $data = $request->validated();
-        $cliente->update(collect($data)->except(['referencias', 'cobrador_id'])->toArray());
+        $cliente->update(collect($data)->except(['referencias', 'documentos', 'cobrador_id'])->toArray());
         return new ClienteResource($cliente->load(['area', 'cobrador', 'referencias']));
     }
 }
