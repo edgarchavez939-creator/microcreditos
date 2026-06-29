@@ -5,6 +5,7 @@ import { SolicitudForm } from '@/features/solicitudes/SolicitudForm';
 import { ReamortizacionPanel } from '@/features/renovaciones/ReamortizacionPanel';
 import { Placeholder } from '@/components/Placeholder';
 import { ClientesPanel } from '@/features/clientes/ClientesPanel';
+import { AprobacionesPanel } from '@/features/aprobaciones/AprobacionesPanel';
 import type { Rol } from '@/types';
 
 interface MenuItem { id: string; label: string; roles: Rol[]; }
@@ -83,8 +84,7 @@ function Pantalla({ id }: { id: string }) {
       return <Placeholder titulo="Mapa territorial" descripcion="Visualización geográfica de clientes."
         permisos={['Ver clientes en el mapa con filtros (área, estado, mora)', 'Abrir ubicación en Google Maps', 'Navegar hacia el cliente']} />;
     case 'aprobaciones':
-      return <Placeholder titulo="Aprobaciones" descripcion="Bandeja de créditos pendientes de aprobación."
-        permisos={['Aprobar/rechazar dentro de tu límite (supervisor)', 'Exoneraciones de seguro requieren administrador', 'Ver detalle del crédito y del cliente']} />;
+      return <AprobacionesPanel />;
     case 'transferencias':
       return <Placeholder titulo="Transferencias" descripcion="Validación de pagos por transferencia."
         permisos={['Revisar comprobante y referencia', 'Aprobar o rechazar la transferencia', 'Queda registrado usuario, fecha y hora']} />;

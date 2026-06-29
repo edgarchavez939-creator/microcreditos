@@ -22,6 +22,12 @@ class SolicitudController extends Controller
         $this->authorize('viewAny', Solicitud::class);
         $query = Solicitud::query()->with(['cliente','area'])->latest();
 
+        // Filtro opcional por estado(s): ?estado=PENDIENTE_SUPERVISOR,PENDIENTE_ADMINISTRADOR
+        if ($estado = $request->query('estado')) {
+            $estados = is_array($estado) ? $estado : explode(',', $estado);
+            $query->whereIn('estado', $estados);
+        }
+
         // Cobrador: solo sus solicitudes. Supervisor: sus áreas.
         $u = $request->user();
         if ($u->esCobrador()) {

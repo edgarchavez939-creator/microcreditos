@@ -11,7 +11,7 @@ export type EstadoSolicitud =
   | 'PAGADO' | 'EN_MORA' | 'REAMORTIZADO' | 'REFINANCIADO' | 'CANCELADO';
 
 export interface Solicitud {
-  id: number; uuid: string; cliente_id: number; estado: EstadoSolicitud;
+  id: number; uuid: string; cliente_id: number; cliente?: string; estado: EstadoSolicitud;
   capital_solicitado: number; monto_aprobado: number; tasa_interes: number;
   interes: number; porcentaje_seguro: number; valor_seguro: number;
   monto_desembolsado: number; total_recaudar: number; seguro_exonerado: boolean;
