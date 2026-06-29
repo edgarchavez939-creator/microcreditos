@@ -10,6 +10,7 @@ class SolicitudResource extends JsonResource
         return [
             'id'                 => $this->id,
             'uuid'               => $this->uuid,
+            'numero_credito'     => $this->numero_credito,
             'cliente_id'         => $this->cliente_id,
             'cliente'            => $this->whenLoaded('cliente', fn () => trim("{$this->cliente->nombres} {$this->cliente->apellidos}")),
             'estado'             => $this->estado,
@@ -33,6 +34,8 @@ class SolicitudResource extends JsonResource
             'total_pagado'       => (float) $this->total_pagado,
             'saldo_pendiente'    => $this->saldoPendiente(),
             'cuotas'             => CuotaResource::collection($this->whenLoaded('cuotas')),
+            'pagos'              => PagoResource::collection($this->whenLoaded('pagos')),
+            'credito_origen'     => $this->whenLoaded('creditoOrigen', fn () => $this->creditoOrigen?->numero_credito),
         ];
     }
 }

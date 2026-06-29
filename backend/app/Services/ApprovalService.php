@@ -52,6 +52,10 @@ class ApprovalService
             $solicitud->estado            = EstadoSolicitud::APROBADO->value;
             $solicitud->usuario_aprobador = $aprobador->id;
             $solicitud->fecha_aprobacion  = now();
+            // Número de crédito único y no editable (CR-000123)
+            if (empty($solicitud->numero_credito)) {
+                $solicitud->numero_credito = 'CR-' . str_pad((string) $solicitud->id, 6, '0', STR_PAD_LEFT);
+            }
             if ($solicitud->seguro_exonerado) {
                 $solicitud->exoneracion_aprobada_por = $aprobador->id;
             }

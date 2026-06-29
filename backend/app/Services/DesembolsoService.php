@@ -37,9 +37,9 @@ class DesembolsoService
                 'registrado_por'=> $usuario->id,
             ]);
 
-            // Cronograma de cuotas (si aún no existe)
+            // Cronograma de cuotas (si aún no existe), con base en la fecha de desembolso
             if (Cuota::where('solicitud_id', $credito->id)->count() === 0) {
-                $this->loans->generarCronograma($credito);
+                $this->loans->generarCronograma($credito, $d['fecha'] ?? now());
             }
 
             // Caja: egreso por el desembolso

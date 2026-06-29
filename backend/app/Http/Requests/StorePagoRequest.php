@@ -14,8 +14,9 @@ class StorePagoRequest extends FormRequest
             'solicitud_id' => ['required', 'integer', 'exists:solicitudes,id'],
             'cuota_id'     => ['nullable', 'integer', 'exists:cuotas,id'],
             'valor'        => ['required', 'numeric', 'gt:0'],
-            'metodo'       => ['required', Rule::in(['EFECTIVO', 'TRANSFERENCIA', 'CONSIGNACION', 'NEQUI', 'DAVIPLATA'])],
+            'metodo'       => ['required', Rule::in(['EFECTIVO', 'TRANSFERENCIA'])],
             'fecha'        => ['nullable', 'date'],
+            'observaciones'=> ['nullable', 'string', 'max:500'],
             'client_uuid'  => ['nullable', 'uuid'],
         ];
     }

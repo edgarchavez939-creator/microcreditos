@@ -41,6 +41,7 @@ class PaymentService
                 'valor'          => $valor,
                 'metodo'         => $d['metodo'],
                 'registrado_por' => $usuario->id,
+                'observaciones'  => $d['observaciones'] ?? null,
                 'client_uuid'    => $d['client_uuid'] ?? null,
             ]);
 

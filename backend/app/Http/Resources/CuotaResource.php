@@ -11,6 +11,8 @@ class CuotaResource extends JsonResource
             'numero_cuota'      => $this->numero_cuota,
             'fecha_vencimiento' => $this->fecha_vencimiento?->toDateString(),
             'valor'             => (float) $this->valor,
+            'abono_capital'     => (float) $this->abono_capital,
+            'abono_interes'     => (float) $this->abono_interes,
             'valor_pagado'      => (float) $this->valor_pagado,
             'saldo'             => (float) $this->saldo,
             'estado'            => $this->estado,

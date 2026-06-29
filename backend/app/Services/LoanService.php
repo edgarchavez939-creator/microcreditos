@@ -113,35 +113,55 @@ class LoanService
     /**
      * Genera el cronograma de cuotas según la modalidad. Transaccional.
      */
-    public function generarCronograma(Solicitud $solicitud): void
+    /**
+     * Genera el cronograma de cuotas con desglose de capital e interés.
+     * La primera cuota se calcula a partir de $fechaBase (fecha de desembolso)
+     * más un período según la modalidad.
+     */
+    public function generarCronograma(Solicitud $solicitud, $fechaBase = null): void
     {
-        DB::transaction(function () use ($solicitud) {
+        DB::transaction(function () use ($solicitud, $fechaBase) {
             Cuota::where('solicitud_id', $solicitud->id)->delete();
 
-            $fecha = Carbon::parse($solicitud->fecha_primer_pago ?? now()->addDay());
-            $valorCuota = (float) $solicitud->valor_cuota;
+            $cuotas        = (int) $solicitud->numero_cuotas;
+            $capital       = (float) $solicitud->monto_aprobado;
             $totalRecaudar = (float) $solicitud->total_recaudar;
-            $cuotas = (int) $solicitud->numero_cuotas;
-            $acumulado = 0.0;
+            $interesTotal  = round($totalRecaudar - $capital, 2);
+
+            $capCuota = round($capital / $cuotas, 2);
+            $intCuota = round($interesTotal / $cuotas, 2);
+
+            $accCap = 0.0;
+            $accInt = 0.0;
+            $fecha  = Carbon::parse($fechaBase ?? $solicitud->fecha_primer_pago ?? now());
 
             for ($i = 1; $i <= $cuotas; $i++) {
-                // La última cuota ajusta el redondeo para cuadrar exacto.
-                $valor = $i === $cuotas
-                    ? round($totalRecaudar - $acumulado, 2)
-                    : $valorCuota;
-                $acumulado += $valor;
+                // Primera cuota = fecha base + un período; las demás encadenan.
+                $fecha = $this->siguienteFecha($fecha, $solicitud->modalidad);
+
+                if ($i === $cuotas) {
+                    // La última cierra exacto los acumulados.
+                    $cap = round($capital - $accCap, 2);
+                    $int = round($interesTotal - $accInt, 2);
+                } else {
+                    $cap = $capCuota;
+                    $int = $intCuota;
+                }
+                $valor = round($cap + $int, 2);
+                $accCap += $cap;
+                $accInt += $int;
 
                 Cuota::create([
                     'solicitud_id'      => $solicitud->id,
                     'numero_cuota'      => $i,
                     'fecha_vencimiento' => $fecha->copy(),
                     'valor'             => $valor,
+                    'abono_capital'     => $cap,
+                    'abono_interes'     => $int,
                     'valor_pagado'      => 0,
                     'saldo'             => $valor,
                     'estado'            => 'PENDIENTE',
                 ]);
-
-                $fecha = $this->siguienteFecha($fecha, $solicitud->modalidad);
             }
         });
     }

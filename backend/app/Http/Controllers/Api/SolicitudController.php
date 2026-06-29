@@ -77,7 +77,7 @@ class SolicitudController extends Controller
     public function show(Solicitud $solicitud)
     {
         $this->authorize('view', $solicitud);
-        return new SolicitudResource($solicitud->load(['cliente','cuotas','pagos']));
+        return new SolicitudResource($solicitud->load(['cliente', 'cuotas', 'pagos' => fn ($q) => $q->latest(), 'pagos.registrador', 'creditoOrigen']));
     }
 
     public function aprobar(Solicitud $solicitud, Request $request)
@@ -99,7 +99,7 @@ class SolicitudController extends Controller
     {
         $this->authorize('disburse', $solicitud);
         $data = $request->validate([
-            'metodo' => ['required', 'in:EFECTIVO,TRANSFERENCIA,NEQUI,DAVIPLATA'],
+            'metodo' => ['required', 'in:EFECTIVO,TRANSFERENCIA'],
             'valor'  => ['nullable', 'numeric', 'gt:0'],
             'fecha'  => ['nullable', 'date'],
         ]);
