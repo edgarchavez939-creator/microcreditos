@@ -34,7 +34,7 @@ export function useRegistrarPago() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (payload: {
-      solicitud_id: number; valor: number; metodo: string; client_uuid: string;
+      solicitud_id: number; valor: number; metodo: string; observaciones?: string; client_uuid: string;
     }) => (await api.post('/pagos', payload)).data,
     onSuccess: (_d, vars) => {
       qc.invalidateQueries({ queryKey: ['cartera'] });

@@ -1,3 +1,4 @@
+import { Icon } from '@/components/ui/icons';
 import { useState } from 'react';
 import { useClientes } from './hooks';
 
@@ -10,22 +11,22 @@ export function ClientesList({ onNuevo }: { onNuevo: () => void }) {
       <div className="mb-4 flex flex-wrap items-center gap-3">
         <input value={buscar} onChange={(e) => setBuscar(e.target.value)}
           placeholder="Buscar por nombre o documento…"
-          className="flex-1 min-w-[200px] rounded border px-3 py-2 text-sm" />
-        <button onClick={onNuevo} className="rounded bg-brand px-4 py-2 text-sm text-white">
-          + Nuevo cliente
+          className="input flex-1 min-w-[200px]" />
+        <button onClick={onNuevo} className="btn-primary btn-sm">
+          <Icon.plus /> Nuevo cliente
         </button>
       </div>
 
       {isLoading ? (
         <p className="text-sm text-slate-500">Cargando clientes…</p>
       ) : !clientes || clientes.length === 0 ? (
-        <p className="rounded-lg border border-dashed p-6 text-center text-sm text-slate-500">
-          No hay clientes todavía. Crea el primero con “+ Nuevo cliente”.
+        <p className="card card-pad border-2 border-dashed border-slate-200 text-center text-sm text-slate-500 shadow-none ring-0">
+          No hay clientes todavía. Crea el primero con el botón “Nuevo cliente”.
         </p>
       ) : (
-        <div className="overflow-x-auto rounded-lg border">
-          <table className="w-full text-sm">
-            <thead className="bg-slate-50 text-left text-slate-500">
+        <div className="table-wrap">
+          <table className="table-base">
+            <thead>
               <tr>
                 <th className="px-3 py-2">#</th>
                 <th className="px-3 py-2">Nombre</th>

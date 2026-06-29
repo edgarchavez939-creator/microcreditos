@@ -86,8 +86,8 @@ export function ReamortizacionForm({ solicitudId, clienteId, onHecho }: Props) {
       <div>
         <label className="block text-sm font-medium">Nuevo capital aprobado</label>
         <input type="number" step="any" {...register('nuevo_capital', { valueAsNumber: true })}
-          className="mt-1 w-full rounded border px-3 py-2" />
-        {errors.nuevo_capital && <p className="text-red-600 text-xs">{errors.nuevo_capital.message}</p>}
+          className="input" />
+        {errors.nuevo_capital && <p className="field-error">{errors.nuevo_capital.message}</p>}
         <p className="text-xs text-slate-400 mt-0.5">
           Mínimo: {money(saldo)} (saldo) · Máximo: {money(cupo)} (cupo)
         </p>
@@ -97,18 +97,18 @@ export function ReamortizacionForm({ solicitudId, clienteId, onHecho }: Props) {
         <div>
           <label className="block text-sm font-medium">Tasa mensual</label>
           <input type="number" step="0.01" {...register('tasa_mensual', { valueAsNumber: true })}
-            className="mt-1 w-full rounded border px-3 py-2" />
-          {errors.tasa_mensual && <p className="text-red-600 text-xs">{errors.tasa_mensual.message}</p>}
+            className="input" />
+          {errors.tasa_mensual && <p className="field-error">{errors.tasa_mensual.message}</p>}
         </div>
         <div>
           <label className="block text-sm font-medium">Plazo (meses)</label>
           <input type="number" {...register('plazo_meses', { valueAsNumber: true })}
-            className="mt-1 w-full rounded border px-3 py-2" />
-          {errors.plazo_meses && <p className="text-red-600 text-xs">{errors.plazo_meses.message}</p>}
+            className="input" />
+          {errors.plazo_meses && <p className="field-error">{errors.plazo_meses.message}</p>}
         </div>
         <div>
           <label className="block text-sm font-medium">Modalidad</label>
-          <select {...register('modalidad')} className="mt-1 w-full rounded border px-3 py-2 bg-white">
+          <select {...register('modalidad')} className="input">
             <option value="MENSUAL">Mensual</option>
             <option value="QUINCENAL">Quincenal</option>
             <option value="SEMANAL">Semanal</option>
@@ -126,14 +126,14 @@ export function ReamortizacionForm({ solicitudId, clienteId, onHecho }: Props) {
         <div>
           <label className="block text-sm font-medium">% Seguro (0.05–0.10)</label>
           <input type="number" step="0.01" {...register('porcentaje_seguro', { valueAsNumber: true })}
-            className="mt-1 w-full rounded border px-3 py-2" />
-          {errors.porcentaje_seguro && <p className="text-red-600 text-xs">{errors.porcentaje_seguro.message}</p>}
+            className="input" />
+          {errors.porcentaje_seguro && <p className="field-error">{errors.porcentaje_seguro.message}</p>}
         </div>
       ) : (
         <div>
           <label className="block text-sm font-medium">Motivo de exoneración</label>
-          <textarea {...register('motivo_exoneracion')} className="mt-1 w-full rounded border px-3 py-2" />
-          {errors.motivo_exoneracion && <p className="text-red-600 text-xs">{errors.motivo_exoneracion.message}</p>}
+          <textarea {...register('motivo_exoneracion')} className="input" />
+          {errors.motivo_exoneracion && <p className="field-error">{errors.motivo_exoneracion.message}</p>}
         </div>
       )}
 
@@ -150,13 +150,13 @@ export function ReamortizacionForm({ solicitudId, clienteId, onHecho }: Props) {
       </div>
 
       {reamortizar.isError && (
-        <p className="rounded bg-red-50 px-3 py-2 text-sm text-red-700">
+        <p className="alert-error">
           {extraerError(reamortizar.error)}
         </p>
       )}
 
       <button type="submit" disabled={reamortizar.isPending}
-        className="rounded bg-brand px-4 py-2 text-white disabled:opacity-50">
+        className="btn-primary">
         {reamortizar.isPending ? 'Procesando…' : 'Reamortizar crédito'}
       </button>
     </form>

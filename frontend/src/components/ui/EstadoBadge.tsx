@@ -1,26 +1,28 @@
 import type { EstadoSolicitud } from '@/types';
 
-const estilos: Record<string, string> = {
-  BORRADOR: 'bg-slate-100 text-slate-600',
-  PENDIENTE_SUPERVISOR: 'bg-yellow-100 text-yellow-800',
-  PENDIENTE_ADMINISTRADOR: 'bg-orange-100 text-orange-800',
-  APROBADO: 'bg-teal-100 text-teal-800',
-  RECHAZADO: 'bg-red-100 text-red-700',
-  DESEMBOLSADO: 'bg-indigo-100 text-indigo-800',
-  ACTIVO: 'bg-green-100 text-green-800',
-  EN_MORA: 'bg-amber-100 text-amber-900',
-  PAGADO: 'bg-blue-100 text-blue-800',
-  FINALIZADO: 'bg-blue-100 text-blue-800',
-  REAMORTIZADO: 'bg-slate-200 text-slate-700',
-  REFINANCIADO: 'bg-purple-100 text-purple-800',
-  CANCELADO: 'bg-red-100 text-red-700',
-  CASTIGADO: 'bg-red-200 text-red-900',
+// color del punto + fondo/textos suaves por estado
+const estilos: Record<string, { wrap: string; dot: string }> = {
+  BORRADOR:                { wrap: 'bg-slate-100 text-slate-600', dot: 'bg-slate-400' },
+  PENDIENTE_SUPERVISOR:    { wrap: 'bg-amber-50 text-amber-700 ring-1 ring-amber-200', dot: 'bg-amber-500' },
+  PENDIENTE_ADMINISTRADOR: { wrap: 'bg-orange-50 text-orange-700 ring-1 ring-orange-200', dot: 'bg-orange-500' },
+  APROBADO:                { wrap: 'bg-brand-50 text-brand-700 ring-1 ring-brand-100', dot: 'bg-brand-500' },
+  RECHAZADO:               { wrap: 'bg-rose-50 text-rose-700 ring-1 ring-rose-200', dot: 'bg-rose-500' },
+  DESEMBOLSADO:            { wrap: 'bg-indigo-50 text-indigo-700 ring-1 ring-indigo-200', dot: 'bg-indigo-500' },
+  ACTIVO:                  { wrap: 'bg-money-50 text-money-700 ring-1 ring-money-100', dot: 'bg-money-500' },
+  EN_MORA:                 { wrap: 'bg-amber-50 text-amber-800 ring-1 ring-amber-200', dot: 'bg-amber-600' },
+  PAGADO:                  { wrap: 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200', dot: 'bg-emerald-500' },
+  FINALIZADO:              { wrap: 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200', dot: 'bg-emerald-500' },
+  REAMORTIZADO:            { wrap: 'bg-violet-50 text-violet-700 ring-1 ring-violet-200', dot: 'bg-violet-500' },
+  REFINANCIADO:            { wrap: 'bg-purple-50 text-purple-700 ring-1 ring-purple-200', dot: 'bg-purple-500' },
+  CANCELADO:               { wrap: 'bg-slate-100 text-slate-600', dot: 'bg-slate-400' },
+  CASTIGADO:               { wrap: 'bg-rose-100 text-rose-800', dot: 'bg-rose-600' },
 };
 
 export function EstadoBadge({ estado }: { estado: EstadoSolicitud }) {
-  const cls = estilos[estado] ?? 'bg-slate-100 text-slate-600';
+  const s = estilos[estado] ?? estilos.BORRADOR;
   return (
-    <span className={`inline-block rounded-full px-2.5 py-0.5 text-xs font-medium ${cls}`}>
+    <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium ${s.wrap}`}>
+      <span className={`h-1.5 w-1.5 rounded-full ${s.dot}`} />
       {estado.replace(/_/g, ' ')}
     </span>
   );

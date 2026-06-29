@@ -7,7 +7,8 @@ export function ClientesPanel() {
 
   return (
     <div>
-      <h2 className="mb-4 text-lg font-semibold">Clientes</h2>
+      <h2 className="mb-1 text-xl font-bold">Clientes</h2>
+      <p className="mb-5 text-sm text-slate-500">Registra y consulta los clientes de tu territorio.</p>
       {modo === 'lista'
         ? <ClientesList onNuevo={() => setModo('nuevo')} />
         : <ClienteForm onCreado={() => setModo('lista')} onCancelar={() => setModo('lista')} />}

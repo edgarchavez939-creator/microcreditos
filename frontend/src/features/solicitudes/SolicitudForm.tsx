@@ -26,23 +26,23 @@ export function SolicitudForm({ clienteId, areaId }: { clienteId: number; areaId
       <div>
         <label className="block text-sm font-medium">Capital solicitado</label>
         <input type="number" step="any" {...register('capital_solicitado', { valueAsNumber: true })}
-          className="mt-1 w-full rounded border px-3 py-2" />
+          className="input" />
       </div>
       <div>
         <label className="block text-sm font-medium">Monto aprobado</label>
         <input type="number" step="any" {...register('monto_aprobado', { valueAsNumber: true })}
-          className="mt-1 w-full rounded border px-3 py-2" />
+          className="input" />
       </div>
       <div className="grid grid-cols-2 gap-3">
         <div>
           <label className="block text-sm font-medium">Tasa interés mensual (0–1)</label>
           <input type="number" step="any" {...register('tasa_interes', { valueAsNumber: true })}
-            className="mt-1 w-full rounded border px-3 py-2" />
+            className="input" />
         </div>
         <div>
           <label className="block text-sm font-medium">N° cuotas</label>
           <input type="number" {...register('numero_cuotas', { valueAsNumber: true })}
-            className="mt-1 w-full rounded border px-3 py-2" />
+            className="input" />
         </div>
       </div>
 
@@ -55,27 +55,27 @@ export function SolicitudForm({ clienteId, areaId }: { clienteId: number; areaId
         <div>
           <label className="block text-sm font-medium">% Seguro (0.05–0.10)</label>
           <input type="number" step="0.01" {...register('porcentaje_seguro', { valueAsNumber: true })}
-            className="mt-1 w-full rounded border px-3 py-2" />
-          {errors.porcentaje_seguro && <p className="text-red-600 text-xs">{errors.porcentaje_seguro.message}</p>}
+            className="input" />
+          {errors.porcentaje_seguro && <p className="field-error">{errors.porcentaje_seguro.message}</p>}
         </div>
       ) : (
         <div>
           <label className="block text-sm font-medium">Motivo de exoneración</label>
-          <textarea {...register('motivo_exoneracion')} className="mt-1 w-full rounded border px-3 py-2" />
-          {errors.motivo_exoneracion && <p className="text-red-600 text-xs">{errors.motivo_exoneracion.message}</p>}
+          <textarea {...register('motivo_exoneracion')} className="input" />
+          {errors.motivo_exoneracion && <p className="field-error">{errors.motivo_exoneracion.message}</p>}
         </div>
       )}
 
-      <div className="rounded-lg bg-slate-50 p-4 text-sm space-y-1">
+      <div className="rounded-xl bg-slate-50 p-4 text-sm space-y-1.5 ring-1 ring-slate-100">
         <div className="flex justify-between"><span>Valor seguro</span><b>{money(preview.valorSeguro)}</b></div>
         <div className="flex justify-between"><span>Monto desembolsado (neto)</span><b>{money(preview.desembolsado)}</b></div>
         <div className="flex justify-between"><span>Intereses (sobre aprobado)</span><b>{money(preview.interes)}</b></div>
-        <div className="flex justify-between"><span>Total a recaudar</span><b>{money(preview.totalRecaudar)}</b></div>
+        <div className="flex justify-between"><span className="font-medium text-slate-700">Total a recaudar</span><b>{money(preview.totalRecaudar)}</b></div>
         <div className="flex justify-between"><span>Valor cuota</span><b>{money(preview.cuota)}</b></div>
       </div>
 
       <button type="submit" disabled={crear.isPending}
-        className="rounded bg-brand px-4 py-2 text-white disabled:opacity-50">
+        className="btn-primary">
         {crear.isPending ? 'Guardando…' : 'Crear solicitud'}
       </button>
     </form>

@@ -4,16 +4,22 @@ import { money } from '@/lib/format';
 import type { Solicitud } from '@/types';
 import { useCreditoDetalle, useCreditos, useDesembolsar, useRegistrarPago } from './hooks';
 
+const METODOS = [
+  { v: 'EFECTIVO', t: 'Efectivo' },
+  { v: 'TRANSFERENCIA', t: 'Transferencia' },
+];
+
 export function CarteraPanel() {
   const { data, isLoading } = useCreditos();
 
   return (
     <div>
-      <h2 className="mb-4 text-lg font-semibold">Cartera</h2>
+      <h2 className="mb-1 text-xl font-bold">Cartera y pagos</h2>
+      <p className="mb-5 text-sm text-slate-500">Desembolsa créditos aprobados y registra los pagos de cada cuota.</p>
       {isLoading ? (
         <p className="text-sm text-slate-500">Cargando créditos…</p>
       ) : !data || data.length === 0 ? (
-        <p className="rounded-lg border border-dashed p-6 text-center text-sm text-slate-500">
+        <p className="card card-pad border-2 border-dashed border-slate-200 text-center text-sm text-slate-500 shadow-none ring-0">
           No hay créditos operables. Aprueba una solicitud para verla aquí.
         </p>
       ) : (
@@ -40,11 +46,20 @@ function CreditoCard({ c }: { c: Solicitud }) {
   };
 
   return (
-    <div className="rounded-xl border p-4">
+    <div className="card card-pad">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
-          <div className="font-semibold">Crédito #{c.id} · {c.cliente ?? `Cliente ${c.cliente_id}`}</div>
-          <EstadoBadge estado={c.estado} />
+          <div className="font-semibold">
+            {c.numero_credito ?? `Crédito #${c.id}`} · {c.cliente ?? `Cliente ${c.cliente_id}`}
+          </div>
+          <div className="flex items-center gap-2">
+            <EstadoBadge estado={c.estado} />
+            {c.credito_origen && (
+              <span className="rounded-full bg-violet-100 px-2 py-0.5 text-xs text-violet-800">
+                Renovación de {c.credito_origen}
+              </span>
+            )}
+          </div>
         </div>
         <div className="text-right text-sm">
           <div className="text-slate-500">Saldo pendiente</div>
@@ -58,21 +73,19 @@ function CreditoCard({ c }: { c: Solicitud }) {
         <Item label="Cuotas" value={`${c.numero_cuotas}`} />
       </dl>
 
-      {error && <p className="mt-3 rounded bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
+      {error && <p className="mt-3 alert-error">{error}</p>}
 
       {esAprobado && (
         <div className="mt-4 flex flex-wrap items-center gap-2">
+          <span className="text-sm text-slate-500">Medio de entrega:</span>
           <select value={metodo} onChange={(e) => setMetodo(e.target.value)}
-            className="rounded border px-2 py-1.5 text-sm bg-white">
-            <option value="EFECTIVO">Efectivo</option>
-            <option value="TRANSFERENCIA">Transferencia</option>
-            <option value="NEQUI">Nequi</option>
-            <option value="DAVIPLATA">Daviplata</option>
+            className="input">
+            {METODOS.map((m) => <option key={m.v} value={m.v}>{m.t}</option>)}
           </select>
           <button
             onClick={() => { setError(null); desembolsar.mutate({ id: c.id, metodo }, { onError: err }); }}
             disabled={desembolsar.isPending}
-            className="rounded bg-brand px-4 py-1.5 text-sm text-white disabled:opacity-50">
+            className="btn-primary btn-sm">
             {desembolsar.isPending ? 'Desembolsando…' : 'Desembolsar y activar'}
           </button>
         </div>
@@ -81,24 +94,25 @@ function CreditoCard({ c }: { c: Solicitud }) {
       {esPagable && (
         <div className="mt-4">
           <button onClick={() => setAbierto(!abierto)} className="text-sm text-brand underline">
-            {abierto ? 'Ocultar cuotas' : 'Ver cuotas y registrar pago'}
+            {abierto ? 'Ocultar ficha' : 'Ver ficha: plan, pagos y registro'}
           </button>
-          {abierto && <DetalleCredito creditoId={c.id} />}
+          {abierto && <FichaCredito creditoId={c.id} />}
         </div>
       )}
     </div>
   );
 }
 
-function DetalleCredito({ creditoId }: { creditoId: number }) {
+function FichaCredito({ creditoId }: { creditoId: number }) {
   const { data: credito, isLoading } = useCreditoDetalle(creditoId);
   const pagar = useRegistrarPago();
   const [valor, setValor] = useState('');
   const [metodo, setMetodo] = useState('EFECTIVO');
+  const [obs, setObs] = useState('');
   const [msg, setMsg] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  if (isLoading) return <p className="mt-2 text-sm text-slate-500">Cargando cuotas…</p>;
+  if (isLoading) return <p className="mt-2 text-sm text-slate-500">Cargando ficha…</p>;
   if (!credito) return null;
 
   const onPagar = () => {
@@ -106,9 +120,9 @@ function DetalleCredito({ creditoId }: { creditoId: number }) {
     const v = Number(valor);
     if (!v || v <= 0) { setError('Ingresa un valor mayor a 0.'); return; }
     pagar.mutate(
-      { solicitud_id: creditoId, valor: v, metodo, client_uuid: crypto.randomUUID() },
+      { solicitud_id: creditoId, valor: v, metodo, observaciones: obs || undefined, client_uuid: crypto.randomUUID() },
       {
-        onSuccess: () => { setMsg('Pago registrado ✓'); setValor(''); },
+        onSuccess: () => { setMsg('Pago registrado ✓'); setValor(''); setObs(''); },
         onError: (e) => {
           const x = e as { message?: string; response?: { data?: { message?: string } } };
           if (x?.message === 'OFFLINE_ENCOLADO') setMsg('Sin conexión: el pago se guardó y se sincronizará al recuperar internet.');
@@ -119,53 +133,100 @@ function DetalleCredito({ creditoId }: { creditoId: number }) {
   };
 
   return (
-    <div className="mt-3 space-y-3">
-      <div className="overflow-x-auto rounded-lg border">
-        <table className="w-full text-sm">
-          <thead className="bg-slate-50 text-left text-slate-500">
-            <tr>
-              <th className="px-3 py-2">Cuota</th><th className="px-3 py-2">Vence</th>
-              <th className="px-3 py-2">Valor</th><th className="px-3 py-2">Pagado</th>
-              <th className="px-3 py-2">Saldo</th><th className="px-3 py-2">Estado</th>
-            </tr>
-          </thead>
-          <tbody>
-            {credito.cuotas?.map((q) => (
-              <tr key={q.numero_cuota} className="border-t">
-                <td className="px-3 py-2">{q.numero_cuota}</td>
-                <td className="px-3 py-2">{q.fecha_vencimiento}</td>
-                <td className="px-3 py-2">{money(q.valor)}</td>
-                <td className="px-3 py-2">{money(q.valor_pagado)}</td>
-                <td className="px-3 py-2">{money(q.saldo)}</td>
-                <td className="px-3 py-2">{q.estado}</td>
+    <div className="mt-3 space-y-5">
+      {/* PLAN DE PAGOS */}
+      <div>
+        <h4 className="mb-2 text-sm font-semibold text-slate-700">Plan de pagos</h4>
+        <div className="table-wrap">
+          <table className="table-base">
+            <thead>
+              <tr>
+                <th className="px-3 py-2">#</th><th className="px-3 py-2">Vence</th>
+                <th className="px-3 py-2">Capital</th><th className="px-3 py-2">Interés</th>
+                <th className="px-3 py-2">Valor</th><th className="px-3 py-2">Pagado</th>
+                <th className="px-3 py-2">Saldo</th><th className="px-3 py-2">Estado</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {credito.cuotas?.map((q) => (
+                <tr key={q.numero_cuota} className="border-t">
+                  <td className="px-3 py-2">{q.numero_cuota}</td>
+                  <td className="px-3 py-2">{q.fecha_vencimiento}</td>
+                  <td className="px-3 py-2">{money(q.abono_capital ?? 0)}</td>
+                  <td className="px-3 py-2">{money(q.abono_interes ?? 0)}</td>
+                  <td className="px-3 py-2">{money(q.valor)}</td>
+                  <td className="px-3 py-2">{money(q.valor_pagado)}</td>
+                  <td className="px-3 py-2">{money(q.saldo)}</td>
+                  <td className="px-3 py-2">{q.estado}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
 
-      <div className="flex flex-wrap items-end gap-2">
-        <label className="text-sm">
-          <span className="block font-medium">Valor del pago</span>
-          <input type="number" step="any" value={valor} onChange={(e) => setValor(e.target.value)}
-            className="mt-1 w-40 rounded border px-3 py-2" />
-        </label>
-        <select value={metodo} onChange={(e) => setMetodo(e.target.value)}
-          className="rounded border px-2 py-2 text-sm bg-white">
-          <option value="EFECTIVO">Efectivo</option>
-          <option value="TRANSFERENCIA">Transferencia</option>
-          <option value="CONSIGNACION">Consignación</option>
-          <option value="NEQUI">Nequi</option>
-          <option value="DAVIPLATA">Daviplata</option>
-        </select>
-        <button onClick={onPagar} disabled={pagar.isPending}
-          className="rounded bg-brand px-4 py-2 text-sm text-white disabled:opacity-50">
-          {pagar.isPending ? 'Registrando…' : 'Registrar pago'}
-        </button>
+      {/* REGISTRAR PAGO */}
+      <div>
+        <h4 className="mb-2 text-sm font-semibold text-slate-700">Registrar pago</h4>
+        <div className="flex flex-wrap items-end gap-2">
+          <label className="text-sm">
+            <span className="block font-medium">Valor</span>
+            <input type="number" step="any" value={valor} onChange={(e) => setValor(e.target.value)}
+              className="input w-36" />
+          </label>
+          <label className="text-sm">
+            <span className="block font-medium">Medio</span>
+            <select value={metodo} onChange={(e) => setMetodo(e.target.value)}
+              className="input">
+              {METODOS.map((m) => <option key={m.v} value={m.v}>{m.t}</option>)}
+            </select>
+          </label>
+          <label className="flex-1 min-w-[160px] text-sm">
+            <span className="block font-medium">Observaciones (opcional)</span>
+            <input value={obs} onChange={(e) => setObs(e.target.value)}
+              className="input" />
+          </label>
+          <button onClick={onPagar} disabled={pagar.isPending}
+            className="btn-primary btn-sm">
+            {pagar.isPending ? 'Registrando…' : 'Registrar pago'}
+          </button>
+        </div>
+        {msg && <p className="mt-2 text-sm text-green-700">{msg}</p>}
+        {error && <p className="mt-2 text-sm text-red-700">{error}</p>}
+        <p className="mt-1 text-xs text-slate-400">El pago se aplica a las cuotas pendientes, de la más antigua a la más reciente.</p>
       </div>
-      {msg && <p className="text-sm text-green-700">{msg}</p>}
-      {error && <p className="text-sm text-red-700">{error}</p>}
-      <p className="text-xs text-slate-400">El pago se aplica automáticamente a las cuotas pendientes, de la más antigua a la más reciente.</p>
+
+      {/* HISTORIAL DE PAGOS */}
+      <div>
+        <h4 className="mb-2 text-sm font-semibold text-slate-700">Pagos realizados</h4>
+        {!credito.pagos || credito.pagos.length === 0 ? (
+          <p className="text-sm text-slate-500">Aún no hay pagos registrados.</p>
+        ) : (
+          <div className="table-wrap">
+            <table className="table-base">
+              <thead>
+                <tr>
+                  <th className="px-3 py-2">Fecha</th><th className="px-3 py-2">Hora</th>
+                  <th className="px-3 py-2">Medio</th><th className="px-3 py-2">Valor</th>
+                  <th className="px-3 py-2">Registró</th><th className="px-3 py-2">Obs.</th>
+                </tr>
+              </thead>
+              <tbody>
+                {credito.pagos.map((p) => (
+                  <tr key={p.id} className="border-t">
+                    <td className="px-3 py-2">{p.fecha}</td>
+                    <td className="px-3 py-2">{p.hora ?? '—'}</td>
+                    <td className="px-3 py-2">{p.metodo}</td>
+                    <td className="px-3 py-2">{money(p.valor)}</td>
+                    <td className="px-3 py-2">{p.registrado_por ?? '—'}</td>
+                    <td className="px-3 py-2">{p.observaciones ?? '—'}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

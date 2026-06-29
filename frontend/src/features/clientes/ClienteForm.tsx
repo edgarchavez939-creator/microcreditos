@@ -45,7 +45,7 @@ export function ClienteForm({ onCreado, onCancelar }: { onCreado?: () => void; o
     });
   };
 
-  const input = 'mt-1 w-full rounded border px-3 py-2';
+  const input = 'input';
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 max-w-2xl">
@@ -58,7 +58,7 @@ export function ClienteForm({ onCreado, onCancelar }: { onCreado?: () => void; o
             <input {...register('apellidos')} className={input} />
           </Campo>
           <Campo label="Tipo documento">
-            <select {...register('tipo_documento')} className={`${input} bg-white`}>
+            <select {...register('tipo_documento')} className={input}>
               <option value="CC">Cédula (CC)</option>
               <option value="CE">Cédula extranjería (CE)</option>
               <option value="TI">Tarjeta identidad (TI)</option>
@@ -73,13 +73,13 @@ export function ClienteForm({ onCreado, onCancelar }: { onCreado?: () => void; o
             <input type="date" {...register('fecha_nacimiento')} className={input} />
           </Campo>
           <Campo label="Género">
-            <select {...register('genero')} className={`${input} bg-white`}>
+            <select {...register('genero')} className={input}>
               <option value="">—</option><option value="M">Masculino</option>
               <option value="F">Femenino</option><option value="OTRO">Otro</option>
             </select>
           </Campo>
           <Campo label="Estado civil">
-            <select {...register('estado_civil')} className={`${input} bg-white`}>
+            <select {...register('estado_civil')} className={input}>
               <option value="">—</option><option value="SOLTERO">Soltero</option>
               <option value="CASADO">Casado</option><option value="UNION_LIBRE">Unión libre</option>
               <option value="DIVORCIADO">Divorciado</option><option value="VIUDO">Viudo</option>
@@ -99,7 +99,7 @@ export function ClienteForm({ onCreado, onCancelar }: { onCreado?: () => void; o
       <Seccion titulo="Ubicación">
         <div className="grid gap-3 sm:grid-cols-2">
           <Campo label="Área" error={errors.area_id?.message}>
-            <select {...register('area_id', { valueAsNumber: true })} className={`${input} bg-white`}>
+            <select {...register('area_id', { valueAsNumber: true })} className={input}>
               <option value="">Selecciona…</option>
               {areas?.map((a) => <option key={a.id} value={a.id}>{a.nombre}</option>)}
             </select>
@@ -113,7 +113,7 @@ export function ClienteForm({ onCreado, onCancelar }: { onCreado?: () => void; o
         </div>
         <div className="mt-3 flex flex-wrap items-center gap-3">
           <button type="button" onClick={capturarGPS}
-            className="rounded border border-brand px-3 py-1.5 text-sm text-brand hover:bg-brand hover:text-white">
+            className="btn-outline btn-sm text-brand ring-brand-200 hover:bg-brand-50">
             📍 Capturar GPS
           </button>
           {lat && lng && (
@@ -144,15 +144,15 @@ export function ClienteForm({ onCreado, onCancelar }: { onCreado?: () => void; o
         </div>
       </Seccion>
 
-      {error && <p className="rounded bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
+      {error && <p className="alert-error">{error}</p>}
 
       <div className="flex gap-3">
         <button type="submit" disabled={crear.isPending}
-          className="rounded bg-brand px-4 py-2 text-white disabled:opacity-50">
+          className="btn-primary">
           {crear.isPending ? 'Guardando…' : 'Guardar cliente'}
         </button>
         {onCancelar && (
-          <button type="button" onClick={onCancelar} className="rounded border px-4 py-2 text-slate-600">
+          <button type="button" onClick={onCancelar} className="btn-outline">
             Cancelar
           </button>
         )}
@@ -175,7 +175,7 @@ function Campo({ label, error, children }: { label: string; error?: string; chil
     <label className="block text-sm">
       <span className="font-medium">{label}</span>
       {children}
-      {error && <span className="text-red-600 text-xs">{error}</span>}
+      {error && <span className="field-error">{error}</span>}
     </label>
   );
 }

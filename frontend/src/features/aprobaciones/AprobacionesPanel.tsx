@@ -9,11 +9,12 @@ export function AprobacionesPanel() {
 
   return (
     <div>
-      <h2 className="mb-4 text-lg font-semibold">Aprobaciones pendientes</h2>
+      <h2 className="mb-1 text-xl font-bold">Aprobaciones</h2>
+      <p className="mb-5 text-sm text-slate-500">Revisa y resuelve las solicitudes que esperan tu decisión.</p>
       {isLoading ? (
         <p className="text-sm text-slate-500">Cargando…</p>
       ) : !data || data.length === 0 ? (
-        <p className="rounded-lg border border-dashed p-6 text-center text-sm text-slate-500">
+        <p className="card card-pad border-2 border-dashed border-slate-200 text-center text-sm text-slate-500 shadow-none ring-0">
           No hay solicitudes pendientes de aprobación.
         </p>
       ) : (
@@ -38,10 +39,10 @@ function TarjetaAprobacion({ s }: { s: Solicitud }) {
   };
 
   return (
-    <div className="rounded-xl border p-4">
+    <div className="card card-pad">
       <div className="flex items-start justify-between gap-3">
         <div>
-          <div className="font-semibold">Crédito #{s.id} · {s.cliente ?? `Cliente ${s.cliente_id}`}</div>
+          <div className="font-semibold">{s.numero_credito ?? `Crédito #${s.id}`} · {s.cliente ?? `Cliente ${s.cliente_id}`}</div>
           <EstadoBadge estado={s.estado} />
           {s.seguro_exonerado && (
             <span className="ml-2 rounded-full bg-orange-100 px-2 py-0.5 text-xs text-orange-800">
@@ -60,18 +61,18 @@ function TarjetaAprobacion({ s }: { s: Solicitud }) {
         <Item label="Cuotas" value={`${s.numero_cuotas}`} />
       </dl>
 
-      {error && <p className="mt-3 rounded bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
+      {error && <p className="mt-3 alert-error">{error}</p>}
 
       {!rechazando ? (
         <div className="mt-4 flex gap-2">
           <button
             onClick={() => { setError(null); aprobar.mutate(s.id, { onError: err }); }}
             disabled={aprobar.isPending}
-            className="rounded bg-brand px-4 py-2 text-sm text-white disabled:opacity-50">
+            className="btn-primary btn-sm">
             {aprobar.isPending ? 'Aprobando…' : 'Aprobar'}
           </button>
           <button onClick={() => { setError(null); setRechazando(true); }}
-            className="rounded border border-red-300 px-4 py-2 text-sm text-red-700">
+            className="btn-danger btn-sm">
             Rechazar
           </button>
         </div>
@@ -79,7 +80,7 @@ function TarjetaAprobacion({ s }: { s: Solicitud }) {
         <div className="mt-4 space-y-2">
           <textarea value={motivo} onChange={(e) => setMotivo(e.target.value)}
             placeholder="Motivo del rechazo (mín. 5 caracteres)"
-            className="w-full rounded border px-3 py-2 text-sm" />
+            className="input" />
           <div className="flex gap-2">
             <button
               onClick={() => {
@@ -90,7 +91,7 @@ function TarjetaAprobacion({ s }: { s: Solicitud }) {
               className="rounded bg-red-600 px-4 py-2 text-sm text-white disabled:opacity-50">
               {rechazar.isPending ? 'Rechazando…' : 'Confirmar rechazo'}
             </button>
-            <button onClick={() => setRechazando(false)} className="rounded border px-4 py-2 text-sm text-slate-600">
+            <button onClick={() => setRechazando(false)} className="btn-outline btn-sm">
               Cancelar
             </button>
           </div>
