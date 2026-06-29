@@ -4,6 +4,7 @@ import { LoginForm } from '@/features/auth/LoginForm';
 import { SolicitudForm } from '@/features/solicitudes/SolicitudForm';
 import { ReamortizacionPanel } from '@/features/renovaciones/ReamortizacionPanel';
 import { Placeholder } from '@/components/Placeholder';
+import { ClientesPanel } from '@/features/clientes/ClientesPanel';
 import type { Rol } from '@/types';
 
 interface MenuItem { id: string; label: string; roles: Rol[]; }
@@ -61,23 +62,20 @@ function AppShell() {
       </nav>
 
       <main className="p-4">
-        <Pantalla id={activo} rol={usuario.rol} />
+        <Pantalla id={activo} />
       </main>
     </div>
   );
 }
 
-function Pantalla({ id, rol }: { id: string; rol: Rol }) {
+function Pantalla({ id }: { id: string }) {
   switch (id) {
     case 'solicitud':
       return <PantallaSolicitud />;
     case 'reamortizacion':
       return <PantallaReamortizacion />;
     case 'clientes':
-      return <Placeholder titulo="Clientes" descripcion="Gestión de clientes del territorio."
-        permisos={rol === 'COBRADOR'
-          ? ['Crear y editar tus clientes', 'Subir documentos (cédula, soportes)', 'Capturar GPS y ver en mapa']
-          : ['Ver y reasignar clientes del área', 'Consultar cartera por cliente']} />;
+      return <ClientesPanel />;
     case 'pagos':
       return <Placeholder titulo="Pagos" descripcion="Registro de pagos y abonos a cuotas."
         permisos={['Registrar pago (efectivo, transferencia, Nequi, Daviplata)', 'Ver cuotas pendientes y saldo', 'Funciona offline y sincroniza al recuperar red']} />;

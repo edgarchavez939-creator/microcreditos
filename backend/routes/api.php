@@ -1,6 +1,8 @@
 <?php
 
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\AreaController;
+use App\Http\Controllers\Api\ClienteController;
 use App\Http\Controllers\Api\ReamortizacionController;
 use App\Http\Controllers\Api\SolicitudController;
 use Illuminate\Support\Facades\Route;
@@ -16,6 +18,10 @@ Route::prefix('auth')->group(function () {
 // --- Rutas protegidas ---
 Route::middleware('auth:api')->group(function () {
     Route::get('auth/me', [AuthController::class, 'me']);
+
+    // Áreas y Clientes
+    Route::get('areas', [AreaController::class, 'index']);
+    Route::apiResource('clientes', ClienteController::class)->only(['index', 'store', 'show', 'update']);
     Route::post('auth/logout', [AuthController::class, 'logout']);
 
     // Solicitudes de préstamo / ventas financiadas
