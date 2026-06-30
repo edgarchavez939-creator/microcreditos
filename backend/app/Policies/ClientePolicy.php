@@ -15,7 +15,7 @@ class ClientePolicy
     {
         if ($u->esAdministrador()) return true;
         if ($u->esSupervisor())    return $u->areas()->where('areas.id', $c->area_id)->exists();
-        return $c->cobrador_id === $u->id;
+        return (int) $c->cobrador_id === (int) $u->id;
     }
 
     public function create(Usuario $u): bool
@@ -27,6 +27,6 @@ class ClientePolicy
     {
         if ($u->esAdministrador()) return true;
         if ($u->esSupervisor())    return $u->areas()->where('areas.id', $c->area_id)->exists();
-        return $c->cobrador_id === $u->id;
+        return (int) $c->cobrador_id === (int) $u->id;
     }
 }

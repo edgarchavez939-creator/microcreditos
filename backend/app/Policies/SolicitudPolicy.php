@@ -15,7 +15,7 @@ class SolicitudPolicy
     {
         if ($u->esAdministrador()) return true;
         if ($u->esSupervisor())    return $u->areas()->where('areas.id', $s->area_id)->exists();
-        return $s->cobrador_id === $u->id;
+        return (int) $s->cobrador_id === (int) $u->id;
     }
 
     public function create(Usuario $u): bool
@@ -27,7 +27,7 @@ class SolicitudPolicy
     public function update(Usuario $u, Solicitud $s): bool
     {
         if ($u->esAdministrador()) return true;
-        return $s->cobrador_id === $u->id && $s->estado === 'BORRADOR';
+        return (int) $s->cobrador_id === (int) $u->id && $s->estado === 'BORRADOR';
     }
 
     /** Aprobar/rechazar: nunca cobrador. Exoneración: solo admin. */
@@ -44,7 +44,7 @@ class SolicitudPolicy
     {
         if ($u->esAdministrador()) return true;
         if ($u->esSupervisor())    return $u->areas()->where('areas.id', $s->area_id)->exists();
-        return $s->cobrador_id === $u->id;
+        return (int) $s->cobrador_id === (int) $u->id;
     }
 
     /** Desembolsar: supervisor del área o administrador. */
@@ -59,6 +59,6 @@ class SolicitudPolicy
     {
         if ($u->esAdministrador()) return true;
         if ($u->esSupervisor())    return $u->areas()->where('areas.id', $s->area_id)->exists();
-        return $s->cobrador_id === $u->id;
+        return (int) $s->cobrador_id === (int) $u->id;
     }
 }
