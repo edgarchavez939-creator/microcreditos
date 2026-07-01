@@ -154,9 +154,15 @@ class SolicitudController extends Controller
 
         $despues = \App\Models\Cuota::where('solicitud_id', $solicitud->id)->count();
 
+        // ¿Dónde se pierden las cuotas? Comparar las tres vías de lectura.
+        $porRelacion = $solicitud->cuotas()->count();
+        $fresh = $solicitud->fresh()->load(['cuotas']);
+        $serial = (new SolicitudResource($fresh))->response(request())->getData(true);
+        $enResource = is_array($serial['data']['cuotas'] ?? null) ? count($serial['data']['cuotas']) : -1;
+
         return response()->json([
-            'message' => "Diagnóstico → numero_cuotas={$nc} · cuotas antes={$antes} · después={$despues}",
-            'diag'    => ['numero_cuotas' => $nc, 'antes' => $antes, 'despues' => $despues],
+            'message' => "numero_cuotas={$nc} · where={$despues} · relacion={$porRelacion} · resource={$enResource}",
+            'diag'    => ['numero_cuotas' => $nc, 'where' => $despues, 'relacion' => $porRelacion, 'resource' => $enResource],
         ]);
     }
 
