@@ -212,11 +212,23 @@ function FichaCredito({ creditoId }: { creditoId: number }) {
           <div className="rounded-xl bg-amber-50 px-3.5 py-2.5 text-sm text-amber-800 ring-1 ring-amber-100">
             <p>Este crédito no tiene cuotas generadas.</p>
             {puedeGenerar && (
-              <button onClick={() => generar.mutate(creditoId)} disabled={generar.isPending}
+              <button onClick={() => {
+                  setError(null); setMsg(null);
+                  generar.mutate(creditoId, {
+                    onSuccess: () => setMsg('Plan de pagos generado ✓'),
+                    onError: (e: unknown) => {
+                      const x = e as { response?: { data?: { message?: string; archivo?: string } } };
+                      setError((x?.response?.data?.message ?? 'No se pudo generar el plan.') +
+                        (x?.response?.data?.archivo ? ` (${x.response.data.archivo})` : ''));
+                    },
+                  });
+                }} disabled={generar.isPending}
                 className="btn-primary btn-sm mt-2">
                 {generar.isPending ? 'Generando…' : 'Generar plan de pagos'}
               </button>
             )}
+            {error && <p className="mt-2 alert-error">{error}</p>}
+            {msg && <p className="mt-2 text-sm text-green-700">{msg}</p>}
           </div>
         ) : (
         <div className="table-wrap">

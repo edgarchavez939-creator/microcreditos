@@ -9,6 +9,7 @@ class Cuota extends Model
     protected $table = 'cuotas';
     protected $fillable = [
         'solicitud_id','numero_cuota','fecha_vencimiento','valor',
+        'abono_capital','abono_interes',
         'valor_pagado','saldo','estado','dias_mora',
     ];
     protected $casts = [

@@ -91,7 +91,11 @@ class SolicitudController extends Controller
         }
 
         // Plan de cuotas al crear la solicitud (fecha provisional; se recalcula al desembolsar)
-        $this->loans->generarCronograma($solicitud, $data['fecha_primer_pago'] ?? now());
+        try {
+            $this->loans->generarCronograma($solicitud, $data['fecha_primer_pago'] ?? now());
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::warning('No se pudo generar el plan al crear la solicitud: '.$e->getMessage());
+        }
 
         return (new SolicitudResource($solicitud->fresh()->load('cuotas')))
             ->response()->setStatusCode(201);
@@ -134,10 +138,18 @@ class SolicitudController extends Controller
     {
         $this->authorize('disburse', $solicitud);
 
-        // Idempotente: solo genera si aún no hay cuotas (no destruye pagos existentes)
-        if (\App\Models\Cuota::where('solicitud_id', $solicitud->id)->count() === 0) {
-            $fechaBase = \App\Models\Desembolso::where('solicitud_id', $solicitud->id)->value('fecha') ?? now();
-            $loans->generarCronograma($solicitud, $fechaBase);
+        try {
+            // Idempotente: solo genera si aún no hay cuotas (no destruye pagos existentes)
+            if (\App\Models\Cuota::where('solicitud_id', $solicitud->id)->count() === 0) {
+                $fechaBase = \App\Models\Desembolso::where('solicitud_id', $solicitud->id)->value('fecha') ?? now();
+                $loans->generarCronograma($solicitud, $fechaBase);
+            }
+        } catch (\Throwable $e) {
+            // Devolver el error real para diagnóstico en pantalla
+            return response()->json([
+                'message' => 'No se pudo generar el plan: '.$e->getMessage(),
+                'archivo' => class_basename($e->getFile()).':'.$e->getLine(),
+            ], 422);
         }
 
         return new SolicitudResource($solicitud->fresh()->load('cuotas'));
