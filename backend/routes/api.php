@@ -8,7 +8,7 @@ use App\Http\Controllers\Api\ReamortizacionController;
 use App\Http\Controllers\Api\SolicitudController;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/health', fn () => response()->json(['status' => 'ok', 'version' => 'v12-diagnostico-plan', 'ts' => now()]));
+Route::get('/health', fn () => response()->json(['status' => 'ok', 'version' => 'v13-diag-conteo', 'ts' => now()]));
 
 // --- Auth (público con rate limiting) ---
 Route::prefix('auth')->group(function () {

@@ -138,21 +138,26 @@ class SolicitudController extends Controller
     {
         $this->authorize('disburse', $solicitud);
 
+        $nc    = (int) $solicitud->numero_cuotas;
+        $antes = \App\Models\Cuota::where('solicitud_id', $solicitud->id)->count();
+
         try {
-            // Idempotente: solo genera si aún no hay cuotas (no destruye pagos existentes)
-            if (\App\Models\Cuota::where('solicitud_id', $solicitud->id)->count() === 0) {
+            if ($antes === 0) {
                 $fechaBase = \App\Models\Desembolso::where('solicitud_id', $solicitud->id)->value('fecha') ?? now();
                 $loans->generarCronograma($solicitud, $fechaBase);
             }
         } catch (\Throwable $e) {
-            // Devolver el error real para diagnóstico en pantalla
             return response()->json([
-                'message' => 'No se pudo generar el plan: '.$e->getMessage(),
-                'archivo' => class_basename($e->getFile()).':'.$e->getLine(),
+                'message' => 'ERROR: '.$e->getMessage().' @'.class_basename($e->getFile()).':'.$e->getLine(),
             ], 422);
         }
 
-        return new SolicitudResource($solicitud->fresh()->load('cuotas'));
+        $despues = \App\Models\Cuota::where('solicitud_id', $solicitud->id)->count();
+
+        return response()->json([
+            'message' => "Diagnóstico → numero_cuotas={$nc} · cuotas antes={$antes} · después={$despues}",
+            'diag'    => ['numero_cuotas' => $nc, 'antes' => $antes, 'despues' => $despues],
+        ]);
     }
 
     public function destroy(Request $request, Solicitud $solicitud)
