@@ -41,3 +41,48 @@ export function useCrearCliente() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ['clientes'] }),
   });
 }
+
+export interface ClienteDetalle {
+  id: number; nombres: string; apellidos: string;
+  tipo_documento: string; numero_documento: string;
+  fecha_nacimiento?: string; genero?: string; estado_civil?: string;
+  telefono_principal?: string; correo?: string;
+  area?: string; cobrador?: string;
+  direccion?: string; barrio?: string; referencia_ubicacion?: string;
+  latitud?: number | null; longitud?: number | null;
+  empresa?: string; cargo?: string; antiguedad_meses?: number; salario?: number; direccion_laboral?: string;
+  referencias?: Array<{ tipo: string; nombre: string; telefono?: string; parentesco?: string }>;
+}
+
+export interface EntradaHistorial {
+  fecha: string; usuario: string; campos: string[]; valores: Record<string, unknown>;
+}
+
+export function useClienteDetalle(id: number | null) {
+  return useQuery({
+    queryKey: ['cliente', id],
+    queryFn: async () => (await api.get<{ data: ClienteDetalle }>(`/clientes/${id}`)).data.data,
+    enabled: !!id,
+  });
+}
+
+export function useHistorialCliente(id: number | null) {
+  return useQuery({
+    queryKey: ['cliente-historial', id],
+    queryFn: async () => (await api.get<{ data: EntradaHistorial[] }>(`/clientes/${id}/historial`)).data.data,
+    enabled: !!id,
+  });
+}
+
+export function useActualizarContacto(id: number) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (data: { correo: string; telefono_principal: string; direccion: string }) =>
+      (await api.patch(`/clientes/${id}/contacto`, data)).data,
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['cliente', id] });
+      qc.invalidateQueries({ queryKey: ['cliente-historial', id] });
+      qc.invalidateQueries({ queryKey: ['clientes'] });
+    },
+  });
+}

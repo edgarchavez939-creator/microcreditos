@@ -139,4 +139,34 @@ class SolicitudController extends Controller
 
         return new SolicitudResource($solicitud->fresh()->load('cuotas'));
     }
+
+    public function destroy(Request $request, Solicitud $solicitud)
+    {
+        $u = $request->user();
+        if (! $u->esAdministrador()) {
+            abort(403, 'Solo el administrador puede eliminar créditos.');
+        }
+        $request->validate(['clave' => ['required', 'string']]);
+        if ($request->input('clave') !== config('app.credito_delete_key')) {
+            abort(422, 'Clave de eliminación incorrecta.');
+        }
+
+        \Illuminate\Support\Facades\DB::transaction(function () use ($solicitud) {
+            $pagoIds = \App\Models\Pago::where('solicitud_id', $solicitud->id)->pluck('id');
+            \App\Models\MovimientoCaja::where(function ($q) use ($solicitud, $pagoIds) {
+                $q->where(fn ($x) => $x->where('referencia_tipo', 'DESEMBOLSO')->where('referencia_id', $solicitud->id))
+                  ->orWhere(fn ($x) => $x->where('referencia_tipo', 'PAGO')->whereIn('referencia_id', $pagoIds));
+            })->delete();
+            \App\Models\Pago::where('solicitud_id', $solicitud->id)->delete();
+            \App\Models\Cuota::where('solicitud_id', $solicitud->id)->delete();
+            \App\Models\Desembolso::where('solicitud_id', $solicitud->id)->delete();
+            \App\Models\Documento::where('solicitud_id', $solicitud->id)->delete();
+            \Illuminate\Support\Facades\DB::table('renovaciones')
+                ->where('credito_origen_id', $solicitud->id)
+                ->orWhere('credito_nuevo_id', $solicitud->id)->delete();
+            $solicitud->delete();
+        });
+
+        return response()->json(['message' => 'Crédito eliminado.']);
+    }
 }

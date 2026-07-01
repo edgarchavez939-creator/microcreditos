@@ -2,7 +2,7 @@ import { Icon } from '@/components/ui/icons';
 import { useState } from 'react';
 import { useClientes } from './hooks';
 
-export function ClientesList({ onNuevo }: { onNuevo: () => void }) {
+export function ClientesList({ onNuevo, onVerPerfil }: { onNuevo: () => void; onVerPerfil: (id: number) => void }) {
   const [buscar, setBuscar] = useState('');
   const { data: clientes, isLoading } = useClientes(buscar);
 
@@ -38,7 +38,7 @@ export function ClientesList({ onNuevo }: { onNuevo: () => void }) {
             </thead>
             <tbody>
               {clientes.map((c) => (
-                <tr key={c.id} className="border-t">
+                <tr key={c.id} onClick={() => onVerPerfil(c.id)} className="cursor-pointer border-t hover:bg-slate-50">
                   <td className="px-3 py-2 text-slate-400">{c.id}</td>
                   <td className="px-3 py-2 font-medium">{c.nombres} {c.apellidos}</td>
                   <td className="px-3 py-2">{c.tipo_documento} {c.numero_documento}</td>
@@ -46,7 +46,7 @@ export function ClientesList({ onNuevo }: { onNuevo: () => void }) {
                   <td className="px-3 py-2">{c.area ?? '—'}</td>
                   <td className="px-3 py-2">
                     {c.latitud && c.longitud
-                      ? <a className="text-brand underline" target="_blank" rel="noreferrer"
+                      ? <a onClick={(e) => e.stopPropagation()} className="text-brand underline" target="_blank" rel="noreferrer"
                           href={`https://www.google.com/maps?q=${c.latitud},${c.longitud}`}>Ver</a>
                       : '—'}
                   </td>

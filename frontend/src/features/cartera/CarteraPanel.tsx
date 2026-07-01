@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { EstadoBadge } from '@/components/ui/EstadoBadge';
 import { money } from '@/lib/format';
 import type { Solicitud } from '@/types';
-import { useCreditoDetalle, useCreditos, useDesembolsar, useGenerarCronograma, useRegistrarPago } from './hooks';
+import { useCreditoDetalle, useCreditos, useDesembolsar, useEliminarCredito, useGenerarCronograma, useRegistrarPago } from './hooks';
 import { useAuthStore } from '@/stores/auth';
 
 function leerBase64(file: File): Promise<string> {
@@ -57,6 +57,10 @@ function CreditoCard({ c }: { c: Solicitud }) {
 
   const esAprobado = c.estado === 'APROBADO';
   const esPagable = ['ACTIVO', 'EN_MORA', 'DESEMBOLSADO'].includes(c.estado);
+  const rolActual = useAuthStore((st) => st.usuario?.rol);
+  const eliminar = useEliminarCredito();
+  const [borrando, setBorrando] = useState(false);
+  const [clave, setClave] = useState('');
 
   const err = (e: unknown) => {
     const x = e as { response?: { data?: { message?: string } } };
@@ -115,6 +119,28 @@ function CreditoCard({ c }: { c: Solicitud }) {
             {abierto ? 'Ocultar ficha' : 'Ver ficha: plan, pagos y registro'}
           </button>
           {abierto && <FichaCredito creditoId={c.id} />}
+        </div>
+      )}
+
+      {rolActual === 'ADMINISTRADOR' && (
+        <div className="mt-4 border-t border-slate-100 pt-3">
+          {!borrando ? (
+            <button onClick={() => { setError(null); setBorrando(true); }} className="text-xs text-rose-600 hover:underline">
+              Eliminar crédito
+            </button>
+          ) : (
+            <div className="flex flex-wrap items-center gap-2">
+              <input type="password" value={clave} onChange={(e) => setClave(e.target.value)}
+                placeholder="Clave de eliminación" className="input max-w-[200px] py-1.5 text-sm" />
+              <button
+                onClick={() => { setError(null); eliminar.mutate({ id: c.id, clave }, { onError: err }); }}
+                disabled={eliminar.isPending || !clave}
+                className="btn btn-sm bg-rose-600 text-white hover:bg-rose-700 disabled:opacity-50">
+                {eliminar.isPending ? 'Eliminando…' : 'Confirmar'}
+              </button>
+              <button onClick={() => { setBorrando(false); setClave(''); }} className="btn-ghost btn-sm">Cancelar</button>
+            </div>
+          )}
         </div>
       )}
     </div>

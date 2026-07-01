@@ -41,6 +41,15 @@ export function useGenerarCronograma() {
   });
 }
 
+export function useEliminarCredito() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, clave }: { id: number; clave: string }) =>
+      (await api.delete(`/solicitudes/${id}`, { data: { clave } })).data,
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['cartera'] }),
+  });
+}
+
 export function useRegistrarPago() {
   const qc = useQueryClient();
   return useMutation({

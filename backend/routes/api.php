@@ -8,7 +8,7 @@ use App\Http\Controllers\Api\ReamortizacionController;
 use App\Http\Controllers\Api\SolicitudController;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/health', fn () => response()->json(['status' => 'ok', 'version' => 'v9-cronograma-sync', 'ts' => now()]));
+Route::get('/health', fn () => response()->json(['status' => 'ok', 'version' => 'v10-borrado-contacto', 'ts' => now()]));
 
 // --- Auth (público con rate limiting) ---
 Route::prefix('auth')->group(function () {
@@ -24,6 +24,9 @@ Route::middleware('auth:api')->group(function () {
     Route::get('areas', [AreaController::class, 'index']);
     Route::get('cobradores', [AreaController::class, 'cobradores']);
     Route::apiResource('clientes', ClienteController::class)->only(['index', 'store', 'show', 'update']);
+    Route::patch('clientes/{cliente}/contacto', [ClienteController::class, 'actualizarContacto']);
+    Route::get('clientes/{cliente}/historial', [ClienteController::class, 'historial']);
+    Route::delete('solicitudes/{solicitud}', [SolicitudController::class, 'destroy']);
     Route::post('auth/logout', [AuthController::class, 'logout']);
 
     // Solicitudes de préstamo / ventas financiadas

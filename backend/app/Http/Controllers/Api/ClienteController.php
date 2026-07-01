@@ -90,4 +90,43 @@ class ClienteController extends Controller
         $cliente->update(collect($data)->except(['referencias', 'documentos', 'cobrador_id'])->toArray());
         return new ClienteResource($cliente->load(['area', 'cobrador', 'referencias']));
     }
+
+    public function actualizarContacto(Request $request, Cliente $cliente)
+    {
+        $this->authorize('update', $cliente);
+        $data = $request->validate([
+            'correo'             => ['required', 'email', 'max:180'],
+            'telefono_principal' => ['required', 'string', 'regex:/^[0-9]{7,10}$/'],
+            'direccion'          => ['required', 'string', 'max:255'],
+        ]);
+        // El AuditObserver registra automáticamente quién y cuándo actualizó.
+        $cliente->update($data);
+        return new ClienteResource($cliente->load(['area', 'cobrador', 'referencias']));
+    }
+
+    public function historial(Cliente $cliente)
+    {
+        $this->authorize('view', $cliente);
+        $filas = \Illuminate\Support\Facades\DB::table('auditoria')
+            ->leftJoin('usuarios', 'auditoria.usuario_id', '=', 'usuarios.id')
+            ->where('auditoria.entidad', 'Cliente')
+            ->where('auditoria.entidad_id', $cliente->id)
+            ->where('auditoria.accion', 'UPDATE')
+            ->orderByDesc('auditoria.created_at')
+            ->limit(50)
+            ->get(['auditoria.created_at', 'auditoria.datos_nuevos', 'usuarios.nombre as usuario']);
+
+        $historial = $filas->map(function ($f) {
+            $cambios = json_decode($f->datos_nuevos ?? '{}', true) ?: [];
+            unset($cambios['updated_at']);
+            return [
+                'fecha'   => $f->created_at,
+                'usuario' => $f->usuario ?? 'Sistema',
+                'campos'  => array_keys($cambios),
+                'valores' => $cambios,
+            ];
+        })->filter(fn ($h) => count($h['campos']) > 0)->values();
+
+        return response()->json(['data' => $historial]);
+    }
 }
