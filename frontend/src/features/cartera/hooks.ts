@@ -30,6 +30,17 @@ export function useDesembolsar() {
   });
 }
 
+export function useGenerarCronograma() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: number) => (await api.post(`/solicitudes/${id}/cronograma`)).data,
+    onSuccess: (_d, id) => {
+      qc.invalidateQueries({ queryKey: ['credito', id] });
+      qc.invalidateQueries({ queryKey: ['cartera'] });
+    },
+  });
+}
+
 export function useRegistrarPago() {
   const qc = useQueryClient();
   return useMutation({

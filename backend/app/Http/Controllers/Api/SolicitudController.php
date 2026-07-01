@@ -127,10 +127,16 @@ class SolicitudController extends Controller
         return new SolicitudResource($solicitud);
     }
 
-    public function generarCronograma(Solicitud $solicitud)
+    public function generarCronograma(Solicitud $solicitud, LoanService $loans)
     {
-        $this->authorize('update', $solicitud);
-        GenerarCronogramaJob::dispatch($solicitud->id);
-        return response()->json(['message' => 'Cronograma en generación.']);
+        $this->authorize('disburse', $solicitud);
+
+        // Idempotente: solo genera si aún no hay cuotas (no destruye pagos existentes)
+        if (\App\Models\Cuota::where('solicitud_id', $solicitud->id)->count() === 0) {
+            $fechaBase = \App\Models\Desembolso::where('solicitud_id', $solicitud->id)->value('fecha') ?? now();
+            $loans->generarCronograma($solicitud, $fechaBase);
+        }
+
+        return new SolicitudResource($solicitud->fresh()->load('cuotas'));
     }
 }

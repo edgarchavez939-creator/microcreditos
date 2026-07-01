@@ -2,7 +2,8 @@ import { useState } from 'react';
 import { EstadoBadge } from '@/components/ui/EstadoBadge';
 import { money } from '@/lib/format';
 import type { Solicitud } from '@/types';
-import { useCreditoDetalle, useCreditos, useDesembolsar, useRegistrarPago } from './hooks';
+import { useCreditoDetalle, useCreditos, useDesembolsar, useGenerarCronograma, useRegistrarPago } from './hooks';
+import { useAuthStore } from '@/stores/auth';
 
 function leerBase64(file: File): Promise<string> {
   return new Promise((res, rej) => {
@@ -123,6 +124,9 @@ function CreditoCard({ c }: { c: Solicitud }) {
 function FichaCredito({ creditoId }: { creditoId: number }) {
   const { data: credito, isLoading, isError, error: qError } = useCreditoDetalle(creditoId);
   const pagar = useRegistrarPago();
+  const generar = useGenerarCronograma();
+  const rol = useAuthStore((st) => st.usuario?.rol);
+  const puedeGenerar = rol === 'ADMINISTRADOR' || rol === 'SUPERVISOR';
   const [valor, setValor] = useState('');
   const [metodo, setMetodo] = useState('EFECTIVO');
   const [obs, setObs] = useState('');
@@ -168,9 +172,15 @@ function FichaCredito({ creditoId }: { creditoId: number }) {
       <div>
         <h4 className="mb-2 text-sm font-semibold text-slate-700">Plan de pagos</h4>
         {sinCuotas ? (
-          <p className="rounded-xl bg-amber-50 px-3.5 py-2.5 text-sm text-amber-800 ring-1 ring-amber-100">
-            Este crédito todavía no tiene cuotas generadas. El plan se crea automáticamente al desembolsar.
-          </p>
+          <div className="rounded-xl bg-amber-50 px-3.5 py-2.5 text-sm text-amber-800 ring-1 ring-amber-100">
+            <p>Este crédito no tiene cuotas generadas.</p>
+            {puedeGenerar && (
+              <button onClick={() => generar.mutate(creditoId)} disabled={generar.isPending}
+                className="btn-primary btn-sm mt-2">
+                {generar.isPending ? 'Generando…' : 'Generar plan de pagos'}
+              </button>
+            )}
+          </div>
         ) : (
         <div className="table-wrap">
           <table className="table-base">
