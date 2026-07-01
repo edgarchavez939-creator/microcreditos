@@ -5,17 +5,28 @@ import { money } from '@/lib/format';
 import type { Solicitud } from '@/types';
 import { useAprobar, useRechazar, useSolicitudesPendientes } from './hooks';
 
+const MOD_LABEL: Record<string, string> = {
+  MENSUAL: 'Mensual', QUINCENAL: 'Quincenal', SEMANAL: 'Semanal', DIARIO: 'Diario',
+};
+
 function enlaceWhatsApp(s: Solicitud): string | null {
   const tel = (s.cliente_telefono ?? '').replace(/\D/g, '');
   if (!tel) return null;
   const telFull = tel.length === 10 ? `57${tel}` : tel; // Colombia
+  const cuota = s.valor_cuota || (s.numero_cuotas ? s.total_recaudar / s.numero_cuotas : 0);
   const msg =
-    `Hola ${s.cliente ?? ''}, tu crédito ${s.numero_credito ?? ''} fue APROBADO. ✅\n\n` +
+    `Hola, ${s.cliente ?? ''}. 💰\n\n` +
+    `Nos complace informarte que tu crédito ${s.numero_credito ?? ''} ha sido aprobado.\n\n` +
+    `Detalles de la aprobación:\n` +
     `• Monto aprobado: ${money(s.monto_aprobado)}\n` +
-    `• Interés: ${money(s.interes)}\n` +
+    `• Intereses: ${money(s.interes)}\n` +
+    `• Seguro: ${money(s.valor_seguro)}\n` +
     `• Total a pagar: ${money(s.total_recaudar)}\n` +
-    `• Cuotas: ${s.numero_cuotas} de ${money(s.valor_cuota)}\n\n` +
-    `Gracias por confiar en nosotros.`;
+    `• Número de cuotas: ${s.numero_cuotas}\n` +
+    `• Forma de pago: ${MOD_LABEL[s.modalidad ?? ''] ?? s.modalidad ?? ''}\n` +
+    `• Valor de cada cuota: ${money(cuota)}\n\n` +
+    `Recuerda realizar el pago oportuno de tus cuotas para mantener un buen historial de crédito.\n\n` +
+    `¡Gracias por confiar en nosotros! Si tienes alguna inquietud, estaremos atentos para ayudarte.`;
   return `https://wa.me/${telFull}?text=${encodeURIComponent(msg)}`;
 }
 
