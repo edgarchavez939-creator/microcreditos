@@ -57,15 +57,23 @@ class SolicitudController extends Controller
         $this->authorize('create', Solicitud::class);
         $data = $request->validated();
 
+        // El crédito hereda cobrador y área del CLIENTE (para visibilidad correcta por rol)
+        $cliente = \App\Models\Cliente::findOrFail($data['cliente_id']);
+
+        // Número de cuotas = plazo (meses) × periodos por mes de la modalidad
+        $factor = \App\Services\LoanService::periodosPorMes($data['modalidad']);
+        $numeroCuotas = (int) $data['plazo_meses'] * $factor;
+        $data['numero_cuotas'] = $numeroCuotas;
+
         $solicitud = new Solicitud([
             'cliente_id'         => $data['cliente_id'],
-            'area_id'            => $data['area_id'],
-            'cobrador_id'        => $request->user()->id,
+            'area_id'            => $cliente->area_id,
+            'cobrador_id'        => $cliente->cobrador_id ?? $request->user()->id,
             'producto_id'        => $data['producto_id'] ?? null,
             'es_venta_financiada'=> $data['es_venta_financiada'] ?? false,
             'capital_solicitado' => $data['capital_solicitado'],
             'tipo_interes'       => $data['tipo_interes'] ?? 'FIJO',
-            'numero_cuotas'      => $data['numero_cuotas'],
+            'numero_cuotas'      => $numeroCuotas,
             'tasa_interes'       => $data['tasa_interes'],
             'modalidad'          => $data['modalidad'],
             'estado'             => 'BORRADOR',

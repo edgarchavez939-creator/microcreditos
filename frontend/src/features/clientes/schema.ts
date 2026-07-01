@@ -17,6 +17,7 @@ export const clienteSchema = z.object({
   correo: z.string().min(1, 'Requerido').email('Correo inválido'),
   // Ubicación (obligatorios)
   area_id: z.number().int().positive('Selecciona un área'),
+  cobrador_id: z.number().int().positive().optional(),
   direccion: z.string().min(1, 'Requerido'),
   barrio: z.string().min(1, 'Requerido'),
   referencia_ubicacion: z.string().min(1, 'Requerido'),

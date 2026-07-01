@@ -65,6 +65,22 @@ class PaymentService
                 $restante = round($restante - $abono, 2);
             }
 
+            // Comprobante de transferencia (opcional)
+            if (! empty($d['comprobante'])) {
+                $c = $d['comprobante'];
+                \App\Models\Documento::create([
+                    'cliente_id'       => $credito->cliente_id,
+                    'solicitud_id'     => $credito->id,
+                    'categoria'        => 'COMPROBANTE_PAGO',
+                    's3_key'           => null,
+                    'nombre_original'  => $c['nombre'],
+                    'mime'             => $c['mime'],
+                    'tamano_bytes'     => $c['tamano'],
+                    'contenido_base64' => $c['contenido_base64'],
+                    'subido_por'       => $usuario->id,
+                ]);
+            }
+
             // Caja: ingreso por el pago
             MovimientoCaja::create([
                 'fecha'           => now()->toDateString(),

@@ -22,6 +22,7 @@ Route::middleware('auth:api')->group(function () {
 
     // Áreas y Clientes
     Route::get('areas', [AreaController::class, 'index']);
+    Route::get('cobradores', [AreaController::class, 'cobradores']);
     Route::apiResource('clientes', ClienteController::class)->only(['index', 'store', 'show', 'update']);
     Route::post('auth/logout', [AuthController::class, 'logout']);
 

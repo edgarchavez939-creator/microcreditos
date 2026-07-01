@@ -3,7 +3,8 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import type { Resolver } from 'react-hook-form';
 import { clienteSchema, aPayload, type ClienteFormValues, type SoporteSubido } from './schema';
-import { useAreas, useCrearCliente } from './hooks';
+import { useAreas, useCobradores, useCrearCliente } from './hooks';
+import { useAuthStore } from '@/stores/auth';
 
 const MAX_BYTES = 2 * 1024 * 1024;
 const MIME_OK = ['image/jpeg', 'image/png', 'image/webp', 'application/pdf'];
@@ -19,6 +20,9 @@ function leerBase64(file: File): Promise<string> {
 
 export function ClienteForm({ onCreado, onCancelar }: { onCreado?: () => void; onCancelar?: () => void }) {
   const { data: areas } = useAreas();
+  const { data: cobradores } = useCobradores();
+  const rol = useAuthStore((s) => s.usuario?.rol);
+  const puedeAsignar = rol === 'ADMINISTRADOR' || rol === 'SUPERVISOR';
   const crear = useCrearCliente();
   const [gpsMsg, setGpsMsg] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -65,6 +69,7 @@ export function ClienteForm({ onCreado, onCancelar }: { onCreado?: () => void; o
 
   const onSubmit = async (v: ClienteFormValues) => {
     setError(null);
+    if (puedeAsignar && !v.cobrador_id) { setError('Selecciona el cobrador asignado.'); return; }
     let documentos: SoporteSubido[] = [];
     try {
       documentos = await Promise.all(archivos.map(async (f) => ({
@@ -140,6 +145,14 @@ export function ClienteForm({ onCreado, onCancelar }: { onCreado?: () => void; o
             </select>
           </Campo>
           <Campo label="Barrio" req error={errors.barrio?.message}><input {...register('barrio')} className="input" /></Campo>
+          {puedeAsignar && (
+            <Campo label="Cobrador asignado" req error={errors.cobrador_id?.message}>
+              <select {...register('cobrador_id', { valueAsNumber: true })} className="input">
+                <option value="">Selecciona…</option>
+                {cobradores?.map((c) => <option key={c.id} value={c.id}>{c.nombre}</option>)}
+              </select>
+            </Campo>
+          )}
           <div className="sm:col-span-2">
             <Campo label="Dirección" req error={errors.direccion?.message}><input {...register('direccion')} className="input" /></Campo>
           </div>

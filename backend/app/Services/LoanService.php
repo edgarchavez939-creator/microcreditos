@@ -21,6 +21,12 @@ use InvalidArgumentException;
  */
 class LoanService
 {
+    /** Cuántas cuotas caben en un mes según la modalidad. */
+    public static function periodosPorMes(string $modalidad): int
+    {
+        return ['MENSUAL' => 1, 'QUINCENAL' => 2, 'SEMANAL' => 4, 'DIARIO' => 30][$modalidad] ?? 1;
+    }
+
     /**
      * Calcula y persiste los montos derivados de una solicitud aplicando
      * las reglas de seguro y exoneración. Devuelve la solicitud actualizada.
@@ -57,7 +63,8 @@ class LoanService
         // --- Fórmulas ---
         $valorSeguro       = $exonerado ? 0.0 : round($montoAprobado * $pctSeguro, 2);
         $montoDesembolsado = round($montoAprobado - $valorSeguro, 2);
-        $interes           = round($montoAprobado * $tasa * $cuotas, 2);  // capital × tasa × N° cuotas (sobre aprobado)
+        $plazoMeses        = (int) ($datos['plazo_meses'] ?? max(1, (int) round($cuotas / self::periodosPorMes($datos['modalidad']))));
+        $interes           = round($montoAprobado * $tasa * $plazoMeses, 2);  // capital × tasa × plazo(meses)
         $totalRecaudar     = round($montoAprobado + $interes, 2);
         $valorCuota        = round($totalRecaudar / max($cuotas, 1), 2);
 

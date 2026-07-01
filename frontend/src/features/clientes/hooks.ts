@@ -10,6 +10,14 @@ export interface ClienteListItem {
 
 export interface Area { id: number; nombre: string; }
 
+export function useCobradores() {
+  return useQuery({
+    queryKey: ['cobradores'],
+    queryFn: async () => (await api.get<{ data: Area[] }>('/cobradores')).data.data,
+    staleTime: 5 * 60 * 1000,
+  });
+}
+
 export function useAreas() {
   return useQuery({
     queryKey: ['areas'],

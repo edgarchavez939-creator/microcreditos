@@ -15,7 +15,7 @@ class SolicitudPolicy
     {
         if ($u->esAdministrador()) return true;
         if ($u->esSupervisor())    return $u->areas()->where('areas.id', $s->area_id)->exists();
-        return (int) $s->cobrador_id === (int) $u->id;
+        return (int) $s->cobrador_id === (int) $u->id || (int) $s->created_by === (int) $u->id;
     }
 
     public function create(Usuario $u): bool

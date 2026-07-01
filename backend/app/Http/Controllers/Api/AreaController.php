@@ -23,4 +23,20 @@ class AreaController extends Controller
             ]),
         ]);
     }
+
+    public function cobradores(Request $request)
+    {
+        $u = $request->user();
+        $query = \App\Models\Usuario::query()->where('rol', 'COBRADOR')->where('activo', true)->orderBy('nombre');
+
+        // El supervisor solo ve cobradores de sus áreas; el admin todos.
+        if ($u->esSupervisor()) {
+            $areas = $u->areas()->pluck('areas.id');
+            $query->whereHas('areas', fn ($q) => $q->whereIn('areas.id', $areas));
+        }
+
+        return response()->json([
+            'data' => $query->get(['id', 'nombre'])->map(fn ($c) => ['id' => $c->id, 'nombre' => $c->nombre]),
+        ]);
+    }
 }

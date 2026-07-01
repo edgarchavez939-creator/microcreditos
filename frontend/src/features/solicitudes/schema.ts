@@ -1,15 +1,19 @@
 import { z } from 'zod';
 
+// Cuotas por mes según modalidad
+export const PERIODOS_POR_MES: Record<string, number> = {
+  MENSUAL: 1, QUINCENAL: 2, SEMANAL: 4, DIARIO: 30,
+};
+
 export const solicitudSchema = z
   .object({
     cliente_id: z.number().int().positive(),
-    area_id: z.number().int().positive(),
+    area_id: z.number().int().positive().optional(),
     capital_solicitado: z.number().positive(),
     monto_aprobado: z.number().positive(),
-    // Porcentajes (5 = 5%), se convierten a decimal al enviar
-    tasa_interes: z.number().min(0).max(100),
+    tasa_interes: z.number().min(0).max(100),          // porcentaje mensual
     modalidad: z.enum(['DIARIO', 'SEMANAL', 'QUINCENAL', 'MENSUAL']),
-    numero_cuotas: z.number().int().min(1),
+    plazo_meses: z.number().int().min(1).max(60),
     fecha_primer_pago: z.string().optional(),
     seguro_exonerado: z.boolean().default(false),
     porcentaje_seguro: z.number().min(0).max(100),
@@ -29,20 +33,23 @@ export const solicitudSchema = z
 
 export type SolicitudForm = z.infer<typeof solicitudSchema>;
 
-/** Cálculo en cliente espejo del backend. Las tasas entran como porcentaje. */
+/** Simulación del plan: nº de cuotas y valor por modalidad + plazo. */
 export function calcularPreview(d: Partial<SolicitudForm>) {
   const aprobado = d.monto_aprobado ?? 0;
+  const plazo = d.plazo_meses ?? 0;
+  const factor = PERIODOS_POR_MES[d.modalidad ?? 'MENSUAL'] ?? 1;
+  const numeroCuotas = plazo * factor;
   const pct = (d.seguro_exonerado ? 0 : d.porcentaje_seguro ?? 0) / 100;
   const tasa = (d.tasa_interes ?? 0) / 100;
   const valorSeguro = Math.round(aprobado * pct * 100) / 100;
   const desembolsado = Math.round((aprobado - valorSeguro) * 100) / 100;
-  const interes = Math.round(aprobado * tasa * (d.numero_cuotas ?? 1) * 100) / 100;
+  const interes = Math.round(aprobado * tasa * plazo * 100) / 100;
   const totalRecaudar = Math.round((aprobado + interes) * 100) / 100;
-  const cuota = d.numero_cuotas ? Math.round((totalRecaudar / d.numero_cuotas) * 100) / 100 : 0;
-  return { valorSeguro, desembolsado, interes, totalRecaudar, cuota };
+  const cuota = numeroCuotas ? Math.round((totalRecaudar / numeroCuotas) * 100) / 100 : 0;
+  return { valorSeguro, desembolsado, interes, totalRecaudar, cuota, numeroCuotas };
 }
 
-/** Convierte porcentajes a decimales para el backend. */
+/** Payload para el backend: plazo en meses + tasas en decimal. */
 export function aPayloadSolicitud(d: SolicitudForm) {
   return {
     ...d,

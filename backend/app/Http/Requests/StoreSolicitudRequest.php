@@ -12,7 +12,7 @@ class StoreSolicitudRequest extends FormRequest
     {
         return [
             'cliente_id'          => ['required','integer','exists:clientes,id'],
-            'area_id'             => ['required','integer','exists:areas,id'],
+            'area_id'             => ['nullable','integer','exists:areas,id'],
             'producto_id'         => ['nullable','integer','exists:productos,id'],
             'es_venta_financiada' => ['boolean'],
             'capital_solicitado'  => ['required','numeric','gt:0'],
@@ -20,7 +20,7 @@ class StoreSolicitudRequest extends FormRequest
             'tasa_interes'        => ['required','numeric','gte:0'],
             'tipo_interes'        => ['nullable','in:FIJO,SOBRE_SALDO'],
             'modalidad'           => ['required','in:DIARIO,SEMANAL,QUINCENAL,MENSUAL'],
-            'numero_cuotas'       => ['required','integer','min:1'],
+            'plazo_meses'         => ['required','integer','min:1','max:60'],
             'fecha_primer_pago'   => ['nullable','date'],
             'porcentaje_seguro'   => ['required_unless:seguro_exonerado,true','numeric','between:0,0.10'],
             'seguro_exonerado'    => ['boolean'],

@@ -10,6 +10,7 @@ const MODALIDADES = [
   { v: 'SEMANAL', t: 'Semanal' },
   { v: 'DIARIO', t: 'Diario' },
 ];
+const MODAL_LABEL: Record<string, string> = { MENSUAL: 'mensuales', QUINCENAL: 'quincenales', SEMANAL: 'semanales', DIARIO: 'diarias' };
 
 export function SolicitudForm({ clienteId, areaId }: { clienteId: number; areaId: number }) {
   const crear = useCrearSolicitud();
@@ -17,13 +18,14 @@ export function SolicitudForm({ clienteId, areaId }: { clienteId: number; areaId
     resolver: zodResolver(solicitudSchema),
     defaultValues: {
       cliente_id: clienteId, area_id: areaId, seguro_exonerado: false,
-      porcentaje_seguro: 10, tasa_interes: 10, numero_cuotas: 3, modalidad: 'MENSUAL',
+      porcentaje_seguro: 10, tasa_interes: 10, plazo_meses: 2, modalidad: 'MENSUAL',
     },
   });
 
   const valores = watch();
   const preview = calcularPreview(valores);
   const exonerado = watch('seguro_exonerado');
+  const modalidad = watch('modalidad');
 
   const onSubmit = (data: TForm) => crear.mutate(aPayloadSolicitud(data));
 
@@ -45,8 +47,8 @@ export function SolicitudForm({ clienteId, areaId }: { clienteId: number; areaId
           <p className="mt-1 text-xs text-slate-400">Ej: 10 = 10%</p>
         </div>
         <div>
-          <label className="label">N° cuotas</label>
-          <input type="number" {...register('numero_cuotas', { valueAsNumber: true })} className="input" />
+          <label className="label">Plazo (meses)</label>
+          <input type="number" min="1" {...register('plazo_meses', { valueAsNumber: true })} className="input" />
         </div>
       </div>
 
@@ -55,7 +57,16 @@ export function SolicitudForm({ clienteId, areaId }: { clienteId: number; areaId
         <select {...register('modalidad')} className="input">
           {MODALIDADES.map((m) => <option key={m.v} value={m.v}>{m.t}</option>)}
         </select>
-        <p className="mt-1 text-xs text-slate-400">Define cada cuánto vence cada cuota del plan.</p>
+      </div>
+
+      {/* Simulación del plan según modalidad */}
+      <div className="rounded-xl bg-brand-50 p-4 text-sm ring-1 ring-brand-100">
+        <div className="font-semibold text-brand-700">Plan simulado</div>
+        <div className="mt-1 text-slate-700">
+          {preview.numeroCuotas > 0
+            ? <>{preview.numeroCuotas} cuotas {MODAL_LABEL[modalidad]} de <b>{money(preview.cuota)}</b></>
+            : 'Completa monto y plazo para ver el plan.'}
+        </div>
       </div>
 
       <label className="flex items-center gap-2">

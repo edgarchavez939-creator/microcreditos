@@ -4,6 +4,15 @@ import { money } from '@/lib/format';
 import type { Solicitud } from '@/types';
 import { useCreditoDetalle, useCreditos, useDesembolsar, useRegistrarPago } from './hooks';
 
+function leerBase64(file: File): Promise<string> {
+  return new Promise((res, rej) => {
+    const r = new FileReader();
+    r.onload = () => res(String(r.result).split(',')[1] ?? '');
+    r.onerror = () => rej(new Error('No se pudo leer el archivo'));
+    r.readAsDataURL(file);
+  });
+}
+
 const METODOS = [
   { v: 'EFECTIVO', t: 'Efectivo' },
   { v: 'TRANSFERENCIA', t: 'Transferencia' },
@@ -117,6 +126,7 @@ function FichaCredito({ creditoId }: { creditoId: number }) {
   const [valor, setValor] = useState('');
   const [metodo, setMetodo] = useState('EFECTIVO');
   const [obs, setObs] = useState('');
+  const [comprobante, setComprobante] = useState<File | null>(null);
   const [msg, setMsg] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -130,14 +140,19 @@ function FichaCredito({ creditoId }: { creditoId: number }) {
 
   const sinCuotas = !credito.cuotas || credito.cuotas.length === 0;
 
-  const onPagar = () => {
+  const onPagar = async () => {
     setError(null); setMsg(null);
     const v = Number(valor);
     if (!v || v <= 0) { setError('Ingresa un valor mayor a 0.'); return; }
+    let comp: { nombre: string; mime: string; tamano: number; contenido_base64: string } | undefined;
+    if (metodo === 'TRANSFERENCIA' && comprobante) {
+      if (comprobante.size > 2 * 1024 * 1024) { setError('El comprobante supera 2 MB.'); return; }
+      comp = { nombre: comprobante.name, mime: comprobante.type, tamano: comprobante.size, contenido_base64: await leerBase64(comprobante) };
+    }
     pagar.mutate(
-      { solicitud_id: creditoId, valor: v, metodo, observaciones: obs || undefined, client_uuid: crypto.randomUUID() },
+      { solicitud_id: creditoId, valor: v, metodo, observaciones: obs || undefined, comprobante: comp, client_uuid: crypto.randomUUID() },
       {
-        onSuccess: () => { setMsg('Pago registrado ✓'); setValor(''); setObs(''); },
+        onSuccess: () => { setMsg('Pago registrado ✓'); setValor(''); setObs(''); setComprobante(null); },
         onError: (e) => {
           const x = e as { message?: string; response?: { data?: { message?: string } } };
           if (x?.message === 'OFFLINE_ENCOLADO') setMsg('Sin conexión: el pago se guardó y se sincronizará al recuperar internet.');
@@ -212,6 +227,16 @@ function FichaCredito({ creditoId }: { creditoId: number }) {
             {pagar.isPending ? 'Registrando…' : 'Registrar pago'}
           </button>
         </div>
+        {metodo === 'TRANSFERENCIA' && (
+          <div className="mt-3">
+            <label className="inline-flex cursor-pointer items-center gap-2 rounded-lg px-3 py-1.5 text-xs font-medium text-brand ring-1 ring-brand-200 hover:bg-brand-50">
+              {comprobante ? 'Cambiar comprobante' : 'Adjuntar comprobante (imagen, máx 2 MB)'}
+              <input type="file" accept="image/jpeg,image/png,image/webp" className="hidden"
+                onChange={(e) => setComprobante(e.target.files?.[0] ?? null)} />
+            </label>
+            {comprobante && <span className="ml-2 text-xs text-slate-500">{comprobante.name}</span>}
+          </div>
+        )}
         {msg && <p className="mt-2 text-sm text-green-700">{msg}</p>}
         {error && <p className="mt-2 text-sm text-red-700">{error}</p>}
         <p className="mt-1 text-xs text-slate-400">El pago se aplica a las cuotas pendientes, de la más antigua a la más reciente.</p>

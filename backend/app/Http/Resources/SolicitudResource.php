@@ -13,6 +13,7 @@ class SolicitudResource extends JsonResource
             'numero_credito'     => $this->numero_credito,
             'cliente_id'         => $this->cliente_id,
             'cliente'            => $this->whenLoaded('cliente', fn () => trim("{$this->cliente->nombres} {$this->cliente->apellidos}")),
+            'cliente_telefono'   => $this->whenLoaded('cliente', fn () => $this->cliente->telefono_principal),
             'estado'             => $this->estado,
             'capital_solicitado' => (float) $this->capital_solicitado,
             'monto_aprobado'     => (float) $this->monto_aprobado,

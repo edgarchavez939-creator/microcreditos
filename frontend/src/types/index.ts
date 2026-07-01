@@ -33,7 +33,7 @@ export interface Pago {
 }
 
 export interface Solicitud {
-  id: number; uuid: string; numero_credito?: string; cliente_id: number; cliente?: string; credito_origen?: string; estado: EstadoSolicitud;
+  id: number; uuid: string; numero_credito?: string; cliente_id: number; cliente?: string; cliente_telefono?: string; credito_origen?: string; estado: EstadoSolicitud;
   capital_solicitado: number; monto_aprobado: number; tasa_interes: number;
   interes: number; porcentaje_seguro: number; valor_seguro: number;
   monto_desembolsado: number; total_recaudar: number; seguro_exonerado: boolean;
