@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { solicitudSchema, aPayloadSolicitud, type SolicitudForm as TForm, calcularPreview } from './schema';
@@ -14,7 +15,8 @@ const MODAL_LABEL: Record<string, string> = { MENSUAL: 'mensuales', QUINCENAL: '
 
 export function SolicitudForm({ clienteId, areaId }: { clienteId: number; areaId: number }) {
   const crear = useCrearSolicitud();
-  const { register, handleSubmit, watch, formState: { errors } } = useForm<TForm>({
+  const [exito, setExito] = useState(false);
+  const { register, handleSubmit, watch, reset, formState: { errors } } = useForm<TForm>({
     resolver: zodResolver(solicitudSchema),
     defaultValues: {
       cliente_id: clienteId, area_id: areaId, seguro_exonerado: false,
@@ -27,10 +29,26 @@ export function SolicitudForm({ clienteId, areaId }: { clienteId: number; areaId
   const exonerado = watch('seguro_exonerado');
   const modalidad = watch('modalidad');
 
-  const onSubmit = (data: TForm) => crear.mutate(aPayloadSolicitud(data));
+  const onSubmit = (data: TForm) => {
+    setExito(false);
+    crear.mutate(aPayloadSolicitud(data), {
+      onSuccess: () => {
+        setExito(true);
+        reset({
+          cliente_id: clienteId, area_id: areaId, seguro_exonerado: false,
+          porcentaje_seguro: 10, tasa_interes: 10, plazo_meses: 2, modalidad: 'MENSUAL',
+        });
+      },
+    });
+  };
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="card card-pad space-y-4 max-w-lg">
+      {exito && (
+        <div className="rounded-xl bg-money-50 px-4 py-3 text-sm text-money-700 ring-1 ring-money-100">
+          Solicitud creada con éxito. El plan de pagos ya quedó generado.
+        </div>
+      )}
       <div>
         <label className="label">Capital solicitado</label>
         <input type="number" step="any" {...register('capital_solicitado', { valueAsNumber: true })} className="input" />

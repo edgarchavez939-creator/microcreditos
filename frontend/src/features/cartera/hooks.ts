@@ -24,8 +24,8 @@ export function useCreditoDetalle(id: number | null) {
 export function useDesembolsar() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async ({ id, metodo }: { id: number; metodo: string }) =>
-      (await api.post(`/solicitudes/${id}/desembolsar`, { metodo })).data,
+    mutationFn: async ({ id, metodo, fecha }: { id: number; metodo: string; fecha: string }) =>
+      (await api.post(`/solicitudes/${id}/desembolsar`, { metodo, fecha })).data,
     onSuccess: () => qc.invalidateQueries({ queryKey: ['cartera'] }),
   });
 }

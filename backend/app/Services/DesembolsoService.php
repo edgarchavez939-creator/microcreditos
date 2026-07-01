@@ -37,8 +37,9 @@ class DesembolsoService
                 'registrado_por'=> $usuario->id,
             ]);
 
-            // Cronograma de cuotas (si aún no existe), con base en la fecha de desembolso
-            if (Cuota::where('solicitud_id', $credito->id)->count() === 0) {
+            // Regenerar el cronograma con la fecha de inicio indicada al desembolsar.
+            // Seguro: solo si aún no hay pagos aplicados.
+            if (\App\Models\Pago::where('solicitud_id', $credito->id)->count() === 0) {
                 $this->loans->generarCronograma($credito, $d['fecha'] ?? now());
             }
 

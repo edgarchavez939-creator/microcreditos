@@ -90,7 +90,10 @@ class SolicitudController extends Controller
             $solicitud->save();
         }
 
-        return (new SolicitudResource($solicitud->fresh()))
+        // Plan de cuotas al crear la solicitud (fecha provisional; se recalcula al desembolsar)
+        $this->loans->generarCronograma($solicitud, $data['fecha_primer_pago'] ?? now());
+
+        return (new SolicitudResource($solicitud->fresh()->load('cuotas')))
             ->response()->setStatusCode(201);
     }
 
@@ -121,7 +124,7 @@ class SolicitudController extends Controller
         $data = $request->validate([
             'metodo' => ['required', 'in:EFECTIVO,TRANSFERENCIA'],
             'valor'  => ['nullable', 'numeric', 'gt:0'],
-            'fecha'  => ['nullable', 'date'],
+            'fecha'  => ['required', 'date'],
         ]);
         $solicitud = $svc->desembolsar($solicitud, $data, $request->user());
         return new SolicitudResource($solicitud);

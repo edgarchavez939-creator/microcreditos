@@ -53,6 +53,7 @@ function CreditoCard({ c }: { c: Solicitud }) {
   const [abierto, setAbierto] = useState(false);
   const desembolsar = useDesembolsar();
   const [metodo, setMetodo] = useState('EFECTIVO');
+  const [fechaInicio, setFechaInicio] = useState(() => new Date().toISOString().slice(0, 10));
   const [error, setError] = useState<string | null>(null);
 
   const esAprobado = c.estado === 'APROBADO';
@@ -98,18 +99,28 @@ function CreditoCard({ c }: { c: Solicitud }) {
       {error && <p className="mt-3 alert-error">{error}</p>}
 
       {esAprobado && (
-        <div className="mt-4 flex flex-wrap items-center gap-2">
-          <span className="text-sm text-slate-500">Medio de entrega:</span>
-          <select value={metodo} onChange={(e) => setMetodo(e.target.value)}
-            className="input">
-            {METODOS.map((m) => <option key={m.v} value={m.v}>{m.t}</option>)}
-          </select>
+        <div className="mt-4 flex flex-wrap items-end gap-3">
+          <label className="text-sm">
+            <span className="block text-slate-500">Fecha de inicio del crédito</span>
+            <input type="date" value={fechaInicio} onChange={(e) => setFechaInicio(e.target.value)} className="input" />
+          </label>
+          <label className="text-sm">
+            <span className="block text-slate-500">Medio de entrega</span>
+            <select value={metodo} onChange={(e) => setMetodo(e.target.value)} className="input">
+              {METODOS.map((m) => <option key={m.v} value={m.v}>{m.t}</option>)}
+            </select>
+          </label>
           <button
-            onClick={() => { setError(null); desembolsar.mutate({ id: c.id, metodo }, { onError: err }); }}
+            onClick={() => {
+              setError(null);
+              if (!fechaInicio) { setError('Indica la fecha de inicio del crédito.'); return; }
+              desembolsar.mutate({ id: c.id, metodo, fecha: fechaInicio }, { onError: err });
+            }}
             disabled={desembolsar.isPending}
             className="btn-primary btn-sm">
             {desembolsar.isPending ? 'Desembolsando…' : 'Desembolsar y activar'}
           </button>
+          <p className="w-full text-xs text-slate-400">La primera cuota vence un período después de esta fecha, según la modalidad.</p>
         </div>
       )}
 
