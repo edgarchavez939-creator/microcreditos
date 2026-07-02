@@ -10,6 +10,9 @@ php artisan migrate --force || echo "Aviso: migrate no se ejecutó (verifica DAT
 # Datos demo (firstOrCreate -> idempotente, no duplica en reinicios)
 php artisan db:seed --force || echo "Aviso: seed no se ejecutó"
 
+# Saneamiento: revertir pagos de transferencias rechazadas antiguas (idempotente)
+php artisan transferencias:sanear || echo "Aviso: saneamiento no se ejecutó"
+
 php artisan config:cache || true
 php artisan route:cache || true
 

@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { EstadoBadge } from '@/components/ui/EstadoBadge';
 import { money } from '@/lib/format';
 import type { Solicitud } from '@/types';
-import { useCreditoDetalle, useCreditos, useDesembolsar, useEliminarCredito, useEventosCredito, useGenerarCronograma, useRegistrarPago } from './hooks';
+import { useCreditoDetalle, useCreditos, useCuotasCredito, useDesembolsar, useEliminarCredito, useEventosCredito, useGenerarCronograma, useRegistrarPago } from './hooks';
 import { useAuthStore } from '@/stores/auth';
 
 function leerBase64(file: File): Promise<string> {
@@ -161,6 +161,8 @@ function CreditoCard({ c }: { c: Solicitud }) {
 function FichaCredito({ creditoId }: { creditoId: number }) {
   const { data: credito, isLoading, isError, error: qError } = useCreditoDetalle(creditoId);
   const pagar = useRegistrarPago();
+  const { data: cuotasData } = useCuotasCredito(creditoId);
+  const cuotas = cuotasData?.data ?? [];
   const generar = useGenerarCronograma();
   const rol = useAuthStore((st) => st.usuario?.rol);
   const puedeGenerar = rol === 'ADMINISTRADOR' || rol === 'SUPERVISOR';
@@ -181,7 +183,7 @@ function FichaCredito({ creditoId }: { creditoId: number }) {
   }
   if (!credito) return null;
 
-  const sinCuotas = !credito.cuotas || credito.cuotas.length === 0;
+  const sinCuotas = cuotas.length === 0;
 
   const onPagar = async () => {
     setError(null); setMsg(null);
@@ -246,7 +248,7 @@ function FichaCredito({ creditoId }: { creditoId: number }) {
               </tr>
             </thead>
             <tbody>
-              {credito.cuotas?.map((q) => (
+              {cuotas.map((q) => (
                 <tr key={q.numero_cuota} className="border-t">
                   <td className="px-3 py-2">{q.numero_cuota}</td>
                   <td className="px-3 py-2">{q.fecha_vencimiento}</td>

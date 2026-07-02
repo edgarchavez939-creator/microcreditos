@@ -36,6 +36,7 @@ export function useGenerarCronograma() {
     mutationFn: async (id: number) => (await api.post(`/solicitudes/${id}/cronograma`)).data,
     onSuccess: (_d, id) => {
       qc.invalidateQueries({ queryKey: ['credito', id] });
+      qc.invalidateQueries({ queryKey: ['credito-cuotas', id] });
       qc.invalidateQueries({ queryKey: ['cartera'] });
     },
   });
@@ -74,5 +75,22 @@ export function useEventosCredito(id: number | null, activo: boolean) {
     queryKey: ['credito-eventos', id],
     queryFn: async () => (await api.get<{ data: EventoCredito[] }>(`/solicitudes/${id}/eventos`)).data.data,
     enabled: !!id && activo,
+  });
+}
+
+export interface CuotaFila {
+  id: number; numero_cuota: number; fecha_vencimiento: string; valor: number;
+  abono_capital: number; abono_interes: number; valor_pagado: number; saldo: number; estado: string;
+}
+
+/** Cuotas por endpoint dedicado (consulta directa, inmune a cachés). */
+export function useCuotasCredito(id: number | null) {
+  return useQuery({
+    queryKey: ['credito-cuotas', id],
+    queryFn: async () =>
+      (await api.get<{ data: CuotaFila[]; total: number }>(`/solicitudes/${id}/cuotas`)).data,
+    enabled: !!id,
+    staleTime: 0,
+    gcTime: 0,
   });
 }

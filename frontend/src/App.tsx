@@ -14,6 +14,7 @@ import { TransferenciasPanel } from '@/features/transferencias/TransferenciasPan
 import { ParametrosPanel } from '@/features/parametros/ParametrosPanel';
 import { MapaPanel } from '@/features/mapa/MapaPanel';
 import { Icon, type IconName } from '@/components/ui/icons';
+import { APP_VERSION } from '@/lib/version';
 import type { Rol } from '@/types';
 
 interface MenuItem { id: string; label: string; icon: IconName; roles: Rol[] }
@@ -84,7 +85,7 @@ function AppShell() {
       <div className="grid h-9 w-9 place-items-center rounded-full bg-brand-500 text-sm font-semibold text-white">{iniciales(usuario.nombre)}</div>
       <div className="min-w-0 flex-1 leading-tight">
         <div className="truncate text-sm font-medium text-white">{usuario.nombre}</div>
-        <div className="text-[11px] text-slate-400">{ROL_LABEL[usuario.rol]}</div>
+        <div className="text-[11px] text-slate-400">{ROL_LABEL[usuario.rol]} · {APP_VERSION}</div>
       </div>
       <button onClick={logout} title="Cerrar sesión"
         className="rounded-lg p-1.5 text-slate-400 transition hover:bg-white/10 hover:text-white"><Icon.logout /></button>

@@ -299,4 +299,35 @@ class SolicitudController extends Controller
 
         return response()->json(['data' => $eventos]);
     }
+
+    /** Cuotas del crédito por consulta directa (endpoint dedicado, a prueba de cachés). */
+    public function cuotas(Solicitud $solicitud)
+    {
+        $this->authorize('view', $solicitud);
+
+        // Auto-reparación: generar el plan si falta y debería existir
+        if ((int) $solicitud->numero_cuotas > 0
+            && (float) $solicitud->monto_aprobado > 0
+            && $solicitud->estado !== 'RECHAZADO'
+            && \App\Models\Cuota::where('solicitud_id', $solicitud->id)->count() === 0) {
+            try {
+                $fechaBase = \App\Models\Desembolso::where('solicitud_id', $solicitud->id)->value('fecha')
+                    ?? $solicitud->fecha_primer_pago ?? now();
+                $this->loans->generarCronograma($solicitud, $fechaBase);
+            } catch (\Throwable $e) {
+                \Illuminate\Support\Facades\Log::warning("Autogeneración de plan falló (solicitud {$solicitud->id}): ".$e->getMessage());
+            }
+        }
+
+        $cuotas = \App\Models\Cuota::where('solicitud_id', $solicitud->id)
+            ->orderBy('numero_cuota')
+            ->get([
+                'id', 'numero_cuota', 'fecha_vencimiento', 'valor',
+                'abono_capital', 'abono_interes', 'valor_pagado', 'saldo', 'estado',
+            ]);
+
+        return response()
+            ->json(['data' => $cuotas, 'total' => $cuotas->count()])
+            ->header('Cache-Control', 'no-store, no-cache, must-revalidate');
+    }
 }

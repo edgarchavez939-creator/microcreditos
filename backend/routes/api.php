@@ -14,7 +14,7 @@ use App\Http\Controllers\Api\ParametroController;
 use App\Http\Controllers\Api\MapaController;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/health', fn () => response()->json(['status' => 'ok', 'version' => 'v26-reversion-cachebuster', 'ts' => now()]));
+Route::get('/health', fn () => response()->json(['status' => 'ok', 'version' => 'v27-cuotas-dedicadas', 'ts' => now()]));
 
 // --- Auth (público con rate limiting) ---
 Route::prefix('auth')->group(function () {
@@ -56,6 +56,7 @@ Route::middleware('auth:api')->group(function () {
     Route::post('solicitudes/{solicitud}/rechazar', [SolicitudController::class, 'rechazar']);
     Route::post('solicitudes/{solicitud}/cronograma', [SolicitudController::class, 'generarCronograma']);
     Route::get('solicitudes/{solicitud}/eventos', [SolicitudController::class, 'eventos']);
+    Route::get('solicitudes/{solicitud}/cuotas', [SolicitudController::class, 'cuotas']);
 
     // Desembolso y pagos (ciclo del dinero)
     Route::post('solicitudes/{solicitud}/desembolsar', [SolicitudController::class, 'desembolsar']);
