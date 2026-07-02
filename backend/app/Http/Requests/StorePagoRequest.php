@@ -18,6 +18,8 @@ class StorePagoRequest extends FormRequest
             'fecha'        => ['nullable', 'date'],
             'observaciones'=> ['nullable', 'string', 'max:500'],
             'client_uuid'  => ['nullable', 'uuid'],
+            'banco'        => ['nullable', 'string', 'max:120'],
+            'referencia'   => ['nullable', 'string', 'max:120'],
             // Comprobante de transferencia (imagen, opcional, máx 2MB)
             'comprobante'                 => ['nullable', 'array'],
             'comprobante.nombre'          => ['required_with:comprobante', 'string', 'max:255'],

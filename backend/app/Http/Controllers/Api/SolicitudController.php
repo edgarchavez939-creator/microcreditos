@@ -195,4 +195,98 @@ class SolicitudController extends Controller
 
         return response()->json(['message' => 'Crédito eliminado.']);
     }
+
+    /** Línea de tiempo del crédito: creación, aprobación, desembolso, pagos, reamortizaciones. */
+    public function eventos(Solicitud $solicitud)
+    {
+        $this->authorize('view', $solicitud);
+
+        $nombres = fn ($id) => $id
+            ? \App\Models\Usuario::where('id', $id)->value('nombre')
+            : null;
+
+        $eventos = [];
+
+        // 1) Creación
+        $eventos[] = [
+            'fecha'   => $solicitud->created_at?->toIso8601String(),
+            'tipo'    => 'CREACION',
+            'titulo'  => 'Solicitud creada',
+            'detalle' => 'Capital solicitado: $' . number_format((float) $solicitud->capital_solicitado, 0, ',', '.'),
+            'usuario' => $nombres($solicitud->created_by),
+        ];
+
+        // 2) Aprobación o rechazo
+        if ($solicitud->fecha_aprobacion) {
+            $rechazado = $solicitud->estado === 'RECHAZADO' || ! empty($solicitud->motivo_rechazo);
+            $eventos[] = [
+                'fecha'   => \Illuminate\Support\Carbon::parse($solicitud->fecha_aprobacion)->toIso8601String(),
+                'tipo'    => $rechazado ? 'RECHAZO' : 'APROBACION',
+                'titulo'  => $rechazado ? 'Solicitud rechazada' : 'Crédito aprobado',
+                'detalle' => $rechazado
+                    ? ('Motivo: ' . ($solicitud->motivo_rechazo ?? '—'))
+                    : ('Monto aprobado: $' . number_format((float) $solicitud->monto_aprobado, 0, ',', '.')
+                        . ' · N° ' . ($solicitud->numero_credito ?? '—')),
+                'usuario' => $nombres($solicitud->usuario_aprobador),
+            ];
+        }
+
+        // 3) Desembolsos
+        foreach (\App\Models\Desembolso::where('solicitud_id', $solicitud->id)->get() as $d) {
+            $eventos[] = [
+                'fecha'   => ($d->created_at ?? $d->fecha)?->toIso8601String(),
+                'tipo'    => 'DESEMBOLSO',
+                'titulo'  => 'Desembolso realizado',
+                'detalle' => '$' . number_format((float) $d->valor, 0, ',', '.') . ' · ' . ucfirst(strtolower($d->metodo))
+                    . ' · Inicio del crédito: ' . \Illuminate\Support\Carbon::parse($d->fecha)->format('d/m/Y'),
+                'usuario' => $nombres($d->registrado_por),
+            ];
+        }
+
+        // 4) Pagos
+        foreach (\App\Models\Pago::where('solicitud_id', $solicitud->id)->orderBy('created_at')->get() as $pg) {
+            $eventos[] = [
+                'fecha'   => ($pg->created_at ?? $pg->fecha)?->toIso8601String(),
+                'tipo'    => 'PAGO',
+                'titulo'  => 'Pago recibido',
+                'detalle' => '$' . number_format((float) $pg->valor, 0, ',', '.') . ' · ' . ucfirst(strtolower($pg->metodo))
+                    . ($pg->observaciones ? ' · ' . $pg->observaciones : ''),
+                'usuario' => $nombres($pg->registrado_por),
+            ];
+        }
+
+        // 5) Reamortizaciones (como origen o como crédito nuevo)
+        $renos = \Illuminate\Support\Facades\DB::table('renovaciones')
+            ->where('credito_origen_id', $solicitud->id)
+            ->orWhere('credito_nuevo_id', $solicitud->id)->get();
+        foreach ($renos as $r) {
+            $esOrigen = (int) $r->credito_origen_id === (int) $solicitud->id;
+            $otro = \App\Models\Solicitud::where('id', $esOrigen ? $r->credito_nuevo_id : $r->credito_origen_id)
+                ->value('numero_credito');
+            $eventos[] = [
+                'fecha'   => \Illuminate\Support\Carbon::parse($r->fecha_renovacion)->toIso8601String(),
+                'tipo'    => 'REAMORTIZACION',
+                'titulo'  => $esOrigen ? 'Crédito reamortizado' : 'Crédito creado por reamortización',
+                'detalle' => ($esOrigen ? 'Continúa en ' : 'Proviene de ') . ($otro ?? 'otro crédito')
+                    . ' · Saldo refinanciado: $' . number_format((float) $r->saldo_refinanciado, 0, ',', '.'),
+                'usuario' => $nombres($r->realizado_por),
+            ];
+        }
+
+        // 6) Cierre
+        if ($solicitud->estado === 'FINALIZADO') {
+            $ultimoPago = \App\Models\Pago::where('solicitud_id', $solicitud->id)->max('created_at');
+            $eventos[] = [
+                'fecha'   => $ultimoPago ? \Illuminate\Support\Carbon::parse($ultimoPago)->toIso8601String() : now()->toIso8601String(),
+                'tipo'    => 'CIERRE',
+                'titulo'  => 'Crédito finalizado',
+                'detalle' => 'Deuda saldada en su totalidad.',
+                'usuario' => null,
+            ];
+        }
+
+        usort($eventos, fn ($a, $b) => strcmp($a['fecha'] ?? '', $b['fecha'] ?? ''));
+
+        return response()->json(['data' => $eventos]);
+    }
 }

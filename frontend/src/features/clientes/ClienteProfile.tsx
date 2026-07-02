@@ -13,7 +13,8 @@ function fmtFecha(iso: string) {
   } catch { return iso; }
 }
 
-export function ClienteProfile({ clienteId, onVolver }: { clienteId: number; onVolver: () => void }) {
+export function ClienteProfile({ clienteId, onVolver, onEditar }:
+  { clienteId: number; onVolver: () => void; onEditar: (c: import('./hooks').ClienteDetalle) => void }) {
   const { data: c, isLoading } = useClienteDetalle(clienteId);
   const { data: historial } = useHistorialCliente(clienteId);
   const actualizar = useActualizarContacto(clienteId);
@@ -59,7 +60,10 @@ export function ClienteProfile({ clienteId, onVolver }: { clienteId: number; onV
             <h3 className="text-lg font-bold">{c.nombres} {c.apellidos}</h3>
             <p className="text-sm text-slate-500">{c.tipo_documento} {c.numero_documento}</p>
           </div>
-          {c.cobrador && <span className="rounded-full bg-brand-50 px-3 py-1 text-xs text-brand-700">Cobrador: {c.cobrador}</span>}
+          <div className="flex items-center gap-2">
+            {c.cobrador && <span className="rounded-full bg-brand-50 px-3 py-1 text-xs text-brand-700">Cobrador: {c.cobrador}</span>}
+            <button onClick={() => onEditar(c)} className="btn-outline btn-sm">Editar datos</button>
+          </div>
         </div>
 
         <div className="mt-4 grid gap-x-6 gap-y-2 text-sm sm:grid-cols-2">
@@ -67,6 +71,9 @@ export function ClienteProfile({ clienteId, onVolver }: { clienteId: number; onV
           <Dato label="Estado civil" value={c.estado_civil} />
           <Dato label="Género" value={c.genero} />
           <Dato label="Nacimiento" value={c.fecha_nacimiento} />
+          <Dato label="Lugar de nacimiento" value={c.lugar_nacimiento} />
+          <Dato label="Expedición del documento" value={c.fecha_expedicion_documento} />
+          <Dato label="Lugar de expedición" value={c.lugar_expedicion_documento} />
           <Dato label="Empresa" value={c.empresa} />
           <Dato label="Cargo" value={c.cargo} />
           <Dato label="Barrio" value={c.barrio} />

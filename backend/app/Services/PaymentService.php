@@ -65,6 +65,19 @@ class PaymentService
                 $restante = round($restante - $abono, 2);
             }
 
+            // Registro de validación para transferencias
+            if ($d['metodo'] === 'TRANSFERENCIA') {
+                \App\Models\Transferencia::create([
+                    'pago_id'        => $pago->id,
+                    'cliente_id'     => $credito->cliente_id,
+                    'banco'          => $d['banco'] ?? 'No indicado',
+                    'referencia'     => $d['referencia'] ?? 'No indicada',
+                    'valor'          => $pago->valor,
+                    'estado'         => 'PENDIENTE_VALIDACION',
+                    'registrado_por' => $usuario->id,
+                ]);
+            }
+
             // Comprobante de transferencia (opcional)
             if (! empty($d['comprobante'])) {
                 $c = $d['comprobante'];

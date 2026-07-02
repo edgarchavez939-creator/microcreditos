@@ -55,11 +55,24 @@ export function useRegistrarPago() {
   return useMutation({
     mutationFn: async (payload: {
       solicitud_id: number; valor: number; metodo: string; observaciones?: string; client_uuid: string;
+      banco?: string; referencia?: string;
       comprobante?: { nombre: string; mime: string; tamano: number; contenido_base64: string };
     }) => (await api.post('/pagos', payload)).data,
     onSuccess: (_d, vars) => {
       qc.invalidateQueries({ queryKey: ['cartera'] });
       qc.invalidateQueries({ queryKey: ['credito', vars.solicitud_id] });
     },
+  });
+}
+
+export interface EventoCredito {
+  fecha: string; tipo: string; titulo: string; detalle?: string; usuario?: string | null;
+}
+
+export function useEventosCredito(id: number | null, activo: boolean) {
+  return useQuery({
+    queryKey: ['credito-eventos', id],
+    queryFn: async () => (await api.get<{ data: EventoCredito[] }>(`/solicitudes/${id}/eventos`)).data.data,
+    enabled: !!id && activo,
   });
 }

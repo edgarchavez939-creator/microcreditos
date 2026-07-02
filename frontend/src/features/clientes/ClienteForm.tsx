@@ -3,7 +3,8 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import type { Resolver } from 'react-hook-form';
 import { clienteSchema, aPayload, type ClienteFormValues, type SoporteSubido } from './schema';
-import { useAreas, useCobradores, useCrearCliente } from './hooks';
+import { useActualizarCliente, useAreas, useCobradores, useCrearCliente, type ClienteDetalle } from './hooks';
+import { MUNICIPIOS, etiquetaMunicipio } from '@/lib/municipios';
 import { useAuthStore } from '@/stores/auth';
 
 const MAX_BYTES = 2 * 1024 * 1024;
@@ -18,12 +19,15 @@ function leerBase64(file: File): Promise<string> {
   });
 }
 
-export function ClienteForm({ onCreado, onCancelar }: { onCreado?: () => void; onCancelar?: () => void }) {
+export function ClienteForm({ onCreado, onCancelar, cliente }:
+  { onCreado?: () => void; onCancelar?: () => void; cliente?: ClienteDetalle | null }) {
+  const editando = !!cliente;
   const { data: areas } = useAreas();
   const { data: cobradores } = useCobradores();
   const rol = useAuthStore((s) => s.usuario?.rol);
   const puedeAsignar = rol === 'ADMINISTRADOR' || rol === 'SUPERVISOR';
   const crear = useCrearCliente();
+  const actualizar = useActualizarCliente(cliente?.id ?? 0);
   const [gpsMsg, setGpsMsg] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [archivos, setArchivos] = useState<File[]>([]);
@@ -32,7 +36,26 @@ export function ClienteForm({ onCreado, onCancelar }: { onCreado?: () => void; o
   const { register, handleSubmit, setValue, watch, formState: { errors } } =
     useForm<ClienteFormValues>({
       resolver: zodResolver(clienteSchema) as Resolver<ClienteFormValues>,
-      defaultValues: { tipo_documento: 'CC' },
+      defaultValues: cliente ? {
+        nombres: cliente.nombres, apellidos: cliente.apellidos,
+        tipo_documento: (cliente.tipo_documento as ClienteFormValues['tipo_documento']) ?? 'CC',
+        numero_documento: cliente.numero_documento,
+        fecha_nacimiento: cliente.fecha_nacimiento ?? '',
+        fecha_expedicion_documento: cliente.fecha_expedicion_documento ?? '',
+        lugar_expedicion_documento: cliente.lugar_expedicion_documento ?? '',
+        lugar_nacimiento: cliente.lugar_nacimiento ?? '',
+        genero: (cliente.genero as ClienteFormValues['genero']) ?? 'M',
+        estado_civil: (cliente.estado_civil as ClienteFormValues['estado_civil']) ?? 'SOLTERO',
+        telefono_principal: cliente.telefono_principal ?? '',
+        correo: cliente.correo ?? '',
+        area_id: cliente.area_id, cobrador_id: cliente.cobrador_id ?? undefined,
+        direccion: cliente.direccion ?? '', barrio: cliente.barrio ?? '',
+        referencia_ubicacion: cliente.referencia_ubicacion ?? '',
+        latitud: cliente.latitud ?? undefined, longitud: cliente.longitud ?? undefined,
+        empresa: cliente.empresa ?? '', cargo: cliente.cargo ?? '',
+        antiguedad_meses: cliente.antiguedad_meses ?? 0, salario: cliente.salario ?? 0,
+        direccion_laboral: cliente.direccion_laboral ?? '',
+      } : { tipo_documento: 'CC' },
     });
 
   const lat = watch('latitud');
@@ -79,17 +102,22 @@ export function ClienteForm({ onCreado, onCancelar }: { onCreado?: () => void; o
       setError('No se pudieron leer los soportes. Intenta de nuevo.');
       return;
     }
-    crear.mutate(aPayload(v, documentos), {
-      onSuccess: () => onCreado?.(),
-      onError: (e) => {
-        const err = e as { response?: { data?: { message?: string } } };
-        setError(err?.response?.data?.message ?? 'No se pudo guardar el cliente.');
-      },
-    });
+    const onError = (e: unknown) => {
+      const err = e as { response?: { data?: { message?: string } } };
+      setError(err?.response?.data?.message ?? 'No se pudo guardar el cliente.');
+    };
+    if (editando) {
+      actualizar.mutate(aPayload(v, documentos), { onSuccess: () => onCreado?.(), onError });
+    } else {
+      crear.mutate(aPayload(v, documentos), { onSuccess: () => onCreado?.(), onError });
+    }
   };
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 max-w-2xl">
+      <datalist id="dane-municipios">
+        {MUNICIPIOS.map((m) => <option key={m.codigo} value={etiquetaMunicipio(m)} />)}
+      </datalist>
       <Seccion titulo="Datos personales">
         <div className="grid gap-3 sm:grid-cols-2">
           <Campo label="Nombres" req error={errors.nombres?.message}><input {...register('nombres')} className="input" /></Campo>
@@ -104,10 +132,22 @@ export function ClienteForm({ onCreado, onCancelar }: { onCreado?: () => void; o
             </select>
           </Campo>
           <Campo label="Número documento" req error={errors.numero_documento?.message}>
-            <input inputMode="numeric" {...register('numero_documento')} className="input" />
+            <input inputMode="numeric" {...register('numero_documento')} className="input"
+              disabled={editando} title={editando ? 'El número de documento no se puede modificar' : undefined} />
           </Campo>
           <Campo label="Fecha nacimiento" req error={errors.fecha_nacimiento?.message}>
             <input type="date" {...register('fecha_nacimiento')} className="input" />
+          </Campo>
+          <Campo label="Lugar de nacimiento" req error={errors.lugar_nacimiento?.message}>
+            <input list="dane-municipios" {...register('lugar_nacimiento')} className="input"
+              placeholder="Escribe para buscar…" />
+          </Campo>
+          <Campo label="Fecha expedición documento" req error={errors.fecha_expedicion_documento?.message}>
+            <input type="date" {...register('fecha_expedicion_documento')} className="input" />
+          </Campo>
+          <Campo label="Lugar expedición documento" req error={errors.lugar_expedicion_documento?.message}>
+            <input list="dane-municipios" {...register('lugar_expedicion_documento')} className="input"
+              placeholder="Escribe para buscar…" />
           </Campo>
           <Campo label="Género" req error={errors.genero?.message}>
             <select {...register('genero')} className="input">

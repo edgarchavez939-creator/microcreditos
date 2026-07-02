@@ -23,6 +23,9 @@ class StoreClienteRequest extends FormRequest
                     ->ignore($clienteId),
             ],
             'fecha_nacimiento'    => ['required', 'date'],
+            'fecha_expedicion_documento' => ['required', 'date', 'before_or_equal:today'],
+            'lugar_expedicion_documento' => ['required', 'string', 'max:150'],
+            'lugar_nacimiento'           => ['required', 'string', 'max:150'],
             'genero'              => ['required', Rule::in(['M', 'F', 'OTRO'])],
             'estado_civil'        => ['required', Rule::in(['SOLTERO', 'CASADO', 'UNION_LIBRE', 'DIVORCIADO', 'VIUDO'])],
             // Contacto (obligatorios)

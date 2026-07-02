@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { esMunicipioValido } from '@/lib/municipios';
 
 const soloDigitos = (min: number, max: number, msg: string) =>
   z.string().regex(new RegExp(`^[0-9]{${min},${max}}$`), msg);
@@ -10,6 +11,11 @@ export const clienteSchema = z.object({
   tipo_documento: z.enum(['CC', 'CE', 'TI', 'NIT', 'PASAPORTE']),
   numero_documento: soloDigitos(4, 40, 'Solo números'),
   fecha_nacimiento: z.string().min(1, 'Requerido'),
+  fecha_expedicion_documento: z.string().min(1, 'Requerido'),
+  lugar_expedicion_documento: z.string().min(1, 'Requerido')
+    .refine(esMunicipioValido, 'Selecciona un municipio del listado'),
+  lugar_nacimiento: z.string().min(1, 'Requerido')
+    .refine(esMunicipioValido, 'Selecciona un municipio del listado'),
   genero: z.enum(['M', 'F', 'OTRO'], { message: 'Requerido' }),
   estado_civil: z.enum(['SOLTERO', 'CASADO', 'UNION_LIBRE', 'DIVORCIADO', 'VIUDO'], { message: 'Requerido' }),
   // Contacto (obligatorios)

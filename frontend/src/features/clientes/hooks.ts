@@ -34,6 +34,18 @@ export function useClientes(buscar = '') {
   });
 }
 
+export function useActualizarCliente(id: number) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (payload: unknown) => (await api.patch(`/clientes/${id}`, payload)).data.data,
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['clientes'] });
+      qc.invalidateQueries({ queryKey: ['cliente', id] });
+      qc.invalidateQueries({ queryKey: ['cliente-historial', id] });
+    },
+  });
+}
+
 export function useCrearCliente() {
   const qc = useQueryClient();
   return useMutation({
@@ -46,7 +58,11 @@ export interface ClienteDetalle {
   id: number; nombres: string; apellidos: string;
   tipo_documento: string; numero_documento: string;
   fecha_nacimiento?: string; genero?: string; estado_civil?: string;
+  fecha_expedicion_documento?: string;
+  lugar_expedicion_documento?: string;
+  lugar_nacimiento?: string;
   telefono_principal?: string; correo?: string;
+  area_id: number; cobrador_id?: number | null;
   area?: string; cobrador?: string;
   direccion?: string; barrio?: string; referencia_ubicacion?: string;
   latitud?: number | null; longitud?: number | null;

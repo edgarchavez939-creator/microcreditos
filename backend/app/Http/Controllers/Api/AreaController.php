@@ -24,6 +24,39 @@ class AreaController extends Controller
         ]);
     }
 
+    public function store(Request $request)
+    {
+        abort_unless($request->user()->esAdministrador(), 403, 'Solo el administrador puede crear áreas.');
+
+        $data = $request->validate([
+            'nombre'      => ['required', 'string', 'max:100', 'unique:areas,nombre'],
+            'descripcion' => ['nullable', 'string', 'max:500'],
+        ]);
+
+        $area = Area::create([
+            'nombre'      => $data['nombre'],
+            'descripcion' => $data['descripcion'] ?? null,
+            'activa'      => true,
+        ]);
+
+        return response()->json(['data' => ['id' => $area->id, 'nombre' => $area->nombre]], 201);
+    }
+
+    public function update(Request $request, Area $area)
+    {
+        abort_unless($request->user()->esAdministrador(), 403, 'Solo el administrador puede editar áreas.');
+
+        $data = $request->validate([
+            'nombre'      => ['sometimes', 'string', 'max:100', \Illuminate\Validation\Rule::unique('areas', 'nombre')->ignore($area->id)],
+            'descripcion' => ['sometimes', 'nullable', 'string', 'max:500'],
+            'activa'      => ['sometimes', 'boolean'],
+        ]);
+
+        $area->update($data);
+
+        return response()->json(['data' => ['id' => $area->id, 'nombre' => $area->nombre, 'activa' => (bool) $area->activa]]);
+    }
+
     public function cobradores(Request $request)
     {
         $u = $request->user();

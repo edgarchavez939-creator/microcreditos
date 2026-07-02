@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { EstadoBadge } from '@/components/ui/EstadoBadge';
 import { money } from '@/lib/format';
 import type { Solicitud } from '@/types';
-import { useCreditoDetalle, useCreditos, useDesembolsar, useEliminarCredito, useGenerarCronograma, useRegistrarPago } from './hooks';
+import { useCreditoDetalle, useCreditos, useDesembolsar, useEliminarCredito, useEventosCredito, useGenerarCronograma, useRegistrarPago } from './hooks';
 import { useAuthStore } from '@/stores/auth';
 
 function leerBase64(file: File): Promise<string> {
@@ -168,6 +168,8 @@ function FichaCredito({ creditoId }: { creditoId: number }) {
   const [metodo, setMetodo] = useState('EFECTIVO');
   const [obs, setObs] = useState('');
   const [comprobante, setComprobante] = useState<File | null>(null);
+  const [banco, setBanco] = useState('');
+  const [referencia, setReferencia] = useState('');
   const [msg, setMsg] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -191,9 +193,12 @@ function FichaCredito({ creditoId }: { creditoId: number }) {
       comp = { nombre: comprobante.name, mime: comprobante.type, tamano: comprobante.size, contenido_base64: await leerBase64(comprobante) };
     }
     pagar.mutate(
-      { solicitud_id: creditoId, valor: v, metodo, observaciones: obs || undefined, comprobante: comp, client_uuid: crypto.randomUUID() },
+      { solicitud_id: creditoId, valor: v, metodo, observaciones: obs || undefined,
+        banco: metodo === 'TRANSFERENCIA' && banco ? banco : undefined,
+        referencia: metodo === 'TRANSFERENCIA' && referencia ? referencia : undefined,
+        comprobante: comp, client_uuid: crypto.randomUUID() },
       {
-        onSuccess: () => { setMsg('Pago registrado ✓'); setValor(''); setObs(''); setComprobante(null); },
+        onSuccess: () => { setMsg('Pago registrado ✓'); setValor(''); setObs(''); setComprobante(null); setBanco(''); setReferencia(''); },
         onError: (e) => {
           const x = e as { message?: string; response?: { data?: { message?: string } } };
           if (x?.message === 'OFFLINE_ENCOLADO') setMsg('Sin conexión: el pago se guardó y se sincronizará al recuperar internet.');
@@ -211,6 +216,9 @@ function FichaCredito({ creditoId }: { creditoId: number }) {
         {sinCuotas ? (
           <div className="rounded-xl bg-amber-50 px-3.5 py-2.5 text-sm text-amber-800 ring-1 ring-amber-100">
             <p>Este crédito no tiene cuotas generadas.</p>
+            <p className="mt-1 break-all text-[11px] text-amber-700/80">
+              [debug] cuotas={JSON.stringify(credito.cuotas)} · campos: {Object.keys(credito).join(', ')}
+            </p>
             {puedeGenerar && (
               <button onClick={() => {
                   setError(null); setMsg(null);
@@ -289,7 +297,13 @@ function FichaCredito({ creditoId }: { creditoId: number }) {
           </button>
         </div>
         {metodo === 'TRANSFERENCIA' && (
-          <div className="mt-3">
+          <div className="mt-3 space-y-2">
+            <div className="flex flex-wrap gap-2">
+              <input value={banco} onChange={(e) => setBanco(e.target.value)}
+                placeholder="Banco (ej. Bancolombia)" className="input max-w-[190px] py-1.5 text-sm" />
+              <input value={referencia} onChange={(e) => setReferencia(e.target.value)}
+                placeholder="N° de referencia" className="input max-w-[190px] py-1.5 text-sm" />
+            </div>
             <label className="inline-flex cursor-pointer items-center gap-2 rounded-lg px-3 py-1.5 text-xs font-medium text-brand ring-1 ring-brand-200 hover:bg-brand-50">
               {comprobante ? 'Cambiar comprobante' : 'Adjuntar comprobante (imagen, máx 2 MB)'}
               <input type="file" accept="image/jpeg,image/png,image/webp" className="hidden"
@@ -298,6 +312,7 @@ function FichaCredito({ creditoId }: { creditoId: number }) {
             {comprobante && <span className="ml-2 text-xs text-slate-500">{comprobante.name}</span>}
           </div>
         )}
+
         {msg && <p className="mt-2 text-sm text-green-700">{msg}</p>}
         {error && <p className="mt-2 text-sm text-red-700">{error}</p>}
         <p className="mt-1 text-xs text-slate-400">El pago se aplica a las cuotas pendientes, de la más antigua a la más reciente.</p>
@@ -334,6 +349,9 @@ function FichaCredito({ creditoId }: { creditoId: number }) {
           </div>
         )}
       </div>
+
+      {/* HISTORIAL DEL CRÉDITO */}
+      <HistorialCredito creditoId={creditoId} />
     </div>
   );
 }
@@ -343,6 +361,55 @@ function Item({ label, value }: { label: string; value: string }) {
     <div className="flex justify-between gap-2">
       <dt className="text-slate-500">{label}</dt>
       <dd className="font-medium">{value}</dd>
+    </div>
+  );
+}
+
+const EVENTO_COLOR: Record<string, string> = {
+  CREACION: 'bg-slate-400', APROBACION: 'bg-brand', RECHAZO: 'bg-rose-500',
+  DESEMBOLSO: 'bg-money-600', PAGO: 'bg-money-600', REAMORTIZACION: 'bg-amber-500', CIERRE: 'bg-ink',
+};
+
+function fmtEvento(iso: string) {
+  try {
+    return new Date(iso).toLocaleString('es-CO', {
+      day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit',
+    });
+  } catch { return iso; }
+}
+
+function HistorialCredito({ creditoId }: { creditoId: number }) {
+  const [abierto, setAbierto] = useState(false);
+  const { data: eventos, isLoading } = useEventosCredito(creditoId, abierto);
+
+  return (
+    <div>
+      <button onClick={() => setAbierto(!abierto)} className="text-sm font-medium text-brand hover:underline">
+        {abierto ? 'Ocultar historial del crédito' : 'Ver historial del crédito'}
+      </button>
+
+      {abierto && (
+        <div className="mt-3">
+          {isLoading ? (
+            <p className="text-sm text-slate-500">Cargando historial…</p>
+          ) : !eventos || eventos.length === 0 ? (
+            <p className="text-sm text-slate-500">Sin eventos registrados.</p>
+          ) : (
+            <ol className="relative ml-2 space-y-4 border-l-2 border-slate-100 pl-5">
+              {eventos.map((e, i) => (
+                <li key={i} className="relative">
+                  <span className={`absolute -left-[27px] top-1 h-3 w-3 rounded-full ring-4 ring-white ${EVENTO_COLOR[e.tipo] ?? 'bg-slate-400'}`} />
+                  <div className="text-sm font-semibold text-slate-800">{e.titulo}</div>
+                  {e.detalle && <div className="text-sm text-slate-600">{e.detalle}</div>}
+                  <div className="mt-0.5 text-xs text-slate-400">
+                    {fmtEvento(e.fecha)}{e.usuario ? ` · ${e.usuario}` : ''}
+                  </div>
+                </li>
+              ))}
+            </ol>
+          )}
+        </div>
+      )}
     </div>
   );
 }

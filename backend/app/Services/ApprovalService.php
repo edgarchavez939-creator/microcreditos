@@ -40,6 +40,12 @@ class ApprovalService
             ], true)) {
                 throw new DomainException('La solicitud no está en un estado aprobable.');
             }
+            $limite = $this->limiteDe($aprobador, $solicitud);
+            if ((float) $solicitud->monto_aprobado > $limite) {
+                throw new DomainException(
+                    'El monto supera el máximo aprobable por el administrador ($' . number_format($limite, 0, ',', '.') . '). Ajusta el parámetro si es necesario.'
+                );
+            }
         } else {
             throw new DomainException('Su rol no tiene permiso de aprobación.');
         }
@@ -92,6 +98,13 @@ class ApprovalService
             ->orderByRaw('CASE WHEN usuario_id IS NOT NULL THEN 0 WHEN area_id IS NOT NULL THEN 1 ELSE 2 END')
             ->first();
 
-        return (float) ($limite?->monto_maximo ?? 0);
+        if ($limite) {
+            return (float) $limite->monto_maximo;
+        }
+
+        // Sin registro específico: usar el parámetro general por rol
+        $clave = $usuario->rol === 'ADMINISTRADOR' ? 'aprobacion.max_administrador' : 'aprobacion.max_supervisor';
+        $porDefecto = $usuario->rol === 'ADMINISTRADOR' ? 50000000 : 2000000;
+        return (float) \App\Models\Parametro::valor($clave, $porDefecto);
     }
 }

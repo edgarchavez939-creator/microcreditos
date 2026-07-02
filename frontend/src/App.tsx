@@ -7,12 +7,19 @@ import { Placeholder } from '@/components/Placeholder';
 import { ClientesPanel } from '@/features/clientes/ClientesPanel';
 import { AprobacionesPanel } from '@/features/aprobaciones/AprobacionesPanel';
 import { CarteraPanel } from '@/features/cartera/CarteraPanel';
+import { DashboardPanel } from '@/features/dashboard/DashboardPanel';
+import { UsuariosPanel } from '@/features/usuarios/UsuariosPanel';
+import { ReportesPanel } from '@/features/reportes/ReportesPanel';
+import { TransferenciasPanel } from '@/features/transferencias/TransferenciasPanel';
+import { ParametrosPanel } from '@/features/parametros/ParametrosPanel';
+import { MapaPanel } from '@/features/mapa/MapaPanel';
 import { Icon, type IconName } from '@/components/ui/icons';
 import type { Rol } from '@/types';
 
 interface MenuItem { id: string; label: string; icon: IconName; roles: Rol[] }
 
 const MENU: MenuItem[] = [
+  { id: 'inicio',         label: 'Inicio',           icon: 'inicio',         roles: ['ADMINISTRADOR', 'SUPERVISOR', 'COBRADOR'] },
   { id: 'solicitud',      label: 'Nueva solicitud',  icon: 'solicitud',      roles: ['ADMINISTRADOR', 'SUPERVISOR', 'COBRADOR'] },
   { id: 'clientes',       label: 'Clientes',         icon: 'clientes',       roles: ['ADMINISTRADOR', 'SUPERVISOR', 'COBRADOR'] },
   { id: 'pagos',          label: 'Cartera y pagos',  icon: 'cartera',        roles: ['ADMINISTRADOR', 'SUPERVISOR', 'COBRADOR'] },
@@ -122,26 +129,17 @@ function AppShell() {
 
 function Pantalla({ id }: { id: string }) {
   switch (id) {
+    case 'inicio':         return <DashboardPanel />;
     case 'solicitud':      return <PantallaSolicitud />;
     case 'reamortizacion': return <PantallaReamortizacion />;
     case 'clientes':       return <ClientesPanel />;
     case 'aprobaciones':   return <AprobacionesPanel />;
     case 'pagos':          return <CarteraPanel />;
-    case 'mapa':
-      return <Placeholder titulo="Mapa territorial" descripcion="Visualización geográfica de clientes."
-        permisos={['Ver clientes en el mapa con filtros (área, estado, mora)', 'Abrir ubicación en Google Maps', 'Navegar hacia el cliente']} />;
-    case 'transferencias':
-      return <Placeholder titulo="Transferencias" descripcion="Validación de pagos por transferencia."
-        permisos={['Revisar comprobante y referencia', 'Aprobar o rechazar la transferencia', 'Queda registrado usuario, fecha y hora']} />;
-    case 'reportes':
-      return <Placeholder titulo="Reportes" descripcion="Indicadores y exportación."
-        permisos={['Cartera vigente y vencida', 'Cobros por cobrador y por área', 'Exoneraciones de seguro', 'Exportar a Excel y PDF']} />;
-    case 'usuarios':
-      return <Placeholder titulo="Usuarios" descripcion="Administración de usuarios y áreas."
-        permisos={['Crear/editar usuarios y asignar roles', 'Asignar áreas', 'Activar/desactivar cuentas']} />;
-    case 'parametros':
-      return <Placeholder titulo="Parámetros" descripcion="Configuración del sistema."
-        permisos={['Límites de aprobación por rol/área', 'Rango de seguro y reducción de cupo', 'Días de mora para castigo']} />;
+    case 'mapa':           return <MapaPanel />;
+    case 'transferencias': return <TransferenciasPanel />;
+    case 'reportes':       return <ReportesPanel />;
+    case 'usuarios':       return <UsuariosPanel />;
+    case 'parametros':     return <ParametrosPanel />;
     default:
       return <Placeholder titulo="Módulo" descripcion="Pantalla no encontrada." />;
   }

@@ -87,7 +87,8 @@ class ClienteController extends Controller
     {
         $this->authorize('update', $cliente);
         $data = $request->validated();
-        $cliente->update(collect($data)->except(['referencias', 'documentos', 'cobrador_id'])->toArray());
+        // El número (y tipo) de documento no son editables una vez creado el cliente.
+        $cliente->update(collect($data)->except(['referencias', 'documentos', 'numero_documento', 'tipo_documento'])->toArray());
         return new ClienteResource($cliente->load(['area', 'cobrador', 'referencias']));
     }
 
