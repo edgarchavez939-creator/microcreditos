@@ -83,7 +83,12 @@ function TarjetaTransferencia({ t }: { t: Transferencia }) {
   const [verComprobante, setVerComprobante] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const invalidar = () => qc.invalidateQueries({ queryKey: ['transferencias'] });
+  const invalidar = () => {
+    qc.invalidateQueries({ queryKey: ['transferencias'] });
+    qc.invalidateQueries({ queryKey: ['cartera'] });   // el saldo del crédito cambia al revertir
+    qc.invalidateQueries({ queryKey: ['credito'] });
+    qc.invalidateQueries({ queryKey: ['dashboard'] });
+  };
   const err = (e: unknown) => {
     const x = e as { response?: { data?: { message?: string } } };
     setError(x?.response?.data?.message ?? 'No se pudo completar la acción.');

@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Transferencia;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use App\Services\PaymentService;
 
 class TransferenciaController extends Controller
 {
@@ -91,13 +92,17 @@ class TransferenciaController extends Controller
         return response()->json(['message' => 'Transferencia aprobada.']);
     }
 
-    public function rechazar(Request $request, Transferencia $transferencia)
+    public function rechazar(Request $request, Transferencia $transferencia, PaymentService $pagos)
     {
         $this->soloValidadores($request);
         abort_unless($transferencia->estado === 'PENDIENTE_VALIDACION', 422, 'Esta transferencia ya fue validada.');
 
         $data = $request->validate(['motivo' => ['required', 'string', 'min:5', 'max:500']]);
 
+        // 1) Revertir el pago: se elimina, se recalculan las cuotas y la caja.
+        $pagos->revertirPagoDeTransferencia($transferencia);
+
+        // 2) Marcar la transferencia como rechazada (conserva banco/referencia/motivo).
         $transferencia->update([
             'estado'         => 'RECHAZADO',
             'motivo_rechazo' => $data['motivo'],
@@ -105,6 +110,6 @@ class TransferenciaController extends Controller
             'validado_at'    => now(),
         ]);
 
-        return response()->json(['message' => 'Transferencia rechazada.']);
+        return response()->json(['message' => 'Transferencia rechazada y pago revertido.']);
     }
 }

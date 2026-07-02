@@ -4,6 +4,7 @@ import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { api } from '@/lib/api/client';
 import { money } from '@/lib/format';
+import { useAreas } from '@/features/clientes/hooks';
 
 interface ClienteMapa {
   id: number;
@@ -51,15 +52,19 @@ const FILTROS: Array<{ v: Filtro; t: string }> = [
 
 export function MapaPanel() {
   const { data: clientes, isLoading, isError } = useClientesMapa();
+  const { data: areas } = useAreas();
   const [filtro, setFiltro] = useState<Filtro>('TODOS');
+  const [areaSel, setAreaSel] = useState<string>('TODAS');
 
   const contenedor = useRef<HTMLDivElement | null>(null);
   const mapa = useRef<L.Map | null>(null);
   const capa = useRef<L.LayerGroup | null>(null);
 
   const visibles = useMemo(
-    () => (clientes ?? []).filter((c) => pasaFiltro(c, filtro)),
-    [clientes, filtro],
+    () => (clientes ?? [])
+      .filter((c) => areaSel === 'TODAS' || c.area === areaSel)
+      .filter((c) => pasaFiltro(c, filtro)),
+    [clientes, filtro, areaSel],
   );
 
   // Crear el mapa una sola vez
@@ -114,11 +119,15 @@ export function MapaPanel() {
     m.fitBounds(L.latLngBounds(bounds).pad(0.2), { maxZoom: 15 });
   }, [visibles]);
 
+  const base = useMemo(
+    () => (clientes ?? []).filter((c) => areaSel === 'TODAS' || c.area === areaSel),
+    [clientes, areaSel],
+  );
   const conteo = useMemo(() => ({
-    mora: (clientes ?? []).filter((c) => Number(c.vencido) > 0).length,
-    aldia: (clientes ?? []).filter((c) => Number(c.creditos_activos) > 0 && Number(c.vencido) === 0).length,
-    sin: (clientes ?? []).filter((c) => Number(c.creditos_activos) === 0).length,
-  }), [clientes]);
+    mora: base.filter((c) => Number(c.vencido) > 0).length,
+    aldia: base.filter((c) => Number(c.creditos_activos) > 0 && Number(c.vencido) === 0).length,
+    sin: base.filter((c) => Number(c.creditos_activos) === 0).length,
+  }), [base]);
 
   return (
     <div>
@@ -128,6 +137,12 @@ export function MapaPanel() {
       </p>
 
       <div className="mb-3 flex flex-wrap items-center gap-3">
+        <label className="text-sm">
+          <select value={areaSel} onChange={(e) => setAreaSel(e.target.value)} className="input py-1.5">
+            <option value="TODAS">Todas las áreas</option>
+            {areas?.map((a) => <option key={a.id} value={a.nombre}>{a.nombre}</option>)}
+          </select>
+        </label>
         <div className="flex rounded-xl bg-slate-100 p-1">
           {FILTROS.map((f) => (
             <button key={f.v} onClick={() => setFiltro(f.v)}

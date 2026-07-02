@@ -11,6 +11,11 @@ export const api = axios.create({
 api.interceptors.request.use((config) => {
   const token = useAuthStore.getState().accessToken;
   if (token) config.headers.Authorization = `Bearer ${token}`;
+  // Anti-caché: cada GET lleva un parámetro único para que ningún caché
+  // (service worker viejo, navegador o proxy) pueda servir datos antiguos.
+  if ((config.method ?? 'get').toLowerCase() === 'get') {
+    config.params = { ...(config.params ?? {}), _t: Date.now() };
+  }
   return config;
 });
 

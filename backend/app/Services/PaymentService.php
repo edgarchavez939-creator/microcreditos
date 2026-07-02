@@ -46,24 +46,7 @@ class PaymentService
             ]);
 
             // Aplicar en cascada a las cuotas abiertas (orden por número)
-            $restante = $valor;
-            $cuotas = Cuota::where('solicitud_id', $credito->id)
-                ->whereIn('estado', ['PENDIENTE', 'PARCIAL', 'VENCIDA'])
-                ->orderBy('numero_cuota')
-                ->lockForUpdate()
-                ->get();
-
-            foreach ($cuotas as $cuota) {
-                if ($restante <= 0) {
-                    break;
-                }
-                $abono = min($restante, (float) $cuota->saldo);
-                $cuota->valor_pagado = round((float) $cuota->valor_pagado + $abono, 2);
-                $cuota->saldo        = round((float) $cuota->saldo - $abono, 2);
-                $cuota->estado       = $cuota->saldo <= 0 ? 'PAGADA' : 'PARCIAL';
-                $cuota->save();
-                $restante = round($restante - $abono, 2);
-            }
+            $this->aplicarACuotas($credito->id, $valor);
 
             // Registro de validación para transferencias
             if ($d['metodo'] === 'TRANSFERENCIA') {
@@ -116,6 +99,73 @@ class PaymentService
             }
 
             return $pago;
+        });
+    }
+
+    /** Aplica un valor en cascada a las cuotas abiertas del crédito (más antigua primero). */
+    private function aplicarACuotas(int $solicitudId, float $valor): void
+    {
+        $restante = $valor;
+        $cuotas = Cuota::where('solicitud_id', $solicitudId)
+            ->whereIn('estado', ['PENDIENTE', 'PARCIAL', 'VENCIDA'])
+            ->orderBy('numero_cuota')
+            ->lockForUpdate()
+            ->get();
+
+        foreach ($cuotas as $cuota) {
+            if ($restante <= 0) {
+                break;
+            }
+            $abono = min($restante, (float) $cuota->saldo);
+            $cuota->valor_pagado = round((float) $cuota->valor_pagado + $abono, 2);
+            $cuota->saldo        = round((float) $cuota->saldo - $abono, 2);
+            $cuota->estado       = $cuota->saldo <= 0 ? 'PAGADA' : 'PARCIAL';
+            $cuota->save();
+            $restante = round($restante - $abono, 2);
+        }
+    }
+
+    /**
+     * Revierte el pago asociado a una transferencia rechazada:
+     * elimina el pago y su ingreso de caja, y recalcula las cuotas
+     * reaplicando desde cero los pagos que sí siguen vigentes.
+     */
+    public function revertirPagoDeTransferencia(\App\Models\Transferencia $transferencia): void
+    {
+        DB::transaction(function () use ($transferencia) {
+            $pago = Pago::find($transferencia->pago_id);
+            if (! $pago) {
+                return; // nada que revertir
+            }
+            $creditoId = (int) $pago->solicitud_id;
+
+            // Conservar el historial de la transferencia (banco/referencia/motivo) desligándola del pago
+            DB::table('transferencias')->where('id', $transferencia->id)->update(['pago_id' => null]);
+
+            // Eliminar el ingreso de caja y el pago
+            MovimientoCaja::where('referencia_tipo', 'PAGO')->where('referencia_id', $pago->id)->delete();
+            $pago->delete();
+
+            // Recalcular las cuotas desde cero con los pagos restantes (en orden cronológico)
+            Cuota::where('solicitud_id', $creditoId)->update([
+                'valor_pagado' => 0,
+                'saldo'        => DB::raw('valor'),
+                'estado'       => 'PENDIENTE',
+            ]);
+            $restantes = Pago::where('solicitud_id', $creditoId)->orderBy('created_at')->orderBy('id')->get();
+            foreach ($restantes as $p) {
+                $this->aplicarACuotas($creditoId, (float) $p->valor);
+            }
+
+            // Estado y total del crédito (query builder: elude el guard de créditos históricos)
+            $pendientes  = Cuota::where('solicitud_id', $creditoId)->where('estado', '!=', 'PAGADA')->count();
+            $totalPagado = (float) Pago::where('solicitud_id', $creditoId)->sum('valor');
+            $cambios = ['total_pagado' => $totalPagado];
+            $estadoActual = DB::table('solicitudes')->where('id', $creditoId)->value('estado');
+            if ($pendientes > 0 && $estadoActual === 'PAGADO') {
+                $cambios['estado'] = 'ACTIVO'; // el crédito se reabre
+            }
+            DB::table('solicitudes')->where('id', $creditoId)->update($cambios);
         });
     }
 }

@@ -14,7 +14,7 @@ use App\Http\Controllers\Api\ParametroController;
 use App\Http\Controllers\Api\MapaController;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/health', fn () => response()->json(['status' => 'ok', 'version' => 'v25-sin-cache-api', 'ts' => now()]));
+Route::get('/health', fn () => response()->json(['status' => 'ok', 'version' => 'v26-reversion-cachebuster', 'ts' => now()]));
 
 // --- Auth (público con rate limiting) ---
 Route::prefix('auth')->group(function () {
