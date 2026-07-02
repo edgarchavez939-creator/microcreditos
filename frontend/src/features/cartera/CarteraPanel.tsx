@@ -216,17 +216,11 @@ function FichaCredito({ creditoId }: { creditoId: number }) {
         {sinCuotas ? (
           <div className="rounded-xl bg-amber-50 px-3.5 py-2.5 text-sm text-amber-800 ring-1 ring-amber-100">
             <p>Este crédito no tiene cuotas generadas.</p>
-            <p className="mt-1 break-all text-[11px] text-amber-700/80">
-              [debug] cuotas={JSON.stringify(credito.cuotas)} · campos: {Object.keys(credito).join(', ')}
-            </p>
             {puedeGenerar && (
               <button onClick={() => {
                   setError(null); setMsg(null);
                   generar.mutate(creditoId, {
-                    onSuccess: (data: unknown) => {
-                      const d = data as { message?: string };
-                      setMsg(d?.message ?? 'Plan generado');
-                    },
+                    onSuccess: () => setMsg('Plan de pagos generado ✓'),
                     onError: (e: unknown) => {
                       const x = e as { response?: { data?: { message?: string } } };
                       setError(x?.response?.data?.message ?? 'No se pudo generar el plan.');

@@ -10,9 +10,14 @@ export interface PreviewReamortizacion {
   interesGenerado: number;     // capital × tasa mensual × meses
   totalDeudaNueva: number;     // capital + interés (sin seguro)
   valorCuota: number;
+  numeroCuotas: number;
 }
 
 const r2 = (n: number) => Math.round(n * 100) / 100;
+
+export const PERIODOS_POR_MES: Record<string, number> = {
+  MENSUAL: 1, QUINCENAL: 2, SEMANAL: 4, DIARIO: 30,
+};
 
 export function calcularReamortizacion(
   saldoPendiente: number,
@@ -21,6 +26,7 @@ export function calcularReamortizacion(
   tasaMensual: number,
   meses: number,
   exonerado = false,
+  modalidad = 'MENSUAL',
 ): PreviewReamortizacion {
   const pct = exonerado ? 0 : pctSeguro;
   const valorSeguro = r2(nuevoCapital * pct);
@@ -29,10 +35,11 @@ export function calcularReamortizacion(
   const totalDeudaNueva = r2(nuevoCapital + interesGenerado);     // sin seguro
   const dineroAdicional = r2(nuevoCapital - saldoPendiente);
   const recibidoCliente = r2(Math.max(valorDesembolsado - saldoPendiente, 0));
-  const valorCuota = r2(totalDeudaNueva / Math.max(meses, 1));
+  const numeroCuotas = Math.max(meses, 1) * (PERIODOS_POR_MES[modalidad] ?? 1);
+  const valorCuota = r2(totalDeudaNueva / numeroCuotas);
   return {
     saldoPendiente: r2(saldoPendiente), nuevoCapital: r2(nuevoCapital),
     valorSeguro, valorDesembolsado, saldoRefinanciado: r2(saldoPendiente),
-    dineroAdicional, recibidoCliente, interesGenerado, totalDeudaNueva, valorCuota,
+    dineroAdicional, recibidoCliente, interesGenerado, totalDeudaNueva, valorCuota, numeroCuotas,
   };
 }

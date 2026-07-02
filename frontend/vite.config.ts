@@ -28,15 +28,13 @@ export default defineConfig({
       },
       workbox: {
         navigateFallback: '/index.html',
+        cleanupOutdatedCaches: true,
+        // La API NUNCA se cachea: siempre red. (El caché 'NetworkFirst' anterior
+        // servía respuestas viejas cuando Render tardaba >5s en arrancar en frío.)
         runtimeCaching: [
           {
             urlPattern: ({ url }) => url.pathname.startsWith('/api/'),
-            handler: 'NetworkFirst',
-            options: {
-              cacheName: 'api-cache',
-              networkTimeoutSeconds: 5,
-              expiration: { maxEntries: 200, maxAgeSeconds: 86400 },
-            },
+            handler: 'NetworkOnly',
           },
         ],
       },

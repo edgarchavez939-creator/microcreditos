@@ -16,11 +16,11 @@ export function makeReamortizacionSchema(saldo: number, cupo: number) {
   return z
     .object({
       nuevo_capital: z.number({ invalid_type_error: 'Requerido' }).positive('Debe ser mayor a 0'),
-      tasa_mensual: z.number({ invalid_type_error: 'Requerido' }).min(0).max(1),
+      tasa_mensual: z.number({ invalid_type_error: 'Requerido' }).min(0, 'Mínimo 0%').max(100, 'Máximo 100%'),
       plazo_meses: z.number({ invalid_type_error: 'Requerido' }).int().min(1),
       modalidad: z.enum(['DIARIO', 'SEMANAL', 'QUINCENAL', 'MENSUAL']),
       seguro_exonerado: z.boolean(),
-      porcentaje_seguro: z.number().min(0).max(0.1),
+      porcentaje_seguro: z.number().min(0).max(100),
       motivo_exoneracion: z.string().optional(),
       fecha_primer_pago: z.string().optional(),
     })

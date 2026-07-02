@@ -31,23 +31,27 @@ export function ReamortizacionForm({ solicitudId, clienteId, onHecho }: Props) {
       resolver,
       defaultValues: {
         nuevo_capital: saldo || 0,
-        tasa_mensual: 0.1,
+        tasa_mensual: 10,
         plazo_meses: 3,
         modalidad: 'MENSUAL',
         seguro_exonerado: false,
-        porcentaje_seguro: 0.08,
+        porcentaje_seguro: 8,
       },
     });
 
   const v = watch();
   const exonerado = watch('seguro_exonerado');
   const preview = calcularReamortizacion(
-    saldo, v.nuevo_capital || 0, v.porcentaje_seguro || 0,
-    v.tasa_mensual || 0, v.plazo_meses || 0, exonerado,
+    saldo, v.nuevo_capital || 0, (v.porcentaje_seguro || 0) / 100,
+    (v.tasa_mensual || 0) / 100, v.plazo_meses || 0, exonerado, v.modalidad,
   );
+  const MODAL_LABEL: Record<string, string> = { MENSUAL: 'mensuales', QUINCENAL: 'quincenales', SEMANAL: 'semanales', DIARIO: 'diarias' };
 
   const onSubmit = (data: ReamortizacionFormValues) =>
-    reamortizar.mutate(data, { onSuccess: () => onHecho?.() });
+    reamortizar.mutate(
+      { ...data, tasa_mensual: data.tasa_mensual / 100, porcentaje_seguro: data.porcentaje_seguro / 100 },
+      { onSuccess: () => onHecho?.() },
+    );
 
   if (saldoQ.isLoading || cupoQ.isLoading) {
     return <p className="text-sm text-slate-500">Cargando saldo y cupo…</p>;
@@ -95,8 +99,8 @@ export function ReamortizacionForm({ solicitudId, clienteId, onHecho }: Props) {
 
       <div className="grid grid-cols-3 gap-3">
         <div>
-          <label className="block text-sm font-medium">Tasa mensual</label>
-          <input type="number" step="0.01" {...register('tasa_mensual', { valueAsNumber: true })}
+          <label className="block text-sm font-medium">Tasa mensual (%)</label>
+          <input type="number" step="0.1" {...register('tasa_mensual', { valueAsNumber: true })}
             className="input" />
           {errors.tasa_mensual && <p className="field-error">{errors.tasa_mensual.message}</p>}
         </div>
@@ -124,8 +128,8 @@ export function ReamortizacionForm({ solicitudId, clienteId, onHecho }: Props) {
 
       {!exonerado ? (
         <div>
-          <label className="block text-sm font-medium">% Seguro (0.05–0.10)</label>
-          <input type="number" step="0.01" {...register('porcentaje_seguro', { valueAsNumber: true })}
+          <label className="block text-sm font-medium">% Seguro (5–10)</label>
+          <input type="number" step="0.1" {...register('porcentaje_seguro', { valueAsNumber: true })}
             className="input" />
           {errors.porcentaje_seguro && <p className="field-error">{errors.porcentaje_seguro.message}</p>}
         </div>
@@ -136,6 +140,16 @@ export function ReamortizacionForm({ solicitudId, clienteId, onHecho }: Props) {
           {errors.motivo_exoneracion && <p className="field-error">{errors.motivo_exoneracion.message}</p>}
         </div>
       )}
+
+      {/* Plan simulado según modalidad */}
+      <div className="rounded-xl bg-brand-50 p-4 text-sm ring-1 ring-brand-100">
+        <div className="font-semibold text-brand-700">Plan simulado</div>
+        <div className="mt-1 text-slate-700">
+          {preview.numeroCuotas > 0
+            ? <>{preview.numeroCuotas} cuotas {MODAL_LABEL[v.modalidad] ?? ''} de <b>{money(preview.valorCuota)}</b></>
+            : 'Completa capital y plazo para ver el plan.'}
+        </div>
+      </div>
 
       {/* Preview en vivo (espejo del backend) */}
       <div className="rounded-lg bg-slate-50 p-4 text-sm space-y-1">

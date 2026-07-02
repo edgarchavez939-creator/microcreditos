@@ -40,7 +40,7 @@ class ReamortizacionService
      */
     public function previsualizar(
         Solicitud $origen, float $nuevoCapital, float $pctSeguro,
-        float $tasaMensual, int $meses, bool $exonerado = false
+        float $tasaMensual, int $meses, bool $exonerado = false, string $modalidad = 'MENSUAL'
     ): array {
         $saldo = $this->saldoPendiente($origen);
         $pct   = $exonerado ? 0.0 : $pctSeguro;
@@ -51,7 +51,8 @@ class ReamortizacionService
         $totalDeuda      = round($nuevoCapital + $interes, 2);                // sin seguro
         $dineroAdicional = round($nuevoCapital - $saldo, 2);                  // capital nuevo − saldo refinanciado
         $recibidoCliente = round(max($valorDesembolso - $saldo, 0), 2);       // efectivo realmente entregado
-        $valorCuota      = round($totalDeuda / max($meses, 1), 2);
+        $numeroCuotas    = max($meses, 1) * LoanService::periodosPorMes($modalidad);
+        $valorCuota      = round($totalDeuda / $numeroCuotas, 2);
 
         return [
             'saldo_pendiente'     => $saldo,
@@ -65,6 +66,7 @@ class ReamortizacionService
             'interes_generado'    => $interes,
             'total_deuda_nueva'   => $totalDeuda,
             'valor_cuota'         => $valorCuota,
+            'numero_cuotas'       => $numeroCuotas,
         ];
     }
 
@@ -109,7 +111,8 @@ class ReamortizacionService
             throw new DomainException('El plazo en meses debe ser al menos 1.');
         }
 
-        $calc = $this->previsualizar($origen, $nuevoCapital, $pct, $tasaMensual, $meses, $exonerado);
+        $modalidad = $d['modalidad'] ?? 'MENSUAL';
+        $calc = $this->previsualizar($origen, $nuevoCapital, $pct, $tasaMensual, $meses, $exonerado, $modalidad);
 
         return DB::transaction(function () use ($origen, $cliente, $usuario, $d, $calc, $nuevoCapital, $pct, $tasaMensual, $meses, $saldo, $exonerado) {
             // 1) Crear crédito nuevo (independiente, ligado al origen)
@@ -124,7 +127,7 @@ class ReamortizacionService
                 'tipo_interes'         => 'FIJO',
                 'interes'              => $calc['interes_generado'],
                 'modalidad'            => $d['modalidad'] ?? 'MENSUAL',
-                'numero_cuotas'        => $meses,
+                'numero_cuotas'        => $calc['numero_cuotas'],
                 'plazo_meses'          => $meses,
                 'fecha_primer_pago'    => $d['fecha_primer_pago'] ?? now()->addMonth()->toDateString(),
                 'valor_cuota'          => $calc['valor_cuota'],

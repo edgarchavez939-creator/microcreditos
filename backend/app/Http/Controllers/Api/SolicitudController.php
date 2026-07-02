@@ -163,32 +163,17 @@ class SolicitudController extends Controller
     {
         $this->authorize('disburse', $solicitud);
 
-        $nc    = (int) $solicitud->numero_cuotas;
-        $antes = \App\Models\Cuota::where('solicitud_id', $solicitud->id)->count();
-
         try {
-            if ($antes === 0) {
+            // Idempotente: solo genera si aún no hay cuotas (no destruye pagos existentes)
+            if (\App\Models\Cuota::where('solicitud_id', $solicitud->id)->count() === 0) {
                 $fechaBase = \App\Models\Desembolso::where('solicitud_id', $solicitud->id)->value('fecha') ?? now();
                 $loans->generarCronograma($solicitud, $fechaBase);
             }
         } catch (\Throwable $e) {
-            return response()->json([
-                'message' => 'ERROR: '.$e->getMessage().' @'.class_basename($e->getFile()).':'.$e->getLine(),
-            ], 422);
+            return response()->json(['message' => 'No se pudo generar el plan: '.$e->getMessage()], 422);
         }
 
-        $despues = \App\Models\Cuota::where('solicitud_id', $solicitud->id)->count();
-
-        // ¿Dónde se pierden las cuotas? Comparar las tres vías de lectura.
-        $porRelacion = $solicitud->cuotas()->count();
-        $fresh = $solicitud->fresh()->load(['cuotas']);
-        $serial = (new SolicitudResource($fresh))->response(request())->getData(true);
-        $enResource = is_array($serial['data']['cuotas'] ?? null) ? count($serial['data']['cuotas']) : -1;
-
-        return response()->json([
-            'message' => "numero_cuotas={$nc} · where={$despues} · relacion={$porRelacion} · resource={$enResource}",
-            'diag'    => ['numero_cuotas' => $nc, 'where' => $despues, 'relacion' => $porRelacion, 'resource' => $enResource],
-        ]);
+        return $this->show($solicitud);
     }
 
     public function destroy(Request $request, Solicitud $solicitud)
