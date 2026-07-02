@@ -178,9 +178,17 @@ function FichaCredito({ creditoId }: { creditoId: number }) {
 
   if (isLoading) return <p className="mt-3 text-sm text-slate-500">Cargando ficha…</p>;
   if (isError) {
-    const e = qError as { response?: { data?: { message?: string }; status?: number } };
-    return <p className="mt-3 alert-error">No se pudo cargar la ficha (
-      {e?.response?.status ?? 'error'}): {e?.response?.data?.message ?? 'intenta de nuevo.'}</p>;
+    const e = qError as { response?: { data?: { message?: string; diag?: unknown }; status?: number } };
+    return (
+      <div className="mt-3 alert-error">
+        <p>No se pudo cargar la ficha ({e?.response?.status ?? 'error'}): {e?.response?.data?.message ?? 'intenta de nuevo.'}</p>
+        {e?.response?.data?.diag != null && (
+          <pre className="mt-2 overflow-x-auto whitespace-pre-wrap break-all text-[11px] leading-snug">
+            {JSON.stringify(e.response.data.diag, null, 1)}
+          </pre>
+        )}
+      </div>
+    );
   }
   if (!credito) return null;
 

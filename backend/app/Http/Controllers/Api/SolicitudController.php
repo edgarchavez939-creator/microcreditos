@@ -103,7 +103,9 @@ class SolicitudController extends Controller
 
     public function show(Solicitud $solicitud)
     {
-        $this->authorize('view', $solicitud);
+        if (request()->user()->cannot('view', $solicitud)) {
+            return $this->denegarConDiagnostico($solicitud);
+        }
 
         // Auto-reparación: si el crédito debería tener plan y no lo tiene, generarlo aquí mismo.
         if ((int) $solicitud->numero_cuotas > 0
@@ -303,7 +305,9 @@ class SolicitudController extends Controller
     /** Cuotas del crédito por consulta directa (endpoint dedicado, a prueba de cachés). */
     public function cuotas(Solicitud $solicitud)
     {
-        $this->authorize('view', $solicitud);
+        if (request()->user()->cannot('view', $solicitud)) {
+            return $this->denegarConDiagnostico($solicitud);
+        }
 
         // Auto-reparación: generar el plan si falta y debería existir
         if ((int) $solicitud->numero_cuotas > 0
@@ -356,5 +360,37 @@ class SolicitudController extends Controller
         return response()
             ->json(['data' => $cuotas, 'pagos' => $pagos, 'total' => $cuotas->count()])
             ->header('Cache-Control', 'no-store, no-cache, must-revalidate');
+    }
+
+    /** 403 auto-explicativo: muestra qué evaluó el permiso y qué rama falló. */
+    private function denegarConDiagnostico(Solicitud $solicitud)
+    {
+        $u = request()->user();
+        $areaCliente     = \Illuminate\Support\Facades\DB::table('clientes')->where('id', $solicitud->cliente_id)->value('area_id');
+        $cobradorCliente = \Illuminate\Support\Facades\DB::table('clientes')->where('id', $solicitud->cliente_id)->value('cobrador_id');
+        $areasUsuario    = \Illuminate\Support\Facades\DB::table('usuario_area')->where('usuario_id', (int) $u->id)->pluck('area_id');
+
+        return response()->json([
+            'message' => 'This action is unauthorized.',
+            'diag' => [
+                'usuario'   => ['id' => $u->id, 'tipo_id' => gettype($u->id), 'rol' => $u->rol, 'clase' => get_class($u)],
+                'solicitud' => [
+                    'id' => $solicitud->id, 'cobrador_id' => $solicitud->cobrador_id,
+                    'tipo_cobrador_id' => gettype($solicitud->cobrador_id),
+                    'area_id' => $solicitud->area_id, 'created_by' => $solicitud->created_by,
+                    'cliente_id' => $solicitud->cliente_id,
+                ],
+                'cliente'   => ['area_id' => $areaCliente, 'cobrador_id' => $cobradorCliente],
+                'areas_del_usuario' => $areasUsuario,
+                'ramas' => [
+                    'es_admin'          => $u->esAdministrador(),
+                    'es_supervisor'     => $u->esSupervisor(),
+                    'es_cobrador'       => $u->esCobrador(),
+                    'cobrador_match'    => (int) $solicitud->cobrador_id === (int) $u->id,
+                    'creador_match'     => (int) $solicitud->created_by === (int) $u->id,
+                    'cliente_cobrador_match' => $cobradorCliente !== null && (int) $cobradorCliente === (int) $u->id,
+                ],
+            ],
+        ], 403);
     }
 }
