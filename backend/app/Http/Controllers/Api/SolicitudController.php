@@ -321,13 +321,39 @@ class SolicitudController extends Controller
 
         $cuotas = \App\Models\Cuota::where('solicitud_id', $solicitud->id)
             ->orderBy('numero_cuota')
+            ->get()
+            ->map(fn ($c) => [
+                'id'                => $c->id,
+                'numero_cuota'      => (int) $c->numero_cuota,
+                'fecha_vencimiento' => $c->fecha_vencimiento?->format('Y-m-d'),
+                'valor'             => (float) $c->valor,
+                'abono_capital'     => (float) $c->abono_capital,
+                'abono_interes'     => (float) $c->abono_interes,
+                'valor_pagado'      => (float) $c->valor_pagado,
+                'saldo'             => (float) $c->saldo,
+                'estado'            => $c->estado,
+            ]);
+
+        // Extracto: pagos del crédito (más reciente primero)
+        $pagos = \App\Models\Pago::where('solicitud_id', $solicitud->id)
+            ->leftJoin('usuarios', 'usuarios.id', '=', 'pagos.registrado_por')
+            ->orderByDesc('pagos.created_at')
             ->get([
-                'id', 'numero_cuota', 'fecha_vencimiento', 'valor',
-                'abono_capital', 'abono_interes', 'valor_pagado', 'saldo', 'estado',
+                'pagos.id', 'pagos.fecha', 'pagos.created_at', 'pagos.valor',
+                'pagos.metodo', 'pagos.observaciones', 'usuarios.nombre as registrado_por',
+            ])
+            ->map(fn ($p) => [
+                'id'             => $p->id,
+                'fecha'          => \Illuminate\Support\Carbon::parse($p->fecha)->format('Y-m-d'),
+                'hora'           => $p->created_at ? \Illuminate\Support\Carbon::parse($p->created_at)->timezone('America/Bogota')->format('h:i a') : null,
+                'valor'          => (float) $p->valor,
+                'metodo'         => $p->metodo,
+                'observaciones'  => $p->observaciones,
+                'registrado_por' => $p->registrado_por,
             ]);
 
         return response()
-            ->json(['data' => $cuotas, 'total' => $cuotas->count()])
+            ->json(['data' => $cuotas, 'pagos' => $pagos, 'total' => $cuotas->count()])
             ->header('Cache-Control', 'no-store, no-cache, must-revalidate');
     }
 }

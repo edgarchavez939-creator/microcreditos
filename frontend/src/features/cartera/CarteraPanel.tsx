@@ -163,6 +163,7 @@ function FichaCredito({ creditoId }: { creditoId: number }) {
   const pagar = useRegistrarPago();
   const { data: cuotasData } = useCuotasCredito(creditoId);
   const cuotas = cuotasData?.data ?? [];
+  const pagosExtracto = cuotasData?.pagos ?? [];
   const generar = useGenerarCronograma();
   const rol = useAuthStore((st) => st.usuario?.rol);
   const puedeGenerar = rol === 'ADMINISTRADOR' || rol === 'SUPERVISOR';
@@ -317,7 +318,7 @@ function FichaCredito({ creditoId }: { creditoId: number }) {
       {/* HISTORIAL DE PAGOS */}
       <div>
         <h4 className="mb-2 text-sm font-semibold text-slate-700">Pagos realizados</h4>
-        {!credito.pagos || credito.pagos.length === 0 ? (
+        {pagosExtracto.length === 0 ? (
           <p className="text-sm text-slate-500">Aún no hay pagos registrados.</p>
         ) : (
           <div className="table-wrap">
@@ -330,7 +331,7 @@ function FichaCredito({ creditoId }: { creditoId: number }) {
                 </tr>
               </thead>
               <tbody>
-                {credito.pagos.map((p) => (
+                {pagosExtracto.map((p) => (
                   <tr key={p.id} className="border-t">
                     <td className="px-3 py-2">{p.fecha}</td>
                     <td className="px-3 py-2">{p.hora ?? '—'}</td>

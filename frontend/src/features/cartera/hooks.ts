@@ -83,12 +83,17 @@ export interface CuotaFila {
   abono_capital: number; abono_interes: number; valor_pagado: number; saldo: number; estado: string;
 }
 
+export interface PagoFila {
+  id: number; fecha: string; hora?: string | null; valor: number;
+  metodo: string; observaciones?: string | null; registrado_por?: string | null;
+}
+
 /** Cuotas por endpoint dedicado (consulta directa, inmune a cachés). */
 export function useCuotasCredito(id: number | null) {
   return useQuery({
     queryKey: ['credito-cuotas', id],
     queryFn: async () =>
-      (await api.get<{ data: CuotaFila[]; total: number }>(`/solicitudes/${id}/cuotas`)).data,
+      (await api.get<{ data: CuotaFila[]; pagos: PagoFila[]; total: number }>(`/solicitudes/${id}/cuotas`)).data,
     enabled: !!id,
     staleTime: 0,
     gcTime: 0,
