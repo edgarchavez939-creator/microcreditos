@@ -132,6 +132,13 @@ class LoanService
 
             $cuotas        = (int) $solicitud->numero_cuotas;
             $capital       = (float) $solicitud->monto_aprobado;
+
+            if ($cuotas < 1) {
+                throw new InvalidArgumentException('El crédito debe tener al menos 1 cuota (numero_cuotas inválido).');
+            }
+            if ($capital <= 0) {
+                throw new InvalidArgumentException('El crédito no tiene monto aprobado; no se puede generar el plan.');
+            }
             $totalRecaudar = (float) $solicitud->total_recaudar;
             $interesTotal  = round($totalRecaudar - $capital, 2);
 

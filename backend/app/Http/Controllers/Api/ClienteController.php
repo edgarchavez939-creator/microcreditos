@@ -89,6 +89,16 @@ class ClienteController extends Controller
         $data = $request->validated();
         // El número (y tipo) de documento no son editables una vez creado el cliente.
         $cliente->update(collect($data)->except(['referencias', 'documentos', 'numero_documento', 'tipo_documento'])->toArray());
+
+        // Si cambió el cobrador o el área, propagar a los créditos no finalizados del cliente
+        // (así el nuevo cobrador puede ver y gestionar la cartera de inmediato).
+        \App\Models\Solicitud::where('cliente_id', $cliente->id)
+            ->whereNotIn('estado', ['FINALIZADO', 'RECHAZADO'])
+            ->update([
+                'cobrador_id' => $cliente->cobrador_id,
+                'area_id'     => $cliente->area_id,
+            ]);
+
         return new ClienteResource($cliente->load(['area', 'cobrador', 'referencias']));
     }
 

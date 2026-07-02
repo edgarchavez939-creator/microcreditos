@@ -104,6 +104,22 @@ class SolicitudController extends Controller
     public function show(Solicitud $solicitud)
     {
         $this->authorize('view', $solicitud);
+
+        // Auto-reparación: si el crédito debería tener plan y no lo tiene, generarlo aquí mismo.
+        if ((int) $solicitud->numero_cuotas > 0
+            && (float) $solicitud->monto_aprobado > 0
+            && ! in_array($solicitud->estado, ['RECHAZADO'], true)
+            && \App\Models\Cuota::where('solicitud_id', $solicitud->id)->count() === 0) {
+            try {
+                $fechaBase = \App\Models\Desembolso::where('solicitud_id', $solicitud->id)->value('fecha')
+                    ?? $solicitud->fecha_primer_pago
+                    ?? now();
+                $this->loans->generarCronograma($solicitud, $fechaBase);
+            } catch (\Throwable $e) {
+                \Illuminate\Support\Facades\Log::warning("Auto-reparación de plan falló (solicitud {$solicitud->id}): ".$e->getMessage());
+            }
+        }
+
         return new SolicitudResource($solicitud->load(['cliente', 'cuotas', 'pagos' => fn ($q) => $q->latest(), 'pagos.registrador', 'creditoOrigen']));
     }
 
