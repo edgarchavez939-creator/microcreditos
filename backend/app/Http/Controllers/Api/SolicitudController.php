@@ -120,7 +120,16 @@ class SolicitudController extends Controller
             }
         }
 
-        return new SolicitudResource($solicitud->load(['cliente', 'cuotas', 'pagos' => fn ($q) => $q->latest(), 'pagos.registrador', 'creditoOrigen']));
+        $solicitud->load(['cliente', 'pagos' => fn ($q) => $q->latest(), 'pagos.registrador', 'creditoOrigen']);
+
+        // Cargar las cuotas con consulta directa (verificada) e inyectarlas en el modelo.
+        // Nota: la carga por relación fallaba en producción para este caso; esta vía es equivalente y comprobada.
+        $solicitud->setRelation(
+            'cuotas',
+            \App\Models\Cuota::where('solicitud_id', $solicitud->id)->orderBy('numero_cuota')->get(),
+        );
+
+        return new SolicitudResource($solicitud);
     }
 
     public function aprobar(Solicitud $solicitud, Request $request)
