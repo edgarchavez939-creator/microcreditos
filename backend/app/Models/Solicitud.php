@@ -68,7 +68,7 @@ class Solicitud extends Model
     /** Saldo pendiente = total deuda − pagos realizados. */
     public function saldoPendiente(): float
     {
-        $pagado = (float) $this->pagos()->sum('valor');
+        $pagado = (float) $this->pagos()->where('aplicado', true)->sum('valor');
         return round((float) $this->total_recaudar - $pagado, 2);
     }
 }

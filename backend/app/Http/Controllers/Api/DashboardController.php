@@ -33,7 +33,7 @@ class DashboardController extends Controller
             ->whereIn('estado', ['ACTIVO', 'DESEMBOLSADO'])
             ->sum('total_recaudar');
 
-        $recuperado = (float) Pago::whereIn('solicitud_id', $ids)->sum('valor');
+        $recuperado = (float) Pago::whereIn('solicitud_id', $ids)->where('aplicado', true)->sum('valor');
 
         $saldoEnCalle = (float) Cuota::whereIn('solicitud_id', $ids)
             ->whereIn('estado', ['PENDIENTE', 'PARCIAL', 'VENCIDA'])
@@ -53,7 +53,7 @@ class DashboardController extends Controller
             ->selectRaw('COUNT(*) as n, COALESCE(SUM(valor - valor_pagado),0) as total')
             ->first();
 
-        $recaudadoHoy = (float) Pago::whereIn('solicitud_id', $ids)->whereDate('fecha', $hoy)->sum('valor');
+        $recaudadoHoy = (float) Pago::whereIn('solicitud_id', $ids)->where('aplicado', true)->whereDate('fecha', $hoy)->sum('valor');
 
         $activos = (int) Solicitud::whereIn('id', $ids)->whereIn('estado', ['ACTIVO', 'DESEMBOLSADO'])->count();
 

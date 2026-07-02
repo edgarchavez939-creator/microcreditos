@@ -3,6 +3,7 @@ namespace App\Policies;
 
 use App\Models\Cliente;
 use App\Models\Usuario;
+use Illuminate\Support\Facades\DB;
 
 class ClientePolicy
 {
@@ -14,7 +15,10 @@ class ClientePolicy
     public function view(Usuario $u, Cliente $c): bool
     {
         if ($u->esAdministrador()) return true;
-        if ($u->esSupervisor())    return $u->areas()->where('areas.id', $c->area_id)->exists();
+        if ($u->esSupervisor()) {
+            return DB::table('usuario_area')->where('usuario_id', (int) $u->id)
+                ->where('area_id', (int) $c->area_id)->exists();
+        }
         return (int) $c->cobrador_id === (int) $u->id;
     }
 
@@ -26,7 +30,10 @@ class ClientePolicy
     public function update(Usuario $u, Cliente $c): bool
     {
         if ($u->esAdministrador()) return true;
-        if ($u->esSupervisor())    return $u->areas()->where('areas.id', $c->area_id)->exists();
+        if ($u->esSupervisor()) {
+            return DB::table('usuario_area')->where('usuario_id', (int) $u->id)
+                ->where('area_id', (int) $c->area_id)->exists();
+        }
         return (int) $c->cobrador_id === (int) $u->id;
     }
 }

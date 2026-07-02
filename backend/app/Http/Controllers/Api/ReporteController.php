@@ -69,6 +69,7 @@ class ReporteController extends Controller
             ->join('clientes as c', 'c.id', '=', 'p.cliente_id')
             ->leftJoin('usuarios as u', 'u.id', '=', 'p.registrado_por')
             ->whereIn('p.solicitud_id', $ids)
+            ->where('p.aplicado', true)
             ->whereBetween('p.fecha', [$data['desde'], $data['hasta']])
             ->orderBy('p.fecha')->orderBy('p.id')
             ->get([

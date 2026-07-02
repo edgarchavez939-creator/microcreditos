@@ -86,6 +86,7 @@ export interface CuotaFila {
 export interface PagoFila {
   id: number; fecha: string; hora?: string | null; valor: number;
   metodo: string; observaciones?: string | null; registrado_por?: string | null;
+  aplicado?: boolean;
 }
 
 /** Cuotas por endpoint dedicado (consulta directa, inmune a cachés). */

@@ -201,7 +201,12 @@ function FichaCredito({ creditoId }: { creditoId: number }) {
         referencia: metodo === 'TRANSFERENCIA' && referencia ? referencia : undefined,
         comprobante: comp, client_uuid: crypto.randomUUID() },
       {
-        onSuccess: () => { setMsg('Pago registrado ✓'); setValor(''); setObs(''); setComprobante(null); setBanco(''); setReferencia(''); },
+        onSuccess: () => {
+          setMsg(metodo === 'TRANSFERENCIA'
+            ? 'Pago por transferencia registrado. Se aplicará al saldo cuando el supervisor lo apruebe.'
+            : 'Pago registrado ✓');
+          setValor(''); setObs(''); setComprobante(null); setBanco(''); setReferencia('');
+        },
         onError: (e) => {
           const x = e as { message?: string; response?: { data?: { message?: string } } };
           if (x?.message === 'OFFLINE_ENCOLADO') setMsg('Sin conexión: el pago se guardó y se sincronizará al recuperar internet.');
@@ -335,7 +340,14 @@ function FichaCredito({ creditoId }: { creditoId: number }) {
                   <tr key={p.id} className="border-t">
                     <td className="px-3 py-2">{p.fecha}</td>
                     <td className="px-3 py-2">{p.hora ?? '—'}</td>
-                    <td className="px-3 py-2">{p.metodo}</td>
+                    <td className="px-3 py-2">
+                      {p.metodo}
+                      {p.aplicado === false && (
+                        <span className="ml-1.5 rounded-full bg-amber-50 px-2 py-0.5 text-[11px] text-amber-800 ring-1 ring-amber-100">
+                          En validación
+                        </span>
+                      )}
+                    </td>
                     <td className="px-3 py-2">{money(p.valor)}</td>
                     <td className="px-3 py-2">{p.registrado_por ?? '—'}</td>
                     <td className="px-3 py-2">{p.observaciones ?? '—'}</td>

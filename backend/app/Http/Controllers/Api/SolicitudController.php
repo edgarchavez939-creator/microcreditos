@@ -340,7 +340,7 @@ class SolicitudController extends Controller
             ->orderByDesc('pagos.created_at')
             ->get([
                 'pagos.id', 'pagos.fecha', 'pagos.created_at', 'pagos.valor',
-                'pagos.metodo', 'pagos.observaciones', 'usuarios.nombre as registrado_por',
+                'pagos.metodo', 'pagos.observaciones', 'pagos.aplicado', 'usuarios.nombre as registrado_por',
             ])
             ->map(fn ($p) => [
                 'id'             => $p->id,
@@ -350,6 +350,7 @@ class SolicitudController extends Controller
                 'metodo'         => $p->metodo,
                 'observaciones'  => $p->observaciones,
                 'registrado_por' => $p->registrado_por,
+                'aplicado'       => (bool) $p->aplicado,
             ]);
 
         return response()

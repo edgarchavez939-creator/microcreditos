@@ -78,18 +78,22 @@ class TransferenciaController extends Controller
         ]]);
     }
 
-    public function aprobar(Request $request, Transferencia $transferencia)
+    public function aprobar(Request $request, Transferencia $transferencia, PaymentService $pagos)
     {
         $this->soloValidadores($request);
         abort_unless($transferencia->estado === 'PENDIENTE_VALIDACION', 422, 'Esta transferencia ya fue validada.');
 
+        // 1) Aplicar el pago (cuotas + caja + cierre si queda saldado)
+        $pagos->aplicarPagoAprobado($transferencia, $request->user());
+
+        // 2) Marcar la transferencia como aprobada
         $transferencia->update([
             'estado'       => 'APROBADO',
             'validado_por' => $request->user()->id,
             'validado_at'  => now(),
         ]);
 
-        return response()->json(['message' => 'Transferencia aprobada.']);
+        return response()->json(['message' => 'Transferencia aprobada y pago aplicado.']);
     }
 
     public function rechazar(Request $request, Transferencia $transferencia, PaymentService $pagos)

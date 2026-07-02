@@ -11,9 +11,9 @@ class Pago extends Model
     protected $table = 'pagos';
     protected $fillable = [
         'cliente_id','solicitud_id','cuota_id','fecha','valor','metodo',
-        'registrado_por','client_uuid','observaciones',
+        'registrado_por','client_uuid','observaciones','aplicado',
     ];
-    protected $casts = ['fecha' => 'date', 'valor' => 'decimal:2'];
+    protected $casts = ['fecha' => 'date', 'valor' => 'decimal:2', 'aplicado' => 'boolean'];
 
     public function solicitud(): BelongsTo { return $this->belongsTo(Solicitud::class); }
     public function cuota(): BelongsTo { return $this->belongsTo(Cuota::class); }
