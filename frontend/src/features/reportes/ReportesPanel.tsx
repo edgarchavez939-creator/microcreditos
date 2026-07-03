@@ -10,6 +10,7 @@ const REPORTES = [
   { id: 'cartera', t: 'Cartera' },
   { id: 'pagos', t: 'Pagos' },
   { id: 'mora', t: 'Mora' },
+  { id: 'caja', t: 'Caja' },
 ] as const;
 type ReporteId = (typeof REPORTES)[number]['id'];
 
@@ -37,6 +38,14 @@ const COLUMNAS: Record<ReporteId, Array<{ k: string; t: string; dinero?: boolean
     { k: 'registrado_por', t: 'Registrado por' },
     { k: 'observaciones', t: 'Observaciones' },
   ],
+  caja: [
+    { k: 'fecha', t: 'Fecha' },
+    { k: 'tipo', t: 'Tipo' },
+    { k: 'concepto', t: 'Concepto' },
+    { k: 'valor', t: 'Valor', dinero: true },
+    { k: 'area', t: 'Área' },
+    { k: 'registrado_por', t: 'Registrado por' },
+  ],
   mora: [
     { k: 'numero_credito', t: 'N° crédito' },
     { k: 'cliente', t: 'Cliente' },
@@ -62,9 +71,9 @@ export function ReportesPanel() {
   const [hasta, setHasta] = useState(hoyISO());
 
   const { data, isLoading, isError } = useQuery({
-    queryKey: ['reporte', tipo, tipo === 'pagos' ? desde : '', tipo === 'pagos' ? hasta : ''],
+    queryKey: ['reporte', tipo, ['pagos','caja'].includes(tipo) ? desde : '', ['pagos','caja'].includes(tipo) ? hasta : ''],
     queryFn: async () => {
-      const params = tipo === 'pagos' ? { params: { desde, hasta } } : undefined;
+      const params = ['pagos','caja'].includes(tipo) ? { params: { desde, hasta } } : undefined;
       const r = await api.get<{ data: Fila[]; total?: number }>(`/reportes/${tipo}`, params);
       return r.data;
     },
@@ -104,7 +113,7 @@ export function ReportesPanel() {
           ))}
         </div>
 
-        {tipo === 'pagos' && (
+        {['pagos','caja'].includes(tipo) && (
           <>
             <label className="text-sm">
               <span className="block text-slate-500">Desde</span>

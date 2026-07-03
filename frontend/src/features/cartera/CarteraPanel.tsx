@@ -2,8 +2,24 @@ import { useState } from 'react';
 import { EstadoBadge } from '@/components/ui/EstadoBadge';
 import { money } from '@/lib/format';
 import type { Solicitud } from '@/types';
-import { useCreditoDetalle, useCreditos, useCuotasCredito, useDesembolsar, useEliminarCredito, useEventosCredito, useGenerarCronograma, useRegistrarPago } from './hooks';
+import { useAnularPago, useCreditoDetalle, useCreditos, useCuotasCredito, useDesembolsar, useEliminarCredito, useEventosCredito, useGenerarCronograma, useRegistrarPago } from './hooks';
 import { useAuthStore } from '@/stores/auth';
+
+function reciboWhatsApp(credito: Solicitud, p: { fecha: string; hora?: string | null; valor: number; metodo: string }): string | null {
+  const tel = (credito.cliente_telefono ?? '').replace(/\D/g, '');
+  if (!tel) return null;
+  const telFull = tel.length === 10 ? `57${tel}` : tel;
+  const msg =
+    `🧾 *RECIBO DE PAGO*\n\n` +
+    `Crédito: ${credito.numero_credito ?? `#${credito.id}`}\n` +
+    `Cliente: ${credito.cliente ?? ''}\n` +
+    `Fecha: ${p.fecha}${p.hora ? ` · ${p.hora}` : ''}\n` +
+    `Valor pagado: ${money(p.valor)}\n` +
+    `Medio: ${p.metodo === 'TRANSFERENCIA' ? 'Transferencia' : 'Efectivo'}\n` +
+    `Saldo pendiente: ${money(credito.saldo_pendiente)}\n\n` +
+    `¡Gracias por tu pago puntual!`;
+  return `https://wa.me/${telFull}?text=${encodeURIComponent(msg)}`;
+}
 
 function leerBase64(file: File): Promise<string> {
   return new Promise((res, rej) => {
@@ -340,7 +356,7 @@ function FichaCredito({ creditoId }: { creditoId: number }) {
                 <tr>
                   <th className="px-3 py-2">Fecha</th><th className="px-3 py-2">Hora</th>
                   <th className="px-3 py-2">Medio</th><th className="px-3 py-2">Valor</th>
-                  <th className="px-3 py-2">Registró</th><th className="px-3 py-2">Obs.</th>
+                  <th className="px-3 py-2">Registró</th><th className="px-3 py-2">Obs.</th><th className="px-3 py-2"></th>
                 </tr>
               </thead>
               <tbody>
@@ -359,6 +375,9 @@ function FichaCredito({ creditoId }: { creditoId: number }) {
                     <td className="px-3 py-2">{money(p.valor)}</td>
                     <td className="px-3 py-2">{p.registrado_por ?? '—'}</td>
                     <td className="px-3 py-2">{p.observaciones ?? '—'}</td>
+                    <td className="px-3 py-2">
+                      <AccionesPago p={p} credito={credito} creditoId={creditoId} />
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -427,6 +446,55 @@ function HistorialCredito({ creditoId }: { creditoId: number }) {
           )}
         </div>
       )}
+    </div>
+  );
+}
+
+function AccionesPago({ p, credito, creditoId }:
+  { p: import('./hooks').PagoFila; credito: Solicitud; creditoId: number }) {
+  const rol = useAuthStore((st) => st.usuario?.rol);
+  const anular = useAnularPago();
+  const [pidiendo, setPidiendo] = useState(false);
+  const [clave, setClave] = useState('');
+  const [err, setErr] = useState<string | null>(null);
+
+  const wa = p.aplicado !== false ? reciboWhatsApp(credito, p) : null;
+
+  return (
+    <div className="flex flex-col items-end gap-1">
+      <div className="flex gap-1.5 whitespace-nowrap">
+        {wa && (
+          <a href={wa} target="_blank" rel="noreferrer" className="text-xs font-medium text-money-700 hover:underline">
+            Recibo
+          </a>
+        )}
+        {rol === 'ADMINISTRADOR' && (
+          !pidiendo ? (
+            <button onClick={() => { setErr(null); setPidiendo(true); }}
+              className="text-xs text-rose-600 hover:underline">Anular</button>
+          ) : null
+        )}
+      </div>
+      {pidiendo && (
+        <div className="flex items-center gap-1.5">
+          <input type="password" value={clave} onChange={(e) => setClave(e.target.value)}
+            placeholder="Clave" className="input max-w-[110px] py-1 text-xs" />
+          <button
+            onClick={() => anular.mutate({ id: p.id, clave, creditoId }, {
+              onSuccess: () => setPidiendo(false),
+              onError: (e: unknown) => {
+                const x = e as { response?: { data?: { message?: string } } };
+                setErr(x?.response?.data?.message ?? 'No se pudo anular.');
+              },
+            })}
+            disabled={anular.isPending || !clave}
+            className="btn btn-sm bg-rose-600 px-2 py-1 text-xs text-white hover:bg-rose-700 disabled:opacity-50">
+            {anular.isPending ? '…' : 'OK'}
+          </button>
+          <button onClick={() => setPidiendo(false)} className="text-xs text-slate-400 hover:underline">✕</button>
+        </div>
+      )}
+      {err && <span className="text-[11px] text-rose-600">{err}</span>}
     </div>
   );
 }

@@ -28,4 +28,18 @@ class PagoController extends Controller
             'credito' => new SolicitudResource($credito->fresh()->load('cuotas')),
         ], 201);
     }
+
+    /** Anula un pago mal digitado (solo administrador, con clave especial). */
+    public function destroy(\Illuminate\Http\Request $request, \App\Models\Pago $pago, \App\Services\PaymentService $svc)
+    {
+        abort_unless($request->user()->esAdministrador(), 403, 'Solo el administrador puede anular pagos.');
+        $request->validate(['clave' => ['required', 'string']]);
+        if ($request->input('clave') !== config('app.credito_delete_key')) {
+            abort(422, 'Clave de anulación incorrecta.');
+        }
+
+        $svc->revertirPago($pago);
+
+        return response()->json(['message' => 'Pago anulado y crédito recalculado.']);
+    }
 }

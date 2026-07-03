@@ -12,9 +12,10 @@ use App\Http\Controllers\Api\ReporteController;
 use App\Http\Controllers\Api\TransferenciaController;
 use App\Http\Controllers\Api\ParametroController;
 use App\Http\Controllers\Api\MapaController;
+use App\Http\Controllers\Api\CajaController;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/health', fn () => response()->json(['status' => 'ok', 'version' => 'v30-diag-403', 'ts' => now()]));
+Route::get('/health', fn () => response()->json(['status' => 'ok', 'version' => 'v32-ruta-caja-recibo', 'ts' => now()]));
 
 // --- Auth (público con rate limiting) ---
 Route::prefix('auth')->group(function () {
@@ -38,6 +39,12 @@ Route::middleware('auth:api')->group(function () {
     Route::get('parametros', [ParametroController::class, 'index']);
     Route::patch('parametros', [ParametroController::class, 'update']);
     Route::get('mapa/clientes', [MapaController::class, 'clientes']);
+    Route::get('ruta-dia', [CajaController::class, 'rutaDia']);
+    Route::get('caja/resumen-dia', [CajaController::class, 'resumenDia']);
+    Route::post('caja/cerrar', [CajaController::class, 'cerrar']);
+    Route::get('caja/cierres', [CajaController::class, 'cierres']);
+    Route::get('reportes/caja', [ReporteController::class, 'caja']);
+    Route::delete('pagos/{pago}', [PagoController::class, 'destroy']);
     Route::apiResource('usuarios', UsuarioController::class)->only(['index', 'store', 'update']);
     Route::get('areas', [AreaController::class, 'index']);
     Route::post('areas', [AreaController::class, 'store']);
@@ -51,7 +58,8 @@ Route::middleware('auth:api')->group(function () {
 
     // Solicitudes de préstamo / ventas financiadas
     Route::apiResource('solicitudes', SolicitudController::class)
-        ->only(['index','store','show']);
+        ->only(['index','store','show'])
+        ->parameters(['solicitudes' => 'solicitud']); // fija el nombre del parámetro (evita la singularización inglesa 'solicitude')
     Route::post('solicitudes/{solicitud}/aprobar', [SolicitudController::class, 'aprobar']);
     Route::post('solicitudes/{solicitud}/rechazar', [SolicitudController::class, 'rechazar']);
     Route::post('solicitudes/{solicitud}/cronograma', [SolicitudController::class, 'generarCronograma']);

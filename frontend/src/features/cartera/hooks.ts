@@ -100,3 +100,18 @@ export function useCuotasCredito(id: number | null) {
     gcTime: 0,
   });
 }
+
+export function useAnularPago() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, clave }: { id: number; clave: string; creditoId: number }) =>
+      (await api.delete(`/pagos/${id}`, { data: { clave } })).data,
+    onSuccess: (_d, v) => {
+      qc.invalidateQueries({ queryKey: ['credito', v.creditoId] });
+      qc.invalidateQueries({ queryKey: ['credito-cuotas', v.creditoId] });
+      qc.invalidateQueries({ queryKey: ['cartera'] });
+      qc.invalidateQueries({ queryKey: ['dashboard'] });
+      qc.invalidateQueries({ queryKey: ['caja-resumen'] });
+    },
+  });
+}

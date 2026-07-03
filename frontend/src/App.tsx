@@ -13,6 +13,8 @@ import { ReportesPanel } from '@/features/reportes/ReportesPanel';
 import { TransferenciasPanel } from '@/features/transferencias/TransferenciasPanel';
 import { ParametrosPanel } from '@/features/parametros/ParametrosPanel';
 import { MapaPanel } from '@/features/mapa/MapaPanel';
+import { RutaPanel } from '@/features/ruta/RutaPanel';
+import { CajaPanel } from '@/features/caja/CajaPanel';
 import { Icon, type IconName } from '@/components/ui/icons';
 import { APP_VERSION } from '@/lib/version';
 import type { Rol } from '@/types';
@@ -21,6 +23,8 @@ interface MenuItem { id: string; label: string; icon: IconName; roles: Rol[] }
 
 const MENU: MenuItem[] = [
   { id: 'inicio',         label: 'Inicio',           icon: 'inicio',         roles: ['ADMINISTRADOR', 'SUPERVISOR', 'COBRADOR'] },
+  { id: 'ruta',           label: 'Ruta del día',     icon: 'ruta',           roles: ['ADMINISTRADOR', 'SUPERVISOR', 'COBRADOR'] },
+  { id: 'caja',           label: 'Caja',             icon: 'caja',           roles: ['ADMINISTRADOR', 'SUPERVISOR', 'COBRADOR'] },
   { id: 'solicitud',      label: 'Nueva solicitud',  icon: 'solicitud',      roles: ['ADMINISTRADOR', 'SUPERVISOR', 'COBRADOR'] },
   { id: 'clientes',       label: 'Clientes',         icon: 'clientes',       roles: ['ADMINISTRADOR', 'SUPERVISOR', 'COBRADOR'] },
   { id: 'pagos',          label: 'Cartera y pagos',  icon: 'cartera',        roles: ['ADMINISTRADOR', 'SUPERVISOR', 'COBRADOR'] },
@@ -131,6 +135,8 @@ function AppShell() {
 function Pantalla({ id }: { id: string }) {
   switch (id) {
     case 'inicio':         return <DashboardPanel />;
+    case 'ruta':           return <RutaPanel />;
+    case 'caja':           return <CajaPanel />;
     case 'solicitud':      return <PantallaSolicitud />;
     case 'reamortizacion': return <PantallaReamortizacion />;
     case 'clientes':       return <ClientesPanel />;

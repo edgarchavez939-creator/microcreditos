@@ -11,8 +11,9 @@ use Illuminate\Support\Facades\DB;
 
 class DashboardController extends Controller
 {
-    public function index(Request $request)
+    public function index(Request $request, \App\Services\MoraService $mora)
     {
+        $mora->sincronizar();
         $u = $request->user();
 
         // Alcance por rol: ids de solicitudes visibles para el usuario

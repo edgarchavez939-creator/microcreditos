@@ -113,4 +113,42 @@ class ReporteController extends Controller
 
         return response()->json(['data' => $filas, 'total' => (float) $filas->sum('valor_pendiente')]);
     }
+
+    /** Flujo de caja: movimientos entre fechas con totales. */
+    public function caja(Request $request)
+    {
+        $data = $request->validate([
+            'desde' => ['required', 'date'],
+            'hasta' => ['required', 'date', 'after_or_equal:desde'],
+        ]);
+        $u = $request->user();
+
+        $q = DB::table('movimientos_caja as m')
+            ->leftJoin('usuarios as us', 'us.id', '=', 'm.registrado_por')
+            ->leftJoin('areas as a', 'a.id', '=', 'm.area_id')
+            ->whereBetween('m.fecha', [$data['desde'], $data['hasta']]);
+
+        if ($u->esCobrador()) {
+            $q->where('m.registrado_por', $u->id);
+        } elseif ($u->esSupervisor()) {
+            $areas = DB::table('usuario_area')->where('usuario_id', $u->id)->pluck('area_id');
+            $q->whereIn('m.area_id', $areas);
+        }
+
+        $filas = $q->orderBy('m.fecha')->orderBy('m.id')->get([
+            'm.fecha', 'm.tipo', 'm.concepto',
+            DB::raw('CAST(m.valor AS FLOAT) as valor'),
+            'a.nombre as area', 'us.nombre as registrado_por',
+        ]);
+
+        $ingresos = (float) $filas->where('tipo', 'INGRESO')->sum('valor');
+        $egresos  = (float) $filas->where('tipo', 'EGRESO')->sum('valor');
+
+        return response()->json([
+            'data' => $filas,
+            'total' => round($ingresos - $egresos, 2),
+            'ingresos' => $ingresos,
+            'egresos' => $egresos,
+        ]);
+    }
 }

@@ -134,15 +134,23 @@ class PaymentService
      */
     public function revertirPagoDeTransferencia(\App\Models\Transferencia $transferencia): void
     {
-        DB::transaction(function () use ($transferencia) {
-            $pago = Pago::find($transferencia->pago_id);
-            if (! $pago) {
-                return; // nada que revertir
-            }
+        $pago = Pago::find($transferencia->pago_id);
+        if (! $pago) {
+            return; // nada que revertir
+        }
+        // Conservar el historial de la transferencia desligándola del pago
+        DB::table('transferencias')->where('id', $transferencia->id)->update(['pago_id' => null]);
+        $this->revertirPago($pago);
+    }
+
+    /** Revierte cualquier pago: elimina pago + caja y recalcula el crédito desde cero. */
+    public function revertirPago(Pago $pago): void
+    {
+        DB::transaction(function () use ($pago) {
             $creditoId = (int) $pago->solicitud_id;
 
-            // Conservar el historial de la transferencia (banco/referencia/motivo) desligándola del pago
-            DB::table('transferencias')->where('id', $transferencia->id)->update(['pago_id' => null]);
+            // Si alguna transferencia apunta a este pago, desligarla primero (conserva su historial)
+            DB::table('transferencias')->where('pago_id', $pago->id)->update(['pago_id' => null]);
 
             // Eliminar el ingreso de caja y el pago
             MovimientoCaja::where('referencia_tipo', 'PAGO')->where('referencia_id', $pago->id)->delete();
@@ -177,7 +185,7 @@ class PaymentService
     {
         $pendientes = Cuota::where('solicitud_id', $credito->id)
             ->where('estado', '!=', 'PAGADA')->count();
-        if ($pendientes === 0 && $credito->estado === EstadoSolicitud::ACTIVO->value) {
+        if ($pendientes === 0 && in_array($credito->estado, [EstadoSolicitud::ACTIVO->value, EstadoSolicitud::EN_MORA->value], true)) {
             $credito->total_pagado = (float) Pago::where('solicitud_id', $credito->id)
                 ->where('aplicado', true)->sum('valor');
             $credito->estado = EstadoSolicitud::PAGADO->value;
