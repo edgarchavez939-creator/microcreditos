@@ -453,10 +453,20 @@ class SolicitudController extends Controller
             'money'       => $money,
         ];
 
-        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('pdf.extracto', $datos)->setPaper('a4');
-        $nombre = 'extracto_' . ($solicitud->numero_credito ?? $solicitud->id) . '.pdf';
-
-        return $pdf->download($nombre);
+        try {
+            if (! class_exists(\Barryvdh\DomPDF\Facade\Pdf::class)) {
+                return response()->json([
+                    'message' => 'El generador de PDF (dompdf) no está instalado en el servidor. Se requiere redesplegar el backend.',
+                ], 500);
+            }
+            $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('pdf.extracto', $datos)->setPaper('a4');
+            $nombre = 'extracto_' . ($solicitud->numero_credito ?? $solicitud->id) . '.pdf';
+            return $pdf->download($nombre);
+        } catch (\Throwable $e) {
+            return response()->json([
+                'message' => 'Error generando el PDF: '.$e->getMessage(),
+            ], 500);
+        }
     }
 
     /** Devuelve un enlace firmado y temporal al PDF del extracto (para compartir por WhatsApp). */

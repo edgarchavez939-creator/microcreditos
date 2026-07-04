@@ -286,23 +286,23 @@ function FichaCredito({ creditoId }: { creditoId: number }) {
           <table className="table-base">
             <thead>
               <tr>
-                <th className="px-3 py-2">#</th><th className="px-3 py-2">Vence</th>
-                <th className="px-3 py-2">Capital</th><th className="px-3 py-2">Interés</th>
-                <th className="px-3 py-2">Valor</th><th className="px-3 py-2">Pagado</th>
-                <th className="px-3 py-2">Saldo</th><th className="px-3 py-2">Estado</th>
+                <th className="px-3 py-2 text-left">#</th><th className="px-3 py-2 text-left">Vence</th>
+                <th className="px-3 py-2 text-left">Capital</th><th className="px-3 py-2 text-left">Interés</th>
+                <th className="px-3 py-2 text-left">Valor</th><th className="px-3 py-2 text-left">Pagado</th>
+                <th className="px-3 py-2 text-left">Saldo</th><th className="px-3 py-2 text-left">Estado</th>
               </tr>
             </thead>
             <tbody>
               {cuotas.map((q) => (
                 <tr key={q.numero_cuota} className="border-t">
-                  <td className="px-3 py-2">{q.numero_cuota}</td>
-                  <td className="px-3 py-2">{fecha(q.fecha_vencimiento)}</td>
-                  <td className="px-3 py-2">{money(q.abono_capital ?? 0)}</td>
-                  <td className="px-3 py-2">{money(q.abono_interes ?? 0)}</td>
-                  <td className="px-3 py-2">{money(q.valor)}</td>
-                  <td className="px-3 py-2">{money(q.valor_pagado)}</td>
-                  <td className="px-3 py-2">{money(q.saldo)}</td>
-                  <td className="px-3 py-2">{q.estado}</td>
+                  <td className="px-3 py-2 text-left">{q.numero_cuota}</td>
+                  <td className="px-3 py-2 text-left">{fecha(q.fecha_vencimiento)}</td>
+                  <td className="px-3 py-2 text-left">{money(q.abono_capital ?? 0)}</td>
+                  <td className="px-3 py-2 text-left">{money(q.abono_interes ?? 0)}</td>
+                  <td className="px-3 py-2 text-left">{money(q.valor)}</td>
+                  <td className="px-3 py-2 text-left">{money(q.valor_pagado)}</td>
+                  <td className="px-3 py-2 text-left">{money(q.saldo)}</td>
+                  <td className="px-3 py-2 text-left">{q.estado}</td>
                 </tr>
               ))}
             </tbody>
@@ -369,9 +369,9 @@ function FichaCredito({ creditoId }: { creditoId: number }) {
             <table className="table-base">
               <thead>
                 <tr>
-                  <th className="px-3 py-2">Fecha</th><th className="px-3 py-2">Hora</th>
-                  <th className="px-3 py-2">Medio</th><th className="px-3 py-2">Valor</th>
-                  <th className="px-3 py-2">Registró</th><th className="px-3 py-2">Obs.</th><th className="px-3 py-2"></th>
+                  <th className="px-3 py-2 text-left">Fecha</th><th className="px-3 py-2 text-left">Hora</th>
+                  <th className="px-3 py-2 text-left">Medio</th><th className="px-3 py-2 text-left">Valor</th>
+                  <th className="px-3 py-2 text-left">Registró</th><th className="px-3 py-2 text-left">Obs.</th><th className="px-3 py-2"></th>
                 </tr>
               </thead>
               <tbody>
@@ -509,15 +509,30 @@ function ExtractoPdf({ credito }: { credito: Solicitud }) {
   const disponible = !!credito.numero_credito && (credito.numero_cuotas ?? 0) > 0;
   if (!disponible) return null;
 
-  // Abre el MISMO PDF institucional del servidor (idéntico al que se envía por WhatsApp),
-  // en una pestaña nueva y lista para imprimir/guardar. Trae plan y pagos.
+  // Obtiene el PDF institucional del servidor (mismo que se envía por WhatsApp) y lo abre
+  // en una pestaña para imprimir/guardar. Si el servidor falla, muestra el motivo real.
   const imprimir = async () => {
     setError(null); setCargando(true);
     try {
-      const r = await api.get<{ data: { url: string } }>(`/solicitudes/${credito.id}/extracto-enlace`);
-      window.open(r.data.data.url, '_blank');
-    } catch {
-      setError('No se pudo generar el extracto. Intenta de nuevo.');
+      const resp = await api.get(`/solicitudes/${credito.id}/extracto.pdf`, { responseType: 'blob' });
+      const blob = new Blob([resp.data], { type: 'application/pdf' });
+      const url = URL.createObjectURL(blob);
+      const win = window.open(url, '_blank');
+      // Liberar el objeto cuando la pestaña ya cargó (no antes, o se cierra vacía)
+      if (win) setTimeout(() => URL.revokeObjectURL(url), 60_000);
+      else setError('El navegador bloqueó la ventana. Permite ventanas emergentes e intenta de nuevo.');
+    } catch (e) {
+      const err = e as { response?: { data?: Blob } };
+      let detalle = '';
+      try {
+        if (err?.response?.data instanceof Blob) {
+          const txt = await err.response.data.text();
+          detalle = (JSON.parse(txt)?.message ?? '').toString();
+        }
+      } catch { /* ignore */ }
+      setError(detalle
+        ? `No se pudo generar el extracto: ${detalle}`
+        : 'No se pudo generar el extracto en el servidor. Intenta de nuevo.');
     } finally {
       setCargando(false);
     }
