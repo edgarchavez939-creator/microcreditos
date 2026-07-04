@@ -519,11 +519,46 @@ function ExtractoPdf({ credito }: { credito: Solicitud }) {
       a.download = `extracto_${credito.numero_credito ?? credito.id}.pdf`;
       document.body.appendChild(a); a.click(); a.remove();
       URL.revokeObjectURL(url);
-    } catch {
-      setError('No se pudo generar el PDF. Intenta de nuevo.');
+    } catch (e) {
+      // Con responseType blob, el error del servidor llega como Blob: leerlo para el mensaje real
+      const err = e as { response?: { data?: Blob } };
+      let detalle = '';
+      try {
+        if (err?.response?.data instanceof Blob) {
+          const txt = await err.response.data.text();
+          detalle = (JSON.parse(txt)?.message ?? '').toString();
+        }
+      } catch { /* ignore */ }
+      setError(detalle
+        ? `No se pudo generar el PDF en el servidor (${detalle}). Usa "Imprimir extracto" como alternativa.`
+        : 'No se pudo generar el PDF en el servidor. Usa "Imprimir extracto" como alternativa.');
     } finally {
       setCargando(false);
     }
+  };
+
+  // Alternativa client-side: abre una ventana imprimible (el usuario elige "Guardar como PDF")
+  const imprimir = () => {
+    const filas = (credito.cuotas ?? []).map((c) =>
+      `<tr><td>${c.numero_cuota}</td><td>${fecha(c.fecha_vencimiento)}</td>` +
+      `<td style="text-align:right">${money(c.valor)}</td>` +
+      `<td style="text-align:right">${money(c.valor_pagado ?? 0)}</td>` +
+      `<td style="text-align:right">${money(c.saldo ?? c.valor)}</td><td>${c.estado}</td></tr>`
+    ).join('');
+    const html = `<!doctype html><html><head><meta charset="utf-8"><title>Extracto ${credito.numero_credito ?? ''}</title>
+      <style>body{font-family:system-ui,sans-serif;color:#1e293b;padding:24px}
+      h1{color:#4f46e5;font-size:20px} table{width:100%;border-collapse:collapse;margin-top:8px}
+      th{background:#f1f5f9;text-align:left;padding:6px;font-size:12px}
+      td{padding:5px 6px;border-bottom:1px solid #f1f5f9;font-size:12px}
+      .kv{margin:4px 0;font-size:13px}</style></head><body>
+      <h1>Extracto de crédito ${credito.numero_credito ?? ''}</h1>
+      <div class="kv"><b>Cliente:</b> ${credito.cliente ?? ''}</div>
+      <div class="kv"><b>Capital aprobado:</b> ${money(credito.monto_aprobado)} · <b>Total a recaudar:</b> ${money(credito.total_recaudar)}</div>
+      <table><thead><tr><th>#</th><th>Vence</th><th>Valor</th><th>Pagado</th><th>Saldo</th><th>Estado</th></tr></thead>
+      <tbody>${filas}</tbody></table>
+      <script>window.onload=()=>window.print()</script></body></html>`;
+    const win = window.open('', '_blank');
+    if (win) { win.document.write(html); win.document.close(); }
   };
 
   const enviarWhatsApp = async () => {
@@ -558,8 +593,15 @@ function ExtractoPdf({ credito }: { credito: Solicitud }) {
           {cargando ? 'Generando…' : 'Descargar PDF'}
         </button>
         <button onClick={enviarWhatsApp} disabled={cargando}
-          className="inline-flex items-center gap-1.5 rounded-lg bg-money-500 px-3.5 py-2 text-sm font-medium text-white shadow-card hover:bg-money-600 disabled:opacity-50">
+          className="inline-flex items-center gap-1.5 rounded-lg px-3.5 py-2 text-sm font-medium text-white shadow-card disabled:opacity-50"
+          style={{ backgroundColor: '#16a34a' }}
+          onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#15803d')}
+          onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#16a34a')}>
           <Icon.transferencias /> Enviar por WhatsApp
+        </button>
+        <button onClick={imprimir}
+          className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 px-3.5 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50">
+          Imprimir extracto
         </button>
       </div>
       {error && <p className="mt-2 text-xs text-rose-600">{error}</p>}

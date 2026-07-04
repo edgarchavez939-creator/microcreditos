@@ -14,7 +14,12 @@ WORKDIR /var/www
 
 # Dependencias (capa cacheable)
 COPY composer.json composer.lock* ./
-RUN composer install --no-dev --no-scripts --no-autoloader --no-interaction --prefer-dist
+# Si hay lock, install (reproducible); si no, update para resolver dependencias nuevas (p.ej. dompdf).
+RUN if [ -f composer.lock ]; then \
+      composer install --no-dev --no-scripts --no-autoloader --no-interaction --prefer-dist; \
+    else \
+      composer update --no-dev --no-scripts --no-autoloader --no-interaction --prefer-dist; \
+    fi
 
 # Código
 COPY . .

@@ -12,7 +12,7 @@ export default {
           300: '#A1A8FB', 400: '#7C84F4', 500: '#4F46E5', 600: '#4338CA', 700: '#3730A3',
         },
         // Dinero / positivo
-        money: { DEFAULT: '#059669', 50: '#ECFDF5', 100: '#D1FAE5', 600: '#059669', 700: '#047857' },
+        money: { DEFAULT: '#059669', 50: '#ECFDF5', 100: '#D1FAE5', 400: '#34D399', 500: '#10B981', 600: '#059669', 700: '#047857' },
       },
       fontFamily: {
         sans: ['Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'],
