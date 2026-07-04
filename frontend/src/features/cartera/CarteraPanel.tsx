@@ -509,35 +509,6 @@ function ExtractoPdf({ credito }: { credito: Solicitud }) {
   const disponible = !!credito.numero_credito && (credito.numero_cuotas ?? 0) > 0;
   if (!disponible) return null;
 
-  // Obtiene el PDF institucional del servidor (mismo que se envía por WhatsApp) y lo abre
-  // en una pestaña para imprimir/guardar. Si el servidor falla, muestra el motivo real.
-  const imprimir = async () => {
-    setError(null); setCargando(true);
-    try {
-      const resp = await api.get(`/solicitudes/${credito.id}/extracto.pdf`, { responseType: 'blob' });
-      const blob = new Blob([resp.data], { type: 'application/pdf' });
-      const url = URL.createObjectURL(blob);
-      const win = window.open(url, '_blank');
-      // Liberar el objeto cuando la pestaña ya cargó (no antes, o se cierra vacía)
-      if (win) setTimeout(() => URL.revokeObjectURL(url), 60_000);
-      else setError('El navegador bloqueó la ventana. Permite ventanas emergentes e intenta de nuevo.');
-    } catch (e) {
-      const err = e as { response?: { data?: Blob } };
-      let detalle = '';
-      try {
-        if (err?.response?.data instanceof Blob) {
-          const txt = await err.response.data.text();
-          detalle = (JSON.parse(txt)?.message ?? '').toString();
-        }
-      } catch { /* ignore */ }
-      setError(detalle
-        ? `No se pudo generar el extracto: ${detalle}`
-        : 'No se pudo generar el extracto en el servidor. Intenta de nuevo.');
-    } finally {
-      setCargando(false);
-    }
-  };
-
   const enviarWhatsApp = async () => {
     setError(null); setCargando(true);
     try {
@@ -565,16 +536,12 @@ function ExtractoPdf({ credito }: { credito: Solicitud }) {
     <div>
       <h4 className="mb-2 text-sm font-semibold text-slate-700">Extracto del crédito</h4>
       <div className="flex flex-wrap items-center gap-2">
-        <button onClick={imprimir} disabled={cargando}
-          className="inline-flex items-center gap-1.5 rounded-lg bg-brand-500 px-3.5 py-2 text-sm font-medium text-white shadow-card hover:bg-brand-600 disabled:opacity-50">
-          {cargando ? 'Generando…' : 'Imprimir extracto'}
-        </button>
         <button onClick={enviarWhatsApp} disabled={cargando}
           className="inline-flex items-center gap-1.5 rounded-lg px-3.5 py-2 text-sm font-medium text-white shadow-card disabled:opacity-50"
           style={{ backgroundColor: '#16a34a' }}
           onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#15803d')}
           onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#16a34a')}>
-          <Icon.transferencias /> Enviar por WhatsApp
+          <Icon.transferencias /> Enviar extracto por WhatsApp
         </button>
       </div>
       {error && <p className="mt-2 text-xs text-rose-600">{error}</p>}
