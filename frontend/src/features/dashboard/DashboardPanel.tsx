@@ -1,10 +1,10 @@
 import { useQuery } from '@tanstack/react-query';
-import { useState } from 'react';
+import { lazy, Suspense, useState } from 'react';
 import { api } from '@/lib/api/client';
 import { money } from '@/lib/format';
 import { useAuthStore } from '@/stores/auth';
 import { useAreas } from '@/features/clientes/hooks';
-import { DashboardGraficas } from './DashboardGraficas';
+const DashboardGraficas = lazy(() => import('./DashboardGraficas').then((m) => ({ default: m.DashboardGraficas })));
 
 interface Indicadores {
   prestado: number;
@@ -77,7 +77,9 @@ export function DashboardPanel() {
               detalle="Requieren administrador" tono={d.exoneraciones_pendientes > 0 ? 'alerta' : 'neutro'} />
           </div>
 
-          <DashboardGraficas areas={areas} />
+          <Suspense fallback={<div className="h-40 animate-pulse rounded-2xl bg-slate-100" />}>
+            <DashboardGraficas areas={areas} />
+          </Suspense>
         </div>
       )}
     </div>
