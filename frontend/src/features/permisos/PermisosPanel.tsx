@@ -6,12 +6,24 @@ const ROLES = ['ADMINISTRADOR', 'SUPERVISOR', 'COBRADOR'] as const;
 type Rol = (typeof ROLES)[number];
 
 export function PermisosPanel() {
-  const { data, isLoading, isError } = useMatrizPermisos();
+  const { data, isLoading, isError, error } = useMatrizPermisos();
   const fijar = useFijarPermiso();
   const [vista, setVista] = useState<'roles' | 'usuario'>('roles');
 
   if (isLoading) return <p className="text-sm text-slate-500">Cargando permisos…</p>;
-  if (isError || !data) return <p className="alert-error">No se pudieron cargar los permisos.</p>;
+  if (isError || !data) {
+    const e = error as { response?: { data?: { message?: string; donde?: string }; status?: number } };
+    return (
+      <div className="alert-error">
+        <p>No se pudieron cargar los permisos ({e?.response?.status ?? 'error'}).</p>
+        {e?.response?.data?.message && (
+          <pre className="mt-2 whitespace-pre-wrap break-all text-[11px]">
+            {e.response.data.message}{e.response.data.donde ? `\n@ ${e.response.data.donde}` : ''}
+          </pre>
+        )}
+      </div>
+    );
+  }
 
   return (
     <div>
