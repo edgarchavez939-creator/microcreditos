@@ -13,9 +13,11 @@ use App\Http\Controllers\Api\TransferenciaController;
 use App\Http\Controllers\Api\ParametroController;
 use App\Http\Controllers\Api\MapaController;
 use App\Http\Controllers\Api\CajaController;
+use App\Http\Controllers\Api\OtpController;
+use App\Http\Controllers\Api\PermisoController;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/health', fn () => response()->json(['status' => 'ok', 'version' => 'v32-ruta-caja-recibo', 'ts' => now()]));
+Route::get('/health', fn () => response()->json(['status' => 'ok', 'version' => 'v33-otp-permisos-cliente', 'ts' => now()]));
 
 // --- Auth (público con rate limiting) ---
 Route::prefix('auth')->group(function () {
@@ -28,23 +30,29 @@ Route::middleware('auth:api')->group(function () {
     Route::get('auth/me', [AuthController::class, 'me']);
 
     // Áreas y Clientes
-    Route::get('dashboard', [DashboardController::class, 'index']);
-    Route::get('reportes/cartera', [ReporteController::class, 'cartera']);
-    Route::get('reportes/pagos', [ReporteController::class, 'pagos']);
-    Route::get('reportes/mora', [ReporteController::class, 'mora']);
-    Route::get('transferencias', [TransferenciaController::class, 'index']);
+    Route::get('dashboard', [DashboardController::class, 'index'])->middleware('modulo:inicio');
+    Route::get('reportes/cartera', [ReporteController::class, 'cartera'])->middleware('modulo:reportes');
+    Route::get('reportes/pagos', [ReporteController::class, 'pagos'])->middleware('modulo:reportes');
+    Route::get('reportes/mora', [ReporteController::class, 'mora'])->middleware('modulo:reportes');
+    Route::get('transferencias', [TransferenciaController::class, 'index'])->middleware('modulo:transferencias');
     Route::get('transferencias/{transferencia}/comprobante', [TransferenciaController::class, 'comprobante']);
-    Route::post('transferencias/{transferencia}/aprobar', [TransferenciaController::class, 'aprobar']);
-    Route::post('transferencias/{transferencia}/rechazar', [TransferenciaController::class, 'rechazar']);
+    Route::post('transferencias/{transferencia}/aprobar', [TransferenciaController::class, 'aprobar'])->middleware('modulo:transferencias');
+    Route::post('transferencias/{transferencia}/rechazar', [TransferenciaController::class, 'rechazar'])->middleware('modulo:transferencias');
     Route::get('parametros', [ParametroController::class, 'index']);
     Route::patch('parametros', [ParametroController::class, 'update']);
-    Route::get('mapa/clientes', [MapaController::class, 'clientes']);
-    Route::get('ruta-dia', [CajaController::class, 'rutaDia']);
-    Route::get('caja/resumen-dia', [CajaController::class, 'resumenDia']);
-    Route::post('caja/cerrar', [CajaController::class, 'cerrar']);
-    Route::get('caja/cierres', [CajaController::class, 'cierres']);
-    Route::get('reportes/caja', [ReporteController::class, 'caja']);
+    Route::get('mapa/clientes', [MapaController::class, 'clientes'])->middleware('modulo:mapa');
+    Route::get('ruta-dia', [CajaController::class, 'rutaDia'])->middleware('modulo:ruta');
+    Route::get('caja/resumen-dia', [CajaController::class, 'resumenDia'])->middleware('modulo:caja');
+    Route::post('caja/cerrar', [CajaController::class, 'cerrar'])->middleware('modulo:caja');
+    Route::get('caja/cierres', [CajaController::class, 'cierres'])->middleware('modulo:caja');
+    Route::get('reportes/caja', [ReporteController::class, 'caja'])->middleware('modulo:reportes');
     Route::delete('pagos/{pago}', [PagoController::class, 'destroy']);
+    Route::post('otp/generar', [OtpController::class, 'generar']);
+    Route::get('mis-permisos', [PermisoController::class, 'mios']);
+    Route::get('permisos', [PermisoController::class, 'index']);
+    Route::patch('permisos', [PermisoController::class, 'update']);
+    Route::get('clientes-buscar', [ClienteController::class, 'porDocumento']);
+    Route::get('reamortizacion/buscar', [ReamortizacionController::class, 'porNumero']);
     Route::apiResource('usuarios', UsuarioController::class)->only(['index', 'store', 'update']);
     Route::get('areas', [AreaController::class, 'index']);
     Route::post('areas', [AreaController::class, 'store']);

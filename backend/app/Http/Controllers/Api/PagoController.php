@@ -33,9 +33,9 @@ class PagoController extends Controller
     public function destroy(\Illuminate\Http\Request $request, \App\Models\Pago $pago, \App\Services\PaymentService $svc)
     {
         abort_unless($request->user()->esAdministrador(), 403, 'Solo el administrador puede anular pagos.');
-        $request->validate(['clave' => ['required', 'string']]);
-        if ($request->input('clave') !== config('app.credito_delete_key')) {
-            abort(422, 'Clave de anulación incorrecta.');
+        $request->validate(['otp' => ['required', 'string', 'digits:6']]);
+        if (! app(\App\Services\OtpService::class)->consumir($request->user(), 'ANULAR_PAGO', $request->input('otp'))) {
+            abort(422, 'Código de seguridad incorrecto, vencido o ya utilizado. Genera uno nuevo.');
         }
 
         $svc->revertirPago($pago);

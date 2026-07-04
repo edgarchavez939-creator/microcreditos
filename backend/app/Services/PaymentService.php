@@ -55,8 +55,9 @@ class PaymentService
             }
 
             // Registro de validación para transferencias
+            $transferencia = null;
             if ($d['metodo'] === 'TRANSFERENCIA') {
-                \App\Models\Transferencia::create([
+                $transferencia = \App\Models\Transferencia::create([
                     'pago_id'        => $pago->id,
                     'cliente_id'     => $credito->cliente_id,
                     'banco'          => $d['banco'] ?? 'No indicado',
@@ -67,12 +68,15 @@ class PaymentService
                 ]);
             }
 
-            // Comprobante de transferencia (opcional)
+            // Comprobante de transferencia (opcional): vinculado al pago Y a la transferencia,
+            // así la evidencia se conserva aunque el pago se revierta o el estado cambie.
             if (! empty($d['comprobante'])) {
                 $c = $d['comprobante'];
                 \App\Models\Documento::create([
                     'cliente_id'       => $credito->cliente_id,
                     'solicitud_id'     => $credito->id,
+                    'pago_id'          => $pago->id,
+                    'transferencia_id' => $transferencia?->id,
                     'categoria'        => 'COMPROBANTE_PAGO',
                     's3_key'           => null,
                     'nombre_original'  => $c['nombre'],
@@ -151,6 +155,9 @@ class PaymentService
 
             // Si alguna transferencia apunta a este pago, desligarla primero (conserva su historial)
             DB::table('transferencias')->where('pago_id', $pago->id)->update(['pago_id' => null]);
+
+            // El comprobante se CONSERVA como evidencia: solo se desliga del pago eliminado
+            DB::table('documentos')->where('pago_id', $pago->id)->update(['pago_id' => null]);
 
             // Eliminar el ingreso de caja y el pago
             MovimientoCaja::where('referencia_tipo', 'PAGO')->where('referencia_id', $pago->id)->delete();

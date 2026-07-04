@@ -36,6 +36,11 @@ class ParametroController extends Controller
             'descripcion' => 'Tope absoluto de aprobación de créditos en el sistema.',
             'default' => 50000000,
         ],
+        'otp.vigencia_minutos' => [
+            'etiqueta' => 'Vigencia del código de seguridad (minutos)', 'tipo' => 'entero',
+            'descripcion' => 'Tiempo de validez de los códigos OTP para anular pagos o eliminar créditos.',
+            'default' => 5,
+        ],
         'auth.max_intentos' => [
             'etiqueta' => 'Intentos de acceso fallidos permitidos', 'tipo' => 'entero',
             'descripcion' => 'Número de intentos de inicio de sesión antes de bloquear la cuenta.',

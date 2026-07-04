@@ -184,9 +184,9 @@ class SolicitudController extends Controller
         if (! $u->esAdministrador()) {
             abort(403, 'Solo el administrador puede eliminar créditos.');
         }
-        $request->validate(['clave' => ['required', 'string']]);
-        if ($request->input('clave') !== config('app.credito_delete_key')) {
-            abort(422, 'Clave de eliminación incorrecta.');
+        $request->validate(['otp' => ['required', 'string', 'digits:6']]);
+        if (! app(\App\Services\OtpService::class)->consumir($request->user(), 'ELIMINAR_CREDITO', $request->input('otp'))) {
+            abort(422, 'Código de seguridad incorrecto, vencido o ya utilizado. Genera uno nuevo.');
         }
 
         \Illuminate\Support\Facades\DB::transaction(function () use ($solicitud) {

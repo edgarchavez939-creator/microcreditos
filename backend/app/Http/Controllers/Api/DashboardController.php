@@ -18,6 +18,21 @@ class DashboardController extends Controller
 
         // Alcance por rol: ids de solicitudes visibles para el usuario
         $solicitudes = Solicitud::query();
+
+        // Filtro por áreas seleccionadas (admin y supervisor; el supervisor solo dentro de las suyas)
+        if ($areasParam = $request->query('areas')) {
+            $seleccion = array_filter(array_map('intval', explode(',', $areasParam)));
+            if (! empty($seleccion)) {
+                if ($u->esSupervisor()) {
+                    $propias = DB::table('usuario_area')->where('usuario_id', $u->id)->pluck('area_id')->all();
+                    $seleccion = array_values(array_intersect($seleccion, $propias));
+                }
+                if (! $u->esCobrador() && ! empty($seleccion)) {
+                    $solicitudes->whereIn('area_id', $seleccion);
+                }
+            }
+        }
+
         if ($u->esCobrador()) {
             $solicitudes->where(fn ($q) => $q->where('cobrador_id', $u->id)->orWhere('created_by', $u->id));
         } elseif ($u->esSupervisor()) {

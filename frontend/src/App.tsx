@@ -1,8 +1,6 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useAuthStore } from '@/stores/auth';
 import { LoginForm } from '@/features/auth/LoginForm';
-import { SolicitudForm } from '@/features/solicitudes/SolicitudForm';
-import { ReamortizacionPanel } from '@/features/renovaciones/ReamortizacionPanel';
 import { Placeholder } from '@/components/Placeholder';
 import { ClientesPanel } from '@/features/clientes/ClientesPanel';
 import { AprobacionesPanel } from '@/features/aprobaciones/AprobacionesPanel';
@@ -15,6 +13,10 @@ import { ParametrosPanel } from '@/features/parametros/ParametrosPanel';
 import { MapaPanel } from '@/features/mapa/MapaPanel';
 import { RutaPanel } from '@/features/ruta/RutaPanel';
 import { CajaPanel } from '@/features/caja/CajaPanel';
+import { PermisosPanel } from '@/features/permisos/PermisosPanel';
+import { useMisPermisos } from '@/features/permisos/hooks';
+import { BuscadorClienteSolicitud } from '@/features/solicitudes/BuscadorClienteSolicitud';
+import { BuscadorReamortizacion } from '@/features/renovaciones/BuscadorReamortizacion';
 import { Icon, type IconName } from '@/components/ui/icons';
 import { APP_VERSION } from '@/lib/version';
 import type { Rol } from '@/types';
@@ -35,6 +37,7 @@ const MENU: MenuItem[] = [
   { id: 'reportes',       label: 'Reportes',         icon: 'reportes',       roles: ['ADMINISTRADOR', 'SUPERVISOR'] },
   { id: 'usuarios',       label: 'Usuarios',         icon: 'usuarios',       roles: ['ADMINISTRADOR'] },
   { id: 'parametros',     label: 'Parámetros',       icon: 'parametros',     roles: ['ADMINISTRADOR'] },
+  { id: 'permisos',       label: 'Permisos',         icon: 'permisos',       roles: ['ADMINISTRADOR'] },
 ];
 
 const ROL_LABEL: Record<Rol, string> = {
@@ -53,9 +56,20 @@ export function App() {
 function AppShell() {
   const usuario = useAuthStore((s) => s.usuario)!;
   const logout = useAuthStore((s) => s.logout);
-  const visibles = MENU.filter((m) => m.roles.includes(usuario.rol));
+  const { data: permitidos } = useMisPermisos(true);
+  // Primero por rol (defensa base) y luego por permisos dinámicos del servidor.
+  // Mientras cargan los permisos, se usa solo el filtro por rol para no parpadear.
+  const visibles = MENU
+    .filter((m) => m.roles.includes(usuario.rol))
+    .filter((m) => !permitidos || permitidos.includes(m.id));
   const [activo, setActivo] = useState(visibles[0]?.id ?? 'solicitud');
   const [drawer, setDrawer] = useState(false);
+
+  useEffect(() => {
+    if (visibles.length > 0 && !visibles.some((m) => m.id === activo)) {
+      setActivo(visibles[0].id);
+    }
+  }, [visibles, activo]);
 
   const brand = (
     <div className="flex items-center gap-2.5 px-2">
@@ -147,45 +161,28 @@ function Pantalla({ id }: { id: string }) {
     case 'reportes':       return <ReportesPanel />;
     case 'usuarios':       return <UsuariosPanel />;
     case 'parametros':     return <ParametrosPanel />;
+    case 'permisos':       return <PermisosPanel />;
     default:
       return <Placeholder titulo="Módulo" descripcion="Pantalla no encontrada." />;
   }
 }
 
 function PantallaSolicitud() {
-  const [clienteId, setClienteId] = useState(1);
   return (
     <>
       <h2 className="mb-1 text-xl font-bold">Nueva solicitud</h2>
-      <p className="mb-5 text-sm text-slate-500">Registra un crédito y revisa el cálculo antes de enviarlo a aprobación.</p>
-      <label className="mb-4 flex items-center gap-2 text-sm">
-        Cliente #
-        <input type="number" value={clienteId} onChange={(e) => setClienteId(Number(e.target.value))}
-          className="w-24 rounded-lg ring-1 ring-inset ring-slate-300 px-2 py-1" />
-      </label>
-      <SolicitudForm clienteId={clienteId} areaId={1} />
+      <p className="mb-5 text-sm text-slate-500">Busca al cliente por su número de documento para evitar duplicados.</p>
+      <BuscadorClienteSolicitud />
     </>
   );
 }
 
 function PantallaReamortizacion() {
-  const [solicitudId, setSolicitudId] = useState(1);
-  const [clienteId, setClienteId] = useState(1);
   return (
     <>
       <h2 className="mb-1 text-xl font-bold">Reamortización</h2>
-      <p className="mb-5 text-sm text-slate-500">Renueva un crédito vigente conservando la trazabilidad con el crédito origen.</p>
-      <div className="mb-4 flex flex-wrap gap-3 text-sm">
-        <label className="flex items-center gap-2">Crédito #
-          <input type="number" value={solicitudId} onChange={(e) => setSolicitudId(Number(e.target.value))}
-            className="w-24 rounded-lg ring-1 ring-inset ring-slate-300 px-2 py-1" />
-        </label>
-        <label className="flex items-center gap-2">Cliente #
-          <input type="number" value={clienteId} onChange={(e) => setClienteId(Number(e.target.value))}
-            className="w-24 rounded-lg ring-1 ring-inset ring-slate-300 px-2 py-1" />
-        </label>
-      </div>
-      <ReamortizacionPanel solicitudId={solicitudId} clienteId={clienteId} />
+      <p className="mb-5 text-sm text-slate-500">Ingresa el número del crédito y el sistema cargará todo automáticamente.</p>
+      <BuscadorReamortizacion />
     </>
   );
 }

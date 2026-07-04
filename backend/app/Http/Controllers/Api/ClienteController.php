@@ -21,7 +21,7 @@ class ClienteController extends Controller
         if ($u->esCobrador()) {
             $query->where(fn ($q) => $q->where('cobrador_id', $u->id)->orWhere('created_by', $u->id));
         } elseif ($u->esSupervisor()) {
-            $areas = $u->areas()->pluck('areas.id');
+            $areas = \Illuminate\Support\Facades\DB::table('usuario_area')->where('usuario_id', $u->id)->pluck('area_id');
             $query->where(fn ($q) => $q->whereIn('area_id', $areas)->orWhere('created_by', $u->id));
         }
 
@@ -139,5 +139,37 @@ class ClienteController extends Controller
         })->filter(fn ($h) => count($h['campos']) > 0)->values();
 
         return response()->json(['data' => $historial]);
+    }
+
+    /**
+     * Búsqueda GLOBAL por número de documento (validación previa a crear solicitud).
+     * Evita duplicados: si el cliente ya existe (aunque sea de otro cobrador/área),
+     * devuelve su información para continuar con la solicitud sobre él.
+     */
+    public function porDocumento(Request $request)
+    {
+        $data = $request->validate(['documento' => ['required', 'string', 'regex:/^[0-9]+$/', 'max:40']]);
+
+        $c = Cliente::with(['area:id,nombre', 'cobrador:id,nombre'])
+            ->where('numero_documento', $data['documento'])
+            ->first();
+
+        if (! $c) {
+            return response()->json(['data' => null, 'existe' => false]);
+        }
+
+        return response()->json(['existe' => true, 'data' => [
+            'id'                 => $c->id,
+            'nombres'            => $c->nombres,
+            'apellidos'          => $c->apellidos,
+            'tipo_documento'     => $c->tipo_documento,
+            'numero_documento'   => $c->numero_documento,
+            'telefono_principal' => $c->telefono_principal,
+            'direccion'          => $c->direccion,
+            'area_id'            => $c->area_id,
+            'area'               => $c->area?->nombre,
+            'cobrador'           => $c->cobrador?->nombre,
+            'activo'             => (bool) $c->activo,
+        ]]);
     }
 }

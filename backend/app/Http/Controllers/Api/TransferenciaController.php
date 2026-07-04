@@ -57,24 +57,37 @@ class TransferenciaController extends Controller
     {
         $this->soloValidadores($request);
 
-        $pago = DB::table('pagos')->where('id', $transferencia->pago_id)->first();
-        abort_unless($pago, 404, 'Pago no encontrado.');
+        // Vínculo directo: el comprobante pertenece a ESTA transferencia y sobrevive
+        // a cualquier cambio de estado (aprobada, rechazada) o reversión del pago.
+        $doc = DB::table('documentos as d')
+            ->leftJoin('usuarios as u', 'u.id', '=', 'd.subido_por')
+            ->where('d.transferencia_id', $transferencia->id)
+            ->whereNotNull('d.contenido_base64')
+            ->orderByDesc('d.created_at')
+            ->first(['d.mime', 'd.nombre_original', 'd.contenido_base64', 'd.created_at', 'u.nombre as subido_por']);
 
-        // El comprobante se guardó como Documento del crédito, categoría COMPROBANTE_PAGO,
-        // subido por quien registró el pago alrededor de la misma fecha.
-        $doc = DB::table('documentos')
-            ->where('solicitud_id', $pago->solicitud_id)
-            ->where('categoria', 'COMPROBANTE_PAGO')
-            ->whereNotNull('contenido_base64')
-            ->orderByDesc('created_at')
-            ->first(['id', 'mime', 'nombre_original', 'contenido_base64', 'created_at']);
+        // Compatibilidad con comprobantes antiguos (sin vínculo directo)
+        if (! $doc && $transferencia->pago_id) {
+            $pago = DB::table('pagos')->where('id', $transferencia->pago_id)->first();
+            if ($pago) {
+                $doc = DB::table('documentos as d')
+                    ->leftJoin('usuarios as u', 'u.id', '=', 'd.subido_por')
+                    ->where('d.solicitud_id', $pago->solicitud_id)
+                    ->where('d.categoria', 'COMPROBANTE_PAGO')
+                    ->whereNotNull('d.contenido_base64')
+                    ->orderByDesc('d.created_at')
+                    ->first(['d.mime', 'd.nombre_original', 'd.contenido_base64', 'd.created_at', 'u.nombre as subido_por']);
+            }
+        }
 
         abort_unless($doc, 404, 'Esta transferencia no tiene comprobante adjunto.');
 
         return response()->json(['data' => [
-            'mime'   => $doc->mime,
-            'nombre' => $doc->nombre_original,
-            'base64' => $doc->contenido_base64,
+            'mime'        => $doc->mime,
+            'nombre'      => $doc->nombre_original,
+            'base64'      => $doc->contenido_base64,
+            'fecha_carga' => \Illuminate\Support\Carbon::parse($doc->created_at)->timezone('America/Bogota')->format('Y-m-d h:i a'),
+            'subido_por'  => $doc->subido_por,
         ]]);
     }
 

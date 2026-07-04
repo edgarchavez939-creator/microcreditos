@@ -106,7 +106,7 @@ function TarjetaTransferencia({ t }: { t: Transferencia }) {
   const { data: comprobante, isLoading: cargandoComp, isError: sinComp } = useQuery({
     queryKey: ['transferencia-comprobante', t.id],
     queryFn: async () =>
-      (await api.get<{ data: { mime: string; nombre: string; base64: string } }>(
+      (await api.get<{ data: { mime: string; nombre: string; base64: string; fecha_carga?: string; subido_por?: string } }>(
         `/transferencias/${t.id}/comprobante`)).data.data,
     enabled: verComprobante,
     retry: false,
@@ -152,8 +152,20 @@ function TarjetaTransferencia({ t }: { t: Transferencia }) {
             ) : sinComp || !comprobante ? (
               <p className="text-sm text-amber-700">Esta transferencia no tiene comprobante adjunto.</p>
             ) : (
-              <img src={`data:${comprobante.mime};base64,${comprobante.base64}`} alt={comprobante.nombre}
-                className="max-h-96 rounded-xl ring-1 ring-slate-200" />
+              <div>
+                <img src={`data:${comprobante.mime};base64,${comprobante.base64}`} alt={comprobante.nombre}
+                  className="max-h-96 rounded-xl ring-1 ring-slate-200" />
+                <p className="mt-1 text-xs text-slate-400">
+                  {comprobante.nombre}
+                  {comprobante.subido_por ? ` · adjuntado por ${comprobante.subido_por}` : ''}
+                  {comprobante.fecha_carga ? ` · ${comprobante.fecha_carga}` : ''}
+                </p>
+                <a href={`data:${comprobante.mime};base64,${comprobante.base64}`}
+                  download={comprobante.nombre ?? 'comprobante'}
+                  className="mt-1 inline-block text-xs font-medium text-brand hover:underline">
+                  Descargar comprobante
+                </a>
+              </div>
             )}
           </div>
         )}

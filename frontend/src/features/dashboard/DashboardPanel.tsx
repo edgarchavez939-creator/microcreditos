@@ -1,7 +1,9 @@
 import { useQuery } from '@tanstack/react-query';
+import { useState } from 'react';
 import { api } from '@/lib/api/client';
 import { money } from '@/lib/format';
 import { useAuthStore } from '@/stores/auth';
+import { useAreas } from '@/features/clientes/hooks';
 
 interface Indicadores {
   prestado: number;
@@ -16,23 +18,29 @@ interface Indicadores {
   exoneraciones_pendientes: number;
 }
 
-function useIndicadores() {
+function useIndicadores(areas: number[]) {
   return useQuery({
-    queryKey: ['dashboard'],
-    queryFn: async () => (await api.get<{ data: Indicadores }>('/dashboard')).data.data,
+    queryKey: ['dashboard', areas.join(',')],
+    queryFn: async () => (await api.get<{ data: Indicadores }>('/dashboard', {
+      params: areas.length ? { areas: areas.join(',') } : undefined,
+    })).data.data,
     refetchInterval: 60_000, // refresca cada minuto
   });
 }
 
 export function DashboardPanel() {
-  const { data: d, isLoading, isError } = useIndicadores();
   const rol = useAuthStore((s) => s.usuario?.rol);
+  const [areas, setAreas] = useState<number[]>([]);
+  const { data: d, isLoading, isError } = useIndicadores(areas);
   const alcance = rol === 'COBRADOR' ? 'de tu cartera' : rol === 'SUPERVISOR' ? 'de tus áreas' : 'de toda la operación';
+  const puedeFiltrar = rol === 'ADMINISTRADOR' || rol === 'SUPERVISOR';
 
   return (
     <div>
       <h2 className="mb-1 text-xl font-bold">Inicio</h2>
-      <p className="mb-5 text-sm text-slate-500">Resumen {alcance} al día de hoy.</p>
+      <p className="mb-4 text-sm text-slate-500">Resumen {alcance} al día de hoy.</p>
+
+      {puedeFiltrar && <FiltroAreas seleccion={areas} onCambio={setAreas} />}
 
       {isLoading ? (
         <p className="text-sm text-slate-500">Cargando indicadores…</p>
@@ -87,6 +95,30 @@ function Tarjeta({ titulo, valor, detalle, tono = 'neutro' }:
       <div className="text-xs font-medium uppercase tracking-wide opacity-70">{titulo}</div>
       <div className="mt-1 font-display text-2xl font-bold">{valor}</div>
       {detalle && <div className="mt-0.5 text-xs opacity-70">{detalle}</div>}
+    </div>
+  );
+}
+
+function FiltroAreas({ seleccion, onCambio }: { seleccion: number[]; onCambio: (a: number[]) => void }) {
+  const { data: areas } = useAreas();
+  if (!areas || areas.length === 0) return null;
+
+  const toggle = (id: number) => {
+    onCambio(seleccion.includes(id) ? seleccion.filter((x) => x !== id) : [...seleccion, id]);
+  };
+
+  return (
+    <div className="mb-5 flex flex-wrap items-center gap-2">
+      <button onClick={() => onCambio([])}
+        className={`rounded-full px-3 py-1 text-xs font-medium ring-1 transition ${seleccion.length === 0 ? 'bg-brand-500 text-white ring-brand-500' : 'bg-white text-slate-600 ring-slate-200 hover:ring-brand-300'}`}>
+        Todas
+      </button>
+      {areas.map((a) => (
+        <button key={a.id} onClick={() => toggle(a.id)}
+          className={`rounded-full px-3 py-1 text-xs font-medium ring-1 transition ${seleccion.includes(a.id) ? 'bg-brand-500 text-white ring-brand-500' : 'bg-white text-slate-600 ring-slate-200 hover:ring-brand-300'}`}>
+          {a.nombre}
+        </button>
+      ))}
     </div>
   );
 }

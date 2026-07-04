@@ -45,8 +45,8 @@ export function useGenerarCronograma() {
 export function useEliminarCredito() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async ({ id, clave }: { id: number; clave: string }) =>
-      (await api.delete(`/solicitudes/${id}`, { data: { clave } })).data,
+    mutationFn: async ({ id, otp }: { id: number; otp: string }) =>
+      (await api.delete(`/solicitudes/${id}`, { data: { otp } })).data,
     onSuccess: () => qc.invalidateQueries({ queryKey: ['cartera'] }),
   });
 }
@@ -104,8 +104,8 @@ export function useCuotasCredito(id: number | null) {
 export function useAnularPago() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async ({ id, clave }: { id: number; clave: string; creditoId: number }) =>
-      (await api.delete(`/pagos/${id}`, { data: { clave } })).data,
+    mutationFn: async ({ id, otp }: { id: number; otp: string; creditoId: number }) =>
+      (await api.delete(`/pagos/${id}`, { data: { otp } })).data,
     onSuccess: (_d, v) => {
       qc.invalidateQueries({ queryKey: ['credito', v.creditoId] });
       qc.invalidateQueries({ queryKey: ['credito-cuotas', v.creditoId] });

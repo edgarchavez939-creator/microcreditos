@@ -80,4 +80,55 @@ class ReamortizacionController extends Controller
             'cupo_disponible' => (float) $cliente->cupo_disponible,
         ]]);
     }
+
+    /**
+     * Carga todo lo necesario para reamortizar a partir del número de crédito:
+     * cliente, saldo, cupo y condiciones actuales (elimina la digitación manual de IDs).
+     */
+    public function porNumero(\Illuminate\Http\Request $request)
+    {
+        $data = $request->validate(['numero' => ['required', 'string', 'max:30']]);
+
+        $numero = strtoupper(trim($data['numero']));
+        // Acepta "CR-000007", "000007" o "7"
+        $s = \App\Models\Solicitud::query()
+            ->when(str_starts_with($numero, 'CR-'),
+                fn ($q) => $q->where('numero_credito', $numero),
+                fn ($q) => $q->where('numero_credito', 'CR-'.str_pad(ltrim($numero, '0') ?: '0', 6, '0', STR_PAD_LEFT))
+                             ->orWhere('id', (int) ltrim($numero, '0')))
+            ->with('cliente:id,nombres,apellidos,telefono_principal,cupo_inicial')
+            ->first();
+
+        abort_unless($s, 404, 'No se encontró un crédito con ese número.');
+        $this->authorize('reamortizar', $s);
+
+        abort_unless(in_array($s->estado, ['ACTIVO', 'EN_MORA', 'DESEMBOLSADO'], true), 422,
+            "El crédito está en estado {$s->estado}; solo se reamortizan créditos vigentes.");
+
+        $saldo = (float) \Illuminate\Support\Facades\DB::table('cuotas')
+            ->where('solicitud_id', $s->id)
+            ->whereIn('estado', ['PENDIENTE', 'PARCIAL', 'VENCIDA'])
+            ->sum(\Illuminate\Support\Facades\DB::raw('valor - valor_pagado'));
+
+        $reduccion = (float) \App\Models\Parametro::valor('cupo.reduccion_por_renovacion', 100000);
+        $renovaciones = \Illuminate\Support\Facades\DB::table('renovaciones')->where('cliente_id', $s->cliente_id)->count();
+        $cupoDisponible = max((float) ($s->cliente->cupo_inicial ?? 0) - $reduccion * $renovaciones, 0);
+
+        return response()->json(['data' => [
+            'solicitud_id'    => $s->id,
+            'numero_credito'  => $s->numero_credito,
+            'estado'          => $s->estado,
+            'cliente_id'      => $s->cliente_id,
+            'cliente'         => trim("{$s->cliente->nombres} {$s->cliente->apellidos}"),
+            'telefono'        => $s->cliente->telefono_principal,
+            'saldo_pendiente' => round($saldo, 2),
+            'cupo_disponible' => $cupoDisponible,
+            'condiciones'     => [
+                'tasa_interes' => (float) $s->tasa_interes,
+                'modalidad'    => $s->modalidad,
+                'plazo_meses'  => (int) ($s->plazo_meses ?? 0),
+                'valor_cuota'  => (float) $s->valor_cuota,
+            ],
+        ]]);
+    }
 }

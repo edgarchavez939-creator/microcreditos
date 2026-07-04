@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { EstadoBadge } from '@/components/ui/EstadoBadge';
 import { money } from '@/lib/format';
 import type { Solicitud } from '@/types';
+import { OtpConfirm } from '@/components/seguridad/OtpConfirm';
 import { useAnularPago, useCreditoDetalle, useCreditos, useCuotasCredito, useDesembolsar, useEliminarCredito, useEventosCredito, useGenerarCronograma, useRegistrarPago } from './hooks';
 import { useAuthStore } from '@/stores/auth';
 
@@ -77,7 +78,6 @@ function CreditoCard({ c }: { c: Solicitud }) {
   const rolActual = useAuthStore((st) => st.usuario?.rol);
   const eliminar = useEliminarCredito();
   const [borrando, setBorrando] = useState(false);
-  const [clave, setClave] = useState('');
 
   const err = (e: unknown) => {
     const x = e as { response?: { data?: { message?: string } } };
@@ -156,17 +156,13 @@ function CreditoCard({ c }: { c: Solicitud }) {
               Eliminar crédito
             </button>
           ) : (
-            <div className="flex flex-wrap items-center gap-2">
-              <input type="password" value={clave} onChange={(e) => setClave(e.target.value)}
-                placeholder="Clave de eliminación" className="input max-w-[200px] py-1.5 text-sm" />
-              <button
-                onClick={() => { setError(null); eliminar.mutate({ id: c.id, clave }, { onError: err }); }}
-                disabled={eliminar.isPending || !clave}
-                className="btn btn-sm bg-rose-600 text-white hover:bg-rose-700 disabled:opacity-50">
-                {eliminar.isPending ? 'Eliminando…' : 'Confirmar'}
-              </button>
-              <button onClick={() => { setBorrando(false); setClave(''); }} className="btn-ghost btn-sm">Cancelar</button>
-            </div>
+            <OtpConfirm
+              operacion="ELIMINAR_CREDITO"
+              etiqueta={eliminar.isPending ? 'Eliminando…' : 'Confirmar eliminación'}
+              pendiente={eliminar.isPending}
+              onConfirmar={(otp) => { setError(null); eliminar.mutate({ id: c.id, otp }, { onError: err }); }}
+              onCancelar={() => setBorrando(false)}
+            />
           )}
         </div>
       )}
@@ -455,7 +451,6 @@ function AccionesPago({ p, credito, creditoId }:
   const rol = useAuthStore((st) => st.usuario?.rol);
   const anular = useAnularPago();
   const [pidiendo, setPidiendo] = useState(false);
-  const [clave, setClave] = useState('');
   const [err, setErr] = useState<string | null>(null);
 
   const wa = p.aplicado !== false ? reciboWhatsApp(credito, p) : null;
@@ -468,31 +463,26 @@ function AccionesPago({ p, credito, creditoId }:
             Recibo
           </a>
         )}
-        {rol === 'ADMINISTRADOR' && (
-          !pidiendo ? (
-            <button onClick={() => { setErr(null); setPidiendo(true); }}
-              className="text-xs text-rose-600 hover:underline">Anular</button>
-          ) : null
+        {rol === 'ADMINISTRADOR' && !pidiendo && (
+          <button onClick={() => { setErr(null); setPidiendo(true); }}
+            className="text-xs text-rose-600 hover:underline">Anular</button>
         )}
       </div>
       {pidiendo && (
-        <div className="flex items-center gap-1.5">
-          <input type="password" value={clave} onChange={(e) => setClave(e.target.value)}
-            placeholder="Clave" className="input max-w-[110px] py-1 text-xs" />
-          <button
-            onClick={() => anular.mutate({ id: p.id, clave, creditoId }, {
-              onSuccess: () => setPidiendo(false),
-              onError: (e: unknown) => {
-                const x = e as { response?: { data?: { message?: string } } };
-                setErr(x?.response?.data?.message ?? 'No se pudo anular.');
-              },
-            })}
-            disabled={anular.isPending || !clave}
-            className="btn btn-sm bg-rose-600 px-2 py-1 text-xs text-white hover:bg-rose-700 disabled:opacity-50">
-            {anular.isPending ? '…' : 'OK'}
-          </button>
-          <button onClick={() => setPidiendo(false)} className="text-xs text-slate-400 hover:underline">✕</button>
-        </div>
+        <OtpConfirm
+          operacion="ANULAR_PAGO"
+          etiqueta={anular.isPending ? 'Anulando…' : 'Anular pago'}
+          pendiente={anular.isPending}
+          compacto
+          onConfirmar={(otp) => anular.mutate({ id: p.id, otp, creditoId }, {
+            onSuccess: () => setPidiendo(false),
+            onError: (e: unknown) => {
+              const x = e as { response?: { data?: { message?: string } } };
+              setErr(x?.response?.data?.message ?? 'No se pudo anular.');
+            },
+          })}
+          onCancelar={() => setPidiendo(false)}
+        />
       )}
       {err && <span className="text-[11px] text-rose-600">{err}</span>}
     </div>
