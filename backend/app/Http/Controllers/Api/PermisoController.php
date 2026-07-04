@@ -14,29 +14,24 @@ class PermisoController extends Controller
     {
         abort_unless($request->user()->esAdministrador(), 403, 'Solo el administrador gestiona permisos.');
 
-        try {
-            $modulos = collect(PermisoService::MODULOS)->map(fn ($def, $id) => [
-                'id' => $id, 'etiqueta' => $def['etiqueta'], 'defecto' => $def['defecto'],
-            ])->values();
+        $modulos = collect(PermisoService::MODULOS)->map(fn ($def, $id) => [
+            'id' => $id, 'etiqueta' => $def['etiqueta'], 'defecto' => $def['defecto'],
+        ])->values();
 
-            $reglasRol = DB::table('permisos')->whereNull('usuario_id')
-                ->get(['modulo', 'rol', 'permitido']);
+        $reglasRol = DB::table('permisos')->whereNull('usuario_id')
+            ->get(['modulo', 'rol', 'permitido']);
 
-            $reglasUsuario = DB::table('permisos')->whereNull('rol')
-                ->join('usuarios', 'usuarios.id', '=', 'permisos.usuario_id')
-                ->get(['permisos.modulo', 'permisos.usuario_id', 'usuarios.nombre', 'permisos.permitido']);
+        // Se califica 'permisos.rol' porque 'usuarios' también tiene columna 'rol'
+        // (sin el prefijo, PostgreSQL la considera ambigua en el join).
+        $reglasUsuario = DB::table('permisos')->whereNull('permisos.rol')
+            ->join('usuarios', 'usuarios.id', '=', 'permisos.usuario_id')
+            ->get(['permisos.modulo', 'permisos.usuario_id', 'usuarios.nombre', 'permisos.permitido']);
 
-            return response()->json(['data' => [
-                'modulos'         => $modulos,
-                'reglas_rol'      => $reglasRol,
-                'reglas_usuario'  => $reglasUsuario,
-            ]]);
-        } catch (\Throwable $e) {
-            return response()->json([
-                'message' => 'ERROR permisos: '.$e->getMessage(),
-                'donde'   => class_basename($e->getFile()).':'.$e->getLine(),
-            ], 500);
-        }
+        return response()->json(['data' => [
+            'modulos'         => $modulos,
+            'reglas_rol'      => $reglasRol,
+            'reglas_usuario'  => $reglasUsuario,
+        ]]);
     }
 
     /** Crea/actualiza una regla de acceso (por rol o por usuario). Efecto inmediato. */
