@@ -1,10 +1,13 @@
 import { useState } from 'react';
 import { EstadoBadge } from '@/components/ui/EstadoBadge';
 import { money } from '@/lib/format';
+import { Icon } from '@/components/ui/icons';
 import type { Solicitud } from '@/types';
 import { OtpConfirm } from '@/components/seguridad/OtpConfirm';
 import { useAnularPago, useCreditoDetalle, useCreditos, useCuotasCredito, useDesembolsar, useEliminarCredito, useEventosCredito, useGenerarCronograma, useRegistrarPago } from './hooks';
 import { useAuthStore } from '@/stores/auth';
+
+const MODALIDAD_LABEL: Record<string, string> = { DIARIO: 'Diario', SEMANAL: 'Semanal', QUINCENAL: 'Quincenal', MENSUAL: 'Mensual' };
 
 function reciboWhatsApp(credito: Solicitud, p: { fecha: string; hora?: string | null; valor: number; metodo: string }): string | null {
   const tel = (credito.cliente_telefono ?? '').replace(/\D/g, '');
@@ -110,6 +113,9 @@ function CreditoCard({ c }: { c: Solicitud }) {
         <Item label="Capital" value={money(c.monto_aprobado)} />
         <Item label="Total deuda" value={money(c.total_recaudar)} />
         <Item label="Cuotas" value={`${c.numero_cuotas}`} />
+        <Item label="Modalidad" value={MODALIDAD_LABEL[c.modalidad] ?? c.modalidad} />
+        <Item label="Valor cuota" value={money(c.valor_cuota)} />
+        <Item label="Tasa mensual" value={`${(Number(c.tasa_interes) * 100).toFixed(1)}%`} />
       </dl>
 
       {error && <p className="mt-3 alert-error">{error}</p>}
@@ -142,8 +148,17 @@ function CreditoCard({ c }: { c: Solicitud }) {
 
       {esPagable && (
         <div className="mt-4">
-          <button onClick={() => setAbierto(!abierto)} className="text-sm text-brand underline">
-            {abierto ? 'Ocultar ficha' : 'Ver ficha: plan, pagos y registro'}
+          <button onClick={() => setAbierto(!abierto)}
+            className={`inline-flex items-center gap-1.5 rounded-lg px-3.5 py-2 text-sm font-medium transition ${
+              abierto
+                ? 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                : 'bg-brand-500 text-white shadow-card hover:bg-brand-600'
+            }`}>
+            {abierto ? (
+              <>Ocultar ficha</>
+            ) : (
+              <><Icon.cartera /> Ver ficha: plan, pagos y registro</>
+            )}
           </button>
           {abierto && <FichaCredito creditoId={c.id} />}
         </div>

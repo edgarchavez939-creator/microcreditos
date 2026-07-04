@@ -31,6 +31,11 @@ export function PermisosPanel() {
         </button>
       </div>
 
+      <div className="mb-3 flex items-center gap-4 text-xs text-slate-500">
+        <span className="flex items-center gap-1.5"><span className="h-4 w-7 rounded-full bg-money-500" /> Permitido</span>
+        <span className="flex items-center gap-1.5"><span className="h-4 w-7 rounded-full bg-rose-500" /> Restringido</span>
+      </div>
+
       {vista === 'roles' ? <MatrizRoles data={data} fijar={fijar} /> : <MatrizUsuario data={data} fijar={fijar} />}
     </div>
   );
@@ -52,7 +57,7 @@ function MatrizRoles({ data, fijar }: { data: NonNullable<ReturnType<typeof useM
           </tr>
         </thead>
         <tbody>
-          {data.modulos.map((m) => (
+          {data.modulos.filter((m) => m.id !== 'permisos').map((m) => (
             <tr key={m.id} className="border-t">
               <td className="px-3 py-2 font-medium">{m.etiqueta}</td>
               {ROLES.map((rol) => {
@@ -102,7 +107,7 @@ function MatrizUsuario({ data, fijar }: { data: NonNullable<ReturnType<typeof us
             <table className="table-base">
               <thead><tr><th className="px-3 py-2 text-left">Módulo</th><th className="px-3 py-2 text-center">Acceso específico</th></tr></thead>
               <tbody>
-                {data.modulos.map((m) => {
+                {data.modulos.filter((m) => m.id !== 'permisos').map((m) => {
                   const regla = data.reglas_usuario.find((r) => r.modulo === m.id && r.usuario_id === usuario.id);
                   const heredado = m.defecto.includes(usuario.rol);
                   return (
@@ -134,7 +139,8 @@ function Interruptor({ activo, onChange, deshabilitado }: { activo: boolean; onC
     <button
       onClick={() => onChange(!activo)}
       disabled={deshabilitado}
-      className={`relative inline-flex h-6 w-11 items-center rounded-full transition disabled:opacity-40 ${activo ? 'bg-money-500' : 'bg-slate-300'}`}
+      title={activo ? 'Permitido — clic para desactivar' : 'Restringido — clic para activar'}
+      className={`relative inline-flex h-6 w-11 items-center rounded-full transition disabled:opacity-40 ${activo ? 'bg-money-500' : 'bg-rose-500'}`}
       aria-pressed={activo}
     >
       <span className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition ${activo ? 'translate-x-5' : 'translate-x-0.5'}`} />
