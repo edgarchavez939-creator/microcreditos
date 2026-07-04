@@ -161,6 +161,7 @@ class ReporteController extends Controller
         ]);
         $u = $request->user();
 
+        try {
         // Alcance: admin ve todos; supervisor ve cobradores de sus areas; cobrador solo a si mismo
         $cobradores = DB::table('usuarios')->where('rol', 'COBRADOR')->where('activo', true);
         if ($u->esSupervisor()) {
@@ -177,7 +178,7 @@ class ReporteController extends Controller
             $creditosIds = DB::table('solicitudes')
                 ->where('cobrador_id', $c->id)
                 ->whereIn('estado', ['ACTIVO', 'DESEMBOLSADO', 'EN_MORA', 'PAGADO'])
-                ->pluck('id');
+                ->pluck('id')->all();
 
             $recaudado = (float) DB::table('pagos')
                 ->where('registrado_por', $c->id)
@@ -193,12 +194,13 @@ class ReporteController extends Controller
 
             $clientes = (int) DB::table('clientes')->where('cobrador_id', $c->id)->where('activo', true)->count();
 
-            $saldoTotal = (float) DB::table('cuotas')
+            // Si el cobrador no tiene creditos, evitar IN () y devolver ceros
+            $saldoTotal = empty($creditosIds) ? 0.0 : (float) DB::table('cuotas')
                 ->whereIn('solicitud_id', $creditosIds)
                 ->whereIn('estado', ['PENDIENTE', 'PARCIAL', 'VENCIDA'])
                 ->sum(DB::raw('valor - valor_pagado'));
 
-            $saldoVencido = (float) DB::table('cuotas')
+            $saldoVencido = empty($creditosIds) ? 0.0 : (float) DB::table('cuotas')
                 ->whereIn('solicitud_id', $creditosIds)
                 ->where('estado', 'VENCIDA')
                 ->sum(DB::raw('valor - valor_pagado'));
@@ -208,7 +210,7 @@ class ReporteController extends Controller
             return [
                 'cobrador'       => $c->nombre,
                 'clientes'       => $clientes,
-                'creditos'       => $creditosIds->count(),
+                'creditos'       => count($creditosIds),
                 'numero_pagos'   => $numPagos,
                 'recaudado'      => $recaudado,
                 'saldo_cartera'  => round($saldoTotal, 2),
@@ -218,5 +220,11 @@ class ReporteController extends Controller
         })->sortByDesc('recaudado')->values();
 
         return response()->json(['data' => $filas]);
+        } catch (\Throwable $e) {
+            return response()->json([
+                'message' => 'ERROR productividad: '.$e->getMessage(),
+                'donde'   => class_basename($e->getFile()).':'.$e->getLine(),
+            ], 500);
+        }
     }
 }

@@ -81,7 +81,7 @@ export function ReportesPanel() {
   const [desde, setDesde] = useState(haceUnMesISO());
   const [hasta, setHasta] = useState(hoyISO());
 
-  const { data, isLoading, isError } = useQuery({
+  const { data, isLoading, isError, error } = useQuery({
     queryKey: ['reporte', tipo, ['pagos','caja','productividad'].includes(tipo) ? desde : '', ['pagos','caja','productividad'].includes(tipo) ? hasta : ''],
     queryFn: async () => {
       const params = ['pagos','caja','productividad'].includes(tipo) ? { params: { desde, hasta } } : undefined;
@@ -145,7 +145,17 @@ export function ReportesPanel() {
       {isLoading ? (
         <p className="text-sm text-slate-500">Cargando reporte…</p>
       ) : isError ? (
-        <p className="alert-error">No se pudo cargar el reporte. Intenta de nuevo.</p>
+        <div className="alert-error">
+          <p>No se pudo cargar el reporte. Intenta de nuevo.</p>
+          {(() => {
+            const e = error as { response?: { data?: { message?: string; donde?: string } } };
+            return e?.response?.data?.message ? (
+              <pre className="mt-2 whitespace-pre-wrap break-all text-[11px]">
+                {e.response.data.message}{e.response.data.donde ? `\n@ ${e.response.data.donde}` : ''}
+              </pre>
+            ) : null;
+          })()}
+        </div>
       ) : filas.length === 0 ? (
         <p className="card card-pad border-2 border-dashed border-slate-200 text-center text-sm text-slate-500 shadow-none ring-0">
           No hay datos para este reporte.
