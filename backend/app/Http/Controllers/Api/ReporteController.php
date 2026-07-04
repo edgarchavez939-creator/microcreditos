@@ -161,7 +161,6 @@ class ReporteController extends Controller
         ]);
         $u = $request->user();
 
-        try {
         // Alcance: admin ve todos; supervisor ve cobradores de sus areas; cobrador solo a si mismo
         $cobradores = DB::table('usuarios')->where('rol', 'COBRADOR')->where('activo', true);
         if ($u->esSupervisor()) {
@@ -220,11 +219,5 @@ class ReporteController extends Controller
         })->sortByDesc('recaudado')->values();
 
         return response()->json(['data' => $filas]);
-        } catch (\Throwable $e) {
-            return response()->json([
-                'message' => 'ERROR productividad: '.$e->getMessage(),
-                'donde'   => class_basename($e->getFile()).':'.$e->getLine(),
-            ], 500);
-        }
     }
 }

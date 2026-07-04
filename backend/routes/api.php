@@ -17,7 +17,7 @@ use App\Http\Controllers\Api\OtpController;
 use App\Http\Controllers\Api\PermisoController;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/health', fn () => response()->json(['status' => 'ok', 'version' => 'v40-fix-productividad', 'ts' => now()]));
+Route::get('/health', fn () => response()->json(['status' => 'ok', 'version' => 'v41-ruta-productividad', 'ts' => now()]));
 
 // --- Auth (público con rate limiting) ---
 Route::prefix('auth')->group(function () {
@@ -47,6 +47,7 @@ Route::middleware('auth:api')->group(function () {
     Route::post('caja/cerrar', [CajaController::class, 'cerrar'])->middleware('modulo:caja');
     Route::get('caja/cierres', [CajaController::class, 'cierres'])->middleware('modulo:caja');
     Route::get('reportes/caja', [ReporteController::class, 'caja'])->middleware('modulo:reportes');
+    Route::get('reportes/productividad', [ReporteController::class, 'productividad'])->middleware('modulo:reportes');
     Route::delete('pagos/{pago}', [PagoController::class, 'destroy']);
     Route::post('otp/generar', [OtpController::class, 'generar']);
     Route::get('mis-permisos', [PermisoController::class, 'mios']);
