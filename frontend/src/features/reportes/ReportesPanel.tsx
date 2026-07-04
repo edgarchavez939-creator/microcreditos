@@ -11,6 +11,7 @@ const REPORTES = [
   { id: 'pagos', t: 'Pagos' },
   { id: 'mora', t: 'Mora' },
   { id: 'caja', t: 'Caja' },
+  { id: 'productividad', t: 'Productividad' },
 ] as const;
 type ReporteId = (typeof REPORTES)[number]['id'];
 
@@ -46,6 +47,16 @@ const COLUMNAS: Record<ReporteId, Array<{ k: string; t: string; dinero?: boolean
     { k: 'area', t: 'Área' },
     { k: 'registrado_por', t: 'Registrado por' },
   ],
+  productividad: [
+    { k: 'cobrador', t: 'Cobrador' },
+    { k: 'clientes', t: 'Clientes' },
+    { k: 'creditos', t: 'Créditos' },
+    { k: 'numero_pagos', t: 'N° pagos' },
+    { k: 'recaudado', t: 'Recaudado', dinero: true },
+    { k: 'saldo_cartera', t: 'Saldo cartera', dinero: true },
+    { k: 'saldo_vencido', t: 'Vencido', dinero: true },
+    { k: 'pct_mora', t: '% Mora' },
+  ],
   mora: [
     { k: 'numero_credito', t: 'N° crédito' },
     { k: 'cliente', t: 'Cliente' },
@@ -71,9 +82,9 @@ export function ReportesPanel() {
   const [hasta, setHasta] = useState(hoyISO());
 
   const { data, isLoading, isError } = useQuery({
-    queryKey: ['reporte', tipo, ['pagos','caja'].includes(tipo) ? desde : '', ['pagos','caja'].includes(tipo) ? hasta : ''],
+    queryKey: ['reporte', tipo, ['pagos','caja','productividad'].includes(tipo) ? desde : '', ['pagos','caja','productividad'].includes(tipo) ? hasta : ''],
     queryFn: async () => {
-      const params = ['pagos','caja'].includes(tipo) ? { params: { desde, hasta } } : undefined;
+      const params = ['pagos','caja','productividad'].includes(tipo) ? { params: { desde, hasta } } : undefined;
       const r = await api.get<{ data: Fila[]; total?: number }>(`/reportes/${tipo}`, params);
       return r.data;
     },
@@ -113,7 +124,7 @@ export function ReportesPanel() {
           ))}
         </div>
 
-        {['pagos','caja'].includes(tipo) && (
+        {['pagos','caja','productividad'].includes(tipo) && (
           <>
             <label className="text-sm">
               <span className="block text-slate-500">Desde</span>

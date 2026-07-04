@@ -151,4 +151,72 @@ class ReporteController extends Controller
             'egresos' => $egresos,
         ]);
     }
+
+    /** Productividad por cobrador: recaudo, clientes, creditos y % de mora de su cartera. */
+    public function productividad(Request $request)
+    {
+        $data = $request->validate([
+            'desde' => ['required', 'date'],
+            'hasta' => ['required', 'date', 'after_or_equal:desde'],
+        ]);
+        $u = $request->user();
+
+        // Alcance: admin ve todos; supervisor ve cobradores de sus areas; cobrador solo a si mismo
+        $cobradores = DB::table('usuarios')->where('rol', 'COBRADOR')->where('activo', true);
+        if ($u->esSupervisor()) {
+            $areas = DB::table('usuario_area')->where('usuario_id', $u->id)->pluck('area_id');
+            $ids = DB::table('usuario_area')->whereIn('area_id', $areas)->pluck('usuario_id');
+            $cobradores->whereIn('id', $ids);
+        } elseif ($u->esCobrador()) {
+            $cobradores->where('id', $u->id);
+        }
+        $cobradores = $cobradores->get(['id', 'nombre']);
+
+        $filas = $cobradores->map(function ($c) use ($data) {
+            // Creditos de su cartera
+            $creditosIds = DB::table('solicitudes')
+                ->where('cobrador_id', $c->id)
+                ->whereIn('estado', ['ACTIVO', 'DESEMBOLSADO', 'EN_MORA', 'PAGADO'])
+                ->pluck('id');
+
+            $recaudado = (float) DB::table('pagos')
+                ->where('registrado_por', $c->id)
+                ->where('aplicado', true)
+                ->whereBetween('fecha', [$data['desde'], $data['hasta']])
+                ->sum('valor');
+
+            $numPagos = (int) DB::table('pagos')
+                ->where('registrado_por', $c->id)
+                ->where('aplicado', true)
+                ->whereBetween('fecha', [$data['desde'], $data['hasta']])
+                ->count();
+
+            $clientes = (int) DB::table('clientes')->where('cobrador_id', $c->id)->where('activo', true)->count();
+
+            $saldoTotal = (float) DB::table('cuotas')
+                ->whereIn('solicitud_id', $creditosIds)
+                ->whereIn('estado', ['PENDIENTE', 'PARCIAL', 'VENCIDA'])
+                ->sum(DB::raw('valor - valor_pagado'));
+
+            $saldoVencido = (float) DB::table('cuotas')
+                ->whereIn('solicitud_id', $creditosIds)
+                ->where('estado', 'VENCIDA')
+                ->sum(DB::raw('valor - valor_pagado'));
+
+            $pctMora = $saldoTotal > 0 ? round($saldoVencido / $saldoTotal * 100, 1) : 0.0;
+
+            return [
+                'cobrador'       => $c->nombre,
+                'clientes'       => $clientes,
+                'creditos'       => $creditosIds->count(),
+                'numero_pagos'   => $numPagos,
+                'recaudado'      => $recaudado,
+                'saldo_cartera'  => round($saldoTotal, 2),
+                'saldo_vencido'  => round($saldoVencido, 2),
+                'pct_mora'       => $pctMora,
+            ];
+        })->sortByDesc('recaudado')->values();
+
+        return response()->json(['data' => $filas]);
+    }
 }

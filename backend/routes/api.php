@@ -17,7 +17,7 @@ use App\Http\Controllers\Api\OtpController;
 use App\Http\Controllers\Api\PermisoController;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/health', fn () => response()->json(['status' => 'ok', 'version' => 'v37-permisos-ui-ficha', 'ts' => now()]));
+Route::get('/health', fn () => response()->json(['status' => 'ok', 'version' => 'v38-graficas-productividad', 'ts' => now()]));
 
 // --- Auth (público con rate limiting) ---
 Route::prefix('auth')->group(function () {
@@ -31,6 +31,7 @@ Route::middleware('auth:api')->group(function () {
 
     // Áreas y Clientes
     Route::get('dashboard', [DashboardController::class, 'index'])->middleware('modulo:inicio');
+    Route::get('dashboard/graficas', [DashboardController::class, 'graficas'])->middleware('modulo:inicio');
     Route::get('reportes/cartera', [ReporteController::class, 'cartera'])->middleware('modulo:reportes');
     Route::get('reportes/pagos', [ReporteController::class, 'pagos'])->middleware('modulo:reportes');
     Route::get('reportes/mora', [ReporteController::class, 'mora'])->middleware('modulo:reportes');

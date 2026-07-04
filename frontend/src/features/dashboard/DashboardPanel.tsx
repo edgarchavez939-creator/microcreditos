@@ -4,6 +4,7 @@ import { api } from '@/lib/api/client';
 import { money } from '@/lib/format';
 import { useAuthStore } from '@/stores/auth';
 import { useAreas } from '@/features/clientes/hooks';
+import { DashboardGraficas } from './DashboardGraficas';
 
 interface Indicadores {
   prestado: number;
@@ -75,6 +76,8 @@ export function DashboardPanel() {
             <Tarjeta titulo="Exoneraciones pendientes" valor={`${d.exoneraciones_pendientes}`}
               detalle="Requieren administrador" tono={d.exoneraciones_pendientes > 0 ? 'alerta' : 'neutro'} />
           </div>
+
+          <DashboardGraficas areas={areas} />
         </div>
       )}
     </div>
