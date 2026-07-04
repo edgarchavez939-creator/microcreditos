@@ -19,6 +19,7 @@
   table.grid th { background: #f1f5f9; color: #475569; text-align: left; padding: 6px; font-size: 10px; border-bottom: 1px solid #e2e8f0; }
   table.grid td { padding: 5px 6px; font-size: 10px; border-bottom: 1px solid #f1f5f9; }
   .right { text-align: right; }
+  .center { text-align: center; }
   .badge { font-size: 9px; padding: 1px 6px; border-radius: 8px; }
   .b-PAGADA { background: #dcfce7; color: #166534; }
   .b-PENDIENTE { background: #f1f5f9; color: #475569; }
@@ -62,7 +63,7 @@
       <table class="grid">
         <thead><tr>
           <th>#</th><th>Vence</th><th class="right">Valor</th>
-          <th class="right">Pagado</th><th class="right">Saldo</th><th>Estado</th>
+          <th class="right">Pagado</th><th class="right">Saldo</th><th class="center">Estado</th>
         </tr></thead>
         <tbody>
         @foreach ($cuotas as $c)
@@ -72,7 +73,7 @@
             <td class="right">{{ $money($c['valor']) }}</td>
             <td class="right">{{ $money($c['valor_pagado']) }}</td>
             <td class="right">{{ $money($c['saldo']) }}</td>
-            <td><span class="badge b-{{ $c['estado'] }}">{{ $c['estado'] }}</span></td>
+            <td class="center"><span class="badge b-{{ $c['estado'] }}">{{ $c['estado'] }}</span></td>
           </tr>
         @endforeach
         </tbody>
