@@ -3,6 +3,7 @@
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\AreaController;
 use App\Http\Controllers\Api\ClienteController;
+use App\Http\Controllers\Api\DocumentoController;
 use App\Http\Controllers\Api\PagoController;
 use App\Http\Controllers\Api\ReamortizacionController;
 use App\Http\Controllers\Api\SolicitudController;
@@ -17,7 +18,11 @@ use App\Http\Controllers\Api\OtpController;
 use App\Http\Controllers\Api\PermisoController;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/health', fn () => response()->json(['status' => 'ok', 'version' => 'v42-aprobacion-monto', 'ts' => now()]));
+Route::get('/health', fn () => response()->json(['status' => 'ok', 'version' => 'v43-lote-mejoras', 'ts' => now()]));
+
+// Extracto PDF: accesible por enlace firmado (para compartir por WhatsApp) o con JWT
+Route::get('solicitudes/{solicitud}/extracto.pdf', [SolicitudController::class, 'extractoPdf'])
+    ->name('extracto.pdf')->middleware('signed');
 
 // --- Auth (público con rate limiting) ---
 Route::prefix('auth')->group(function () {
@@ -54,6 +59,12 @@ Route::middleware('auth:api')->group(function () {
     Route::get('permisos', [PermisoController::class, 'index']);
     Route::patch('permisos', [PermisoController::class, 'update']);
     Route::get('clientes-buscar', [ClienteController::class, 'porDocumento']);
+    // Administración de documentos del cliente
+    Route::get('clientes/{cliente}/documentos', [DocumentoController::class, 'index']);
+    Route::post('clientes/{cliente}/documentos', [DocumentoController::class, 'store']);
+    Route::get('clientes/{cliente}/documentos/{documento}', [DocumentoController::class, 'show']);
+    Route::post('clientes/{cliente}/documentos/{documento}/reemplazar', [DocumentoController::class, 'replace']);
+    Route::delete('clientes/{cliente}/documentos/{documento}', [DocumentoController::class, 'destroy']);
     Route::get('reamortizacion/buscar', [ReamortizacionController::class, 'porNumero']);
     Route::apiResource('usuarios', UsuarioController::class)->only(['index', 'store', 'update']);
     Route::get('areas', [AreaController::class, 'index']);
@@ -75,6 +86,7 @@ Route::middleware('auth:api')->group(function () {
     Route::post('solicitudes/{solicitud}/cronograma', [SolicitudController::class, 'generarCronograma']);
     Route::get('solicitudes/{solicitud}/eventos', [SolicitudController::class, 'eventos']);
     Route::get('solicitudes/{solicitud}/cuotas', [SolicitudController::class, 'cuotas']);
+    Route::get('solicitudes/{solicitud}/extracto-enlace', [SolicitudController::class, 'extractoEnlace']);
 
     // Desembolso y pagos (ciclo del dinero)
     Route::post('solicitudes/{solicitud}/desembolsar', [SolicitudController::class, 'desembolsar']);

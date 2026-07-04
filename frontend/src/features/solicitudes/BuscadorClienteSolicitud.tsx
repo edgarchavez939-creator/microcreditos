@@ -22,6 +22,7 @@ export function BuscadorClienteSolicitud() {
   const [cliente, setCliente] = useState<ClienteEncontrado | null>(null);
   const [noExiste, setNoExiste] = useState(false);
   const [crear, setCrear] = useState(false);
+  const [creada, setCreada] = useState(false);
 
   const buscar = useMutation({
     mutationFn: async () =>
@@ -34,7 +35,7 @@ export function BuscadorClienteSolicitud() {
     },
   });
 
-  const reset = () => { setCliente(null); setNoExiste(false); setCrear(false); };
+  const reset = () => { setCliente(null); setNoExiste(false); setCrear(false); setCreada(false); };
 
   // Paso 2b: registrar cliente nuevo, luego continuar con la solicitud
   if (crear) {
@@ -76,7 +77,10 @@ export function BuscadorClienteSolicitud() {
             </p>
           )}
         </div>
-        <SolicitudForm clienteId={cliente.id} areaId={cliente.area_id} />
+        <SolicitudForm clienteId={cliente.id} areaId={cliente.area_id} onCreada={() => {
+          setCliente(null); setNoExiste(false); setCrear(false);
+          setDocumento(''); setCreada(true);
+        }} />
       </div>
     );
   }
@@ -84,12 +88,17 @@ export function BuscadorClienteSolicitud() {
   // Paso 1: buscar por documento
   return (
     <div className="max-w-md">
+      {creada && (
+        <div className="mb-4 rounded-xl bg-money-50 px-4 py-3 text-sm text-money-700 ring-1 ring-money-100">
+          Solicitud creada con éxito y enviada a aprobación. Puedes registrar otra buscando un cliente.
+        </div>
+      )}
       <label className="block text-sm">
         <span className="mb-1 block text-slate-600">Número de documento del cliente</span>
         <div className="flex gap-2">
           <input
             value={documento}
-            onChange={(e) => { setDocumento(e.target.value.replace(/\D/g, '')); setNoExiste(false); }}
+            onChange={(e) => { setDocumento(e.target.value.replace(/\D/g, '')); setNoExiste(false); setCreada(false); }}
             inputMode="numeric"
             placeholder="Ej. 1039876543"
             className="input"

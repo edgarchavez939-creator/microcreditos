@@ -102,3 +102,54 @@ export function useActualizarContacto(id: number) {
     },
   });
 }
+
+// ─── Documentos del cliente (#4) ───────────────────────────────────────────
+export interface DocumentoMeta {
+  id: number;
+  categoria: string;
+  nombre_original: string;
+  mime: string;
+  tamano_bytes: number;
+  created_at: string;
+  subido_por: string | null;
+}
+
+export function useDocumentosCliente(clienteId: number) {
+  return useQuery({
+    queryKey: ['documentos', clienteId],
+    queryFn: async () =>
+      (await api.get<{ data: DocumentoMeta[] }>(`/clientes/${clienteId}/documentos`)).data.data,
+  });
+}
+
+export function useSubirDocumento(clienteId: number) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (payload: { categoria: string; nombre_original: string; mime: string; contenido_base64: string }) =>
+      (await api.post(`/clientes/${clienteId}/documentos`, payload)).data,
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['documentos', clienteId] }),
+  });
+}
+
+export function useReemplazarDocumento(clienteId: number) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, ...payload }: { id: number; nombre_original: string; mime: string; contenido_base64: string }) =>
+      (await api.post(`/clientes/${clienteId}/documentos/${id}/reemplazar`, payload)).data,
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['documentos', clienteId] }),
+  });
+}
+
+export function useEliminarDocumento(clienteId: number) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: number) => (await api.delete(`/clientes/${clienteId}/documentos/${id}`)).data,
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['documentos', clienteId] }),
+  });
+}
+
+export async function verDocumento(clienteId: number, id: number) {
+  const r = await api.get<{ data: { mime: string; nombre_original: string; contenido_base64: string } }>(
+    `/clientes/${clienteId}/documentos/${id}`);
+  return r.data.data;
+}

@@ -1,4 +1,5 @@
 import { fecha } from '@/lib/format';
+import { GestorDocumentos } from './GestorDocumentos';
 import { useState } from 'react';
 import { useActualizarContacto, useClienteDetalle, useHistorialCliente } from './hooks';
 
@@ -6,13 +7,6 @@ const ETIQUETAS: Record<string, string> = {
   correo: 'Correo', telefono_principal: 'Teléfono', direccion: 'Dirección',
 };
 
-function fmtFecha(iso: string) {
-  try {
-    return new Date(iso).toLocaleString('es-CO', {
-      day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit',
-    });
-  } catch { return iso; }
-}
 
 export function ClienteProfile({ clienteId, onVolver, onEditar }:
   { clienteId: number; onVolver: () => void; onEditar: (c: import('./hooks').ClienteDetalle) => void }) {
@@ -121,6 +115,9 @@ export function ClienteProfile({ clienteId, onVolver, onEditar }:
         {error && <p className="mt-2 alert-error">{error}</p>}
       </div>
 
+      {/* Documentos soporte (#4) */}
+      <GestorDocumentos clienteId={c.id} />
+
       {/* Historial de actualizaciones */}
       <div className="card card-pad">
         <h4 className="mb-3 font-semibold">Historial de actualizaciones</h4>
@@ -134,7 +131,7 @@ export function ClienteProfile({ clienteId, onVolver, onEditar }:
                   <span className="font-medium text-slate-700">
                     {h.campos.map((k) => ETIQUETAS[k] ?? k).join(', ') || 'Actualización'}
                   </span>
-                  <span className="text-xs text-slate-500">{fmtFecha(h.fecha)} · {h.usuario}</span>
+                  <span className="text-xs text-slate-500">{fecha(h.fecha)} · {h.usuario}</span>
                 </div>
               </li>
             ))}

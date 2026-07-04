@@ -6,6 +6,7 @@ import type { Solicitud } from '@/types';
 import { OtpConfirm } from '@/components/seguridad/OtpConfirm';
 import { useAnularPago, useCreditoDetalle, useCreditos, useCuotasCredito, useDesembolsar, useEliminarCredito, useEventosCredito, useGenerarCronograma, useRegistrarPago } from './hooks';
 import { useAuthStore } from '@/stores/auth';
+import { api } from '@/lib/api/client';
 
 const MODALIDAD_LABEL: Record<string, string> = { DIARIO: 'Diario', SEMANAL: 'Semanal', QUINCENAL: 'Quincenal', MENSUAL: 'Mensual' };
 
@@ -253,6 +254,9 @@ function FichaCredito({ creditoId }: { creditoId: number }) {
 
   return (
     <div className="mt-3 space-y-5">
+      {/* EXTRACTO PDF */}
+      <ExtractoPdf credito={credito} />
+
       {/* PLAN DE PAGOS */}
       <div>
         <h4 className="mb-2 text-sm font-semibold text-slate-700">Plan de pagos</h4>
@@ -492,6 +496,73 @@ function AccionesPago({ p, credito, creditoId }:
         />
       )}
       {err && <span className="text-[11px] text-rose-600">{err}</span>}
+    </div>
+  );
+}
+
+/** #3: Extracto en PDF — descarga directa y envío por WhatsApp (con enlace al PDF). */
+function ExtractoPdf({ credito }: { credito: Solicitud }) {
+  const [cargando, setCargando] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  // No tiene sentido el extracto si el crédito aún no está aprobado (sin plan)
+  const disponible = !!credito.numero_credito && (credito.numero_cuotas ?? 0) > 0;
+  if (!disponible) return null;
+
+  const descargar = async () => {
+    setError(null); setCargando(true);
+    try {
+      const resp = await api.get(`/solicitudes/${credito.id}/extracto.pdf`, { responseType: 'blob' });
+      const url = URL.createObjectURL(new Blob([resp.data], { type: 'application/pdf' }));
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `extracto_${credito.numero_credito ?? credito.id}.pdf`;
+      document.body.appendChild(a); a.click(); a.remove();
+      URL.revokeObjectURL(url);
+    } catch {
+      setError('No se pudo generar el PDF. Intenta de nuevo.');
+    } finally {
+      setCargando(false);
+    }
+  };
+
+  const enviarWhatsApp = async () => {
+    setError(null); setCargando(true);
+    try {
+      // Enlace firmado y temporal al PDF (7 días), apto para compartir
+      const r = await api.get<{ data: { url: string } }>(`/solicitudes/${credito.id}/extracto-enlace`);
+      const pdfUrl = r.data.data.url;
+      const tel = (credito.cliente_telefono ?? '').replace(/\D/g, '');
+      const telFull = tel.length === 10 ? `57${tel}` : tel;
+      const msg =
+        `Hola, ${credito.cliente ?? ''}. Te compartimos el extracto de tu crédito ${credito.numero_credito ?? ''}.\n\n` +
+        `Puedes consultarlo y descargarlo aquí:\n${pdfUrl}\n\n` +
+        `Cualquier inquietud, estamos atentos para ayudarte.`;
+      const wa = tel
+        ? `https://wa.me/${telFull}?text=${encodeURIComponent(msg)}`
+        : `https://wa.me/?text=${encodeURIComponent(msg)}`;
+      window.open(wa, '_blank');
+    } catch {
+      setError('No se pudo preparar el enlace. Intenta de nuevo.');
+    } finally {
+      setCargando(false);
+    }
+  };
+
+  return (
+    <div>
+      <h4 className="mb-2 text-sm font-semibold text-slate-700">Extracto del crédito</h4>
+      <div className="flex flex-wrap items-center gap-2">
+        <button onClick={descargar} disabled={cargando}
+          className="inline-flex items-center gap-1.5 rounded-lg bg-brand-500 px-3.5 py-2 text-sm font-medium text-white shadow-card hover:bg-brand-600 disabled:opacity-50">
+          {cargando ? 'Generando…' : 'Descargar PDF'}
+        </button>
+        <button onClick={enviarWhatsApp} disabled={cargando}
+          className="inline-flex items-center gap-1.5 rounded-lg bg-money-500 px-3.5 py-2 text-sm font-medium text-white shadow-card hover:bg-money-600 disabled:opacity-50">
+          <Icon.transferencias /> Enviar por WhatsApp
+        </button>
+      </div>
+      {error && <p className="mt-2 text-xs text-rose-600">{error}</p>}
     </div>
   );
 }

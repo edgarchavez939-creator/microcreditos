@@ -149,7 +149,13 @@ function TarjetaAprobacion({ s, onAprobado }: { s: Solicitud; onAprobado: (s: So
             onClick={() => {
               setError(null);
               if (!montoAprobado || montoAprobado <= 0) { setError('Ingresa el capital a aprobar.'); return; }
-              aprobar.mutate({ id: s.id, monto_aprobado: montoAprobado }, { onSuccess: () => onAprobado(s), onError: err });
+              aprobar.mutate({ id: s.id, monto_aprobado: montoAprobado }, {
+                onSuccess: (resp) => {
+                  const aprobada = (resp?.data ?? resp) as Solicitud;
+                  onAprobado({ ...s, ...aprobada });
+                },
+                onError: err,
+              });
             }}
             disabled={aprobar.isPending}
             className="btn-primary btn-sm">

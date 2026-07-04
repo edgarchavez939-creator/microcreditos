@@ -13,7 +13,7 @@ const MODALIDADES = [
 ];
 const MODAL_LABEL: Record<string, string> = { MENSUAL: 'mensuales', QUINCENAL: 'quincenales', SEMANAL: 'semanales', DIARIO: 'diarias' };
 
-export function SolicitudForm({ clienteId, areaId }: { clienteId: number; areaId: number }) {
+export function SolicitudForm({ clienteId, areaId, onCreada }: { clienteId: number; areaId: number; onCreada?: () => void }) {
   const crear = useCrearSolicitud();
   const [exito, setExito] = useState(false);
   const { register, handleSubmit, watch, reset, formState: { errors } } = useForm<TForm>({
@@ -38,6 +38,8 @@ export function SolicitudForm({ clienteId, areaId }: { clienteId: number; areaId
           cliente_id: clienteId, area_id: areaId, seguro_exonerado: false,
           porcentaje_seguro: 10, tasa_interes: 10, plazo_meses: 2, modalidad: 'MENSUAL',
         });
+        // #6: limpiar por completo el flujo (incluido el cliente seleccionado)
+        onCreada?.();
       },
     });
   };
@@ -46,7 +48,7 @@ export function SolicitudForm({ clienteId, areaId }: { clienteId: number; areaId
     <form onSubmit={handleSubmit(onSubmit)} className="card card-pad space-y-4 max-w-lg">
       {exito && (
         <div className="rounded-xl bg-money-50 px-4 py-3 text-sm text-money-700 ring-1 ring-money-100">
-          Solicitud creada con éxito. El plan de pagos ya quedó generado.
+          Solicitud creada con éxito. Quedó pendiente de aprobación.
         </div>
       )}
       <div>

@@ -172,7 +172,7 @@ class SolicitudController extends Controller
             \Illuminate\Support\Facades\Log::warning("No se pudo generar el plan al aprobar (solicitud {$solicitud->id}): ".$e->getMessage());
         }
 
-        return new SolicitudResource($solicitud->fresh()->load('cuotas'));
+        return new SolicitudResource($solicitud->fresh()->load(['cuotas', 'cliente']));
     }
 
     public function rechazar(Solicitud $solicitud, Request $request)
@@ -394,6 +394,81 @@ class SolicitudController extends Controller
         return response()
             ->json(['data' => $cuotas, 'pagos' => $pagos, 'total' => $cuotas->count()])
             ->header('Cache-Control', 'no-store, no-cache, must-revalidate');
+    }
+
+    /**
+     * Genera el PDF del extracto del crédito con el diseño institucional.
+     * Accesible con JWT (descarga desde la app) o con URL firmada (enlace para WhatsApp).
+     */
+    public function extractoPdf(Solicitud $solicitud, Request $request)
+    {
+        // Autorización: o viene firmado (enlace público temporal) o el usuario puede ver el crédito
+        if (! $request->hasValidSignature() && (! $request->user() || $request->user()->cannot('view', $solicitud))) {
+            abort(403, 'No autorizado para ver este extracto.');
+        }
+
+        $solicitud->loadMissing('cliente');
+        $money = fn ($v) => '$' . number_format((float) $v, 0, ',', '.');
+        $fFecha = fn ($v) => $v ? \Illuminate\Support\Carbon::parse($v)->format('d/m/Y') : '';
+
+        $cuotas = \App\Models\Cuota::where('solicitud_id', $solicitud->id)
+            ->orderBy('numero_cuota')->get()
+            ->map(fn ($c) => [
+                'numero_cuota'      => (int) $c->numero_cuota,
+                'fecha_vencimiento' => $c->fecha_vencimiento ? \Illuminate\Support\Carbon::parse($c->fecha_vencimiento)->format('d/m/Y') : '',
+                'valor'             => (float) $c->valor,
+                'valor_pagado'      => (float) $c->valor_pagado,
+                'saldo'             => (float) $c->saldo,
+                'estado'            => $c->estado,
+            ])->all();
+
+        $pagos = \App\Models\Pago::where('solicitud_id', $solicitud->id)
+            ->where('aplicado', true)
+            ->leftJoin('usuarios', 'usuarios.id', '=', 'pagos.registrado_por')
+            ->orderBy('pagos.fecha')
+            ->get(['pagos.fecha', 'pagos.valor', 'pagos.metodo', 'usuarios.nombre as registrado_por'])
+            ->map(fn ($p) => [
+                'fecha'          => \Illuminate\Support\Carbon::parse($p->fecha)->format('d/m/Y'),
+                'valor'          => (float) $p->valor,
+                'metodo'         => $p->metodo,
+                'registrado_por' => $p->registrado_por,
+            ])->all();
+
+        $totalPagado = (float) \App\Models\Pago::where('solicitud_id', $solicitud->id)
+            ->where('aplicado', true)->sum('valor');
+
+        $modLabel = ['DIARIO' => 'Diario', 'SEMANAL' => 'Semanal', 'QUINCENAL' => 'Quincenal', 'MENSUAL' => 'Mensual'];
+
+        $datos = [
+            's'           => $solicitud,
+            'empresa'     => config('app.name', 'Microcréditos'),
+            'generado'    => now()->timezone('America/Bogota')->format('d/m/Y h:i a'),
+            'cliente'     => $solicitud->cliente ? trim("{$solicitud->cliente->nombres} {$solicitud->cliente->apellidos}") : '—',
+            'documento'   => $solicitud->cliente ? "{$solicitud->cliente->tipo_documento} {$solicitud->cliente->numero_documento}" : '—',
+            'modalidad'   => $modLabel[$solicitud->modalidad] ?? $solicitud->modalidad,
+            'cuotas'      => $cuotas,
+            'pagos'       => $pagos,
+            'totalPagado' => $totalPagado,
+            'saldo'       => $solicitud->saldoPendiente(),
+            'money'       => $money,
+        ];
+
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('pdf.extracto', $datos)->setPaper('a4');
+        $nombre = 'extracto_' . ($solicitud->numero_credito ?? $solicitud->id) . '.pdf';
+
+        return $pdf->download($nombre);
+    }
+
+    /** Devuelve un enlace firmado y temporal al PDF del extracto (para compartir por WhatsApp). */
+    public function extractoEnlace(Solicitud $solicitud, Request $request)
+    {
+        if ($request->user()->cannot('view', $solicitud)) {
+            abort(403, 'No autorizado.');
+        }
+        $url = \Illuminate\Support\Facades\URL::temporarySignedRoute(
+            'extracto.pdf', now()->addDays(7), ['solicitud' => $solicitud->id]
+        );
+        return response()->json(['data' => ['url' => $url]]);
     }
 
     /** 403 auto-explicativo: muestra qué evaluó el permiso y qué rama falló. */
