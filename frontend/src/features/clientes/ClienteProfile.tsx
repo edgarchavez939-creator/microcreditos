@@ -1,3 +1,4 @@
+import { fecha } from '@/lib/format';
 import { useState } from 'react';
 import { useActualizarContacto, useClienteDetalle, useHistorialCliente } from './hooks';
 
@@ -70,9 +71,9 @@ export function ClienteProfile({ clienteId, onVolver, onEditar }:
           <Dato label="Área" value={c.area} />
           <Dato label="Estado civil" value={c.estado_civil} />
           <Dato label="Género" value={c.genero} />
-          <Dato label="Nacimiento" value={c.fecha_nacimiento} />
+          <Dato label="Nacimiento" value={fecha(c.fecha_nacimiento)} />
           <Dato label="Lugar de nacimiento" value={c.lugar_nacimiento} />
-          <Dato label="Expedición del documento" value={c.fecha_expedicion_documento} />
+          <Dato label="Expedición del documento" value={fecha(c.fecha_expedicion_documento)} />
           <Dato label="Lugar de expedición" value={c.lugar_expedicion_documento} />
           <Dato label="Empresa" value={c.empresa} />
           <Dato label="Cargo" value={c.cargo} />

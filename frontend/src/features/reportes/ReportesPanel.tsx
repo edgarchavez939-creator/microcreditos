@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import * as XLSX from 'xlsx';
 import { api } from '@/lib/api/client';
-import { money } from '@/lib/format';
+import { money, fecha } from '@/lib/format';
 
 type Fila = Record<string, unknown>;
 
@@ -15,7 +15,7 @@ const REPORTES = [
 ] as const;
 type ReporteId = (typeof REPORTES)[number]['id'];
 
-const COLUMNAS: Record<ReporteId, Array<{ k: string; t: string; dinero?: boolean }>> = {
+const COLUMNAS: Record<ReporteId, Array<{ k: string; t: string; dinero?: boolean; fecha?: boolean }>> = {
   cartera: [
     { k: 'numero_credito', t: 'N° crédito' },
     { k: 'cliente', t: 'Cliente' },
@@ -31,7 +31,7 @@ const COLUMNAS: Record<ReporteId, Array<{ k: string; t: string; dinero?: boolean
     { k: 'estado', t: 'Estado' },
   ],
   pagos: [
-    { k: 'fecha', t: 'Fecha' },
+    { k: 'fecha', t: 'Fecha', fecha: true },
     { k: 'numero_credito', t: 'N° crédito' },
     { k: 'cliente', t: 'Cliente' },
     { k: 'valor', t: 'Valor', dinero: true },
@@ -40,7 +40,7 @@ const COLUMNAS: Record<ReporteId, Array<{ k: string; t: string; dinero?: boolean
     { k: 'observaciones', t: 'Observaciones' },
   ],
   caja: [
-    { k: 'fecha', t: 'Fecha' },
+    { k: 'fecha', t: 'Fecha', fecha: true },
     { k: 'tipo', t: 'Tipo' },
     { k: 'concepto', t: 'Concepto' },
     { k: 'valor', t: 'Valor', dinero: true },
@@ -64,7 +64,7 @@ const COLUMNAS: Record<ReporteId, Array<{ k: string; t: string; dinero?: boolean
     { k: 'cobrador', t: 'Cobrador' },
     { k: 'area', t: 'Área' },
     { k: 'numero_cuota', t: 'Cuota' },
-    { k: 'fecha_vencimiento', t: 'Vencía' },
+    { k: 'fecha_vencimiento', t: 'Vencía', fecha: true },
     { k: 'valor_pendiente', t: 'Pendiente', dinero: true },
     { k: 'dias_mora', t: 'Días de mora' },
   ],
@@ -96,7 +96,7 @@ export function ReportesPanel() {
   const exportar = () => {
     const hoja = filas.map((f) => {
       const fila: Record<string, unknown> = {};
-      for (const c of cols) fila[c.t] = f[c.k] ?? '';
+      for (const c of cols) fila[c.t] = c.fecha ? fecha(f[c.k] as string) : (f[c.k] ?? '');
       return fila;
     });
     const ws = XLSX.utils.json_to_sheet(hoja);
@@ -177,7 +177,7 @@ export function ReportesPanel() {
                   <tr key={i} className="border-t">
                     {cols.map((c) => (
                       <td key={c.k} className={c.dinero ? 'whitespace-nowrap text-right' : ''}>
-                        {c.dinero ? money(Number(f[c.k] ?? 0)) : String(f[c.k] ?? '—')}
+                        {c.dinero ? money(Number(f[c.k] ?? 0)) : c.fecha ? (fecha(f[c.k] as string) || '—') : String(f[c.k] ?? '—')}
                       </td>
                     ))}
                   </tr>

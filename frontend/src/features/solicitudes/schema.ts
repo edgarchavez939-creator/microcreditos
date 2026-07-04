@@ -10,7 +10,6 @@ export const solicitudSchema = z
     cliente_id: z.number().int().positive(),
     area_id: z.number().int().positive().optional(),
     capital_solicitado: z.number().positive(),
-    monto_aprobado: z.number().positive(),
     tasa_interes: z.number().min(0).max(100),          // porcentaje mensual
     modalidad: z.enum(['DIARIO', 'SEMANAL', 'QUINCENAL', 'MENSUAL']),
     plazo_meses: z.number().int().min(1).max(60),
@@ -33,18 +32,18 @@ export const solicitudSchema = z
 
 export type SolicitudForm = z.infer<typeof solicitudSchema>;
 
-/** Simulación del plan: nº de cuotas y valor por modalidad + plazo. */
+/** Simulación estimada del plan. Se basa en el capital SOLICITADO (el monto real lo fija el aprobador). */
 export function calcularPreview(d: Partial<SolicitudForm>) {
-  const aprobado = d.monto_aprobado ?? 0;
+  const base = d.capital_solicitado ?? 0;
   const plazo = d.plazo_meses ?? 0;
   const factor = PERIODOS_POR_MES[d.modalidad ?? 'MENSUAL'] ?? 1;
   const numeroCuotas = plazo * factor;
   const pct = (d.seguro_exonerado ? 0 : d.porcentaje_seguro ?? 0) / 100;
   const tasa = (d.tasa_interes ?? 0) / 100;
-  const valorSeguro = Math.round(aprobado * pct * 100) / 100;
-  const desembolsado = Math.round((aprobado - valorSeguro) * 100) / 100;
-  const interes = Math.round(aprobado * tasa * plazo * 100) / 100;
-  const totalRecaudar = Math.round((aprobado + interes) * 100) / 100;
+  const valorSeguro = Math.round(base * pct * 100) / 100;
+  const desembolsado = Math.round((base - valorSeguro) * 100) / 100;
+  const interes = Math.round(base * tasa * plazo * 100) / 100;
+  const totalRecaudar = Math.round((base + interes) * 100) / 100;
   const cuota = numeroCuotas ? Math.round((totalRecaudar / numeroCuotas) * 100) / 100 : 0;
   return { valorSeguro, desembolsado, interes, totalRecaudar, cuota, numeroCuotas };
 }

@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api/client';
-import { money } from '@/lib/format';
+import { money, fecha } from '@/lib/format';
 
 interface ParadaRuta {
   cuota_id: number;
@@ -111,7 +111,7 @@ function Parada({ p }: { p: ParadaRuta }) {
           {p.direccion ?? 'Sin dirección'}{p.barrio ? ` · ${p.barrio}` : ''}
         </div>
         <div className="mt-0.5 text-xs text-slate-400">
-          Cuota {p.numero_cuota} · vence {p.fecha_vencimiento}
+          Cuota {p.numero_cuota} · vence {fecha(p.fecha_vencimiento)}
           {p.estado === 'VENCIDA' && <span className="ml-1.5 rounded-full bg-amber-100 px-2 py-0.5 text-amber-800">{p.dias_mora} día{p.dias_mora === 1 ? '' : 's'} de mora</span>}
         </div>
       </div>

@@ -148,13 +148,41 @@ class PaymentService
     }
 
     /** Revierte cualquier pago: elimina pago + caja y recalcula el crédito desde cero. */
-    public function revertirPago(Pago $pago): void
+    public function revertirPago(Pago $pago, ?\App\Models\Usuario $usuario = null, ?string $motivo = null): void
     {
-        DB::transaction(function () use ($pago) {
+        DB::transaction(function () use ($pago, $usuario, $motivo) {
             $creditoId = (int) $pago->solicitud_id;
 
-            // Si alguna transferencia apunta a este pago, desligarla primero (conserva su historial)
-            DB::table('transferencias')->where('pago_id', $pago->id)->update(['pago_id' => null]);
+            // Si el pago provino de una transferencia, sincronizarla: pasa a RECHAZADO
+            // con la observación pedida y queda registrada en auditoría (trazabilidad completa).
+            $observacion = $motivo ? "Anulado desde Extracto: {$motivo}" : 'Anulado desde Extracto';
+            $transfers = DB::table('transferencias')->where('pago_id', $pago->id)->get();
+            foreach ($transfers as $t) {
+                DB::table('transferencias')->where('id', $t->id)->update([
+                    'estado'         => 'RECHAZADO',
+                    'motivo_rechazo' => $observacion,
+                    'validado_por'   => $usuario?->id ?? $t->validado_por,
+                    'validado_at'    => now(),
+                    'pago_id'        => null, // desligar conservando el historial de la transferencia
+                ]);
+
+                DB::table('auditoria')->insert([
+                    'usuario_id'      => $usuario?->id,
+                    'accion'          => 'REJECT',
+                    'entidad'         => 'transferencias',
+                    'entidad_id'      => $t->id,
+                    'datos_anteriores'=> json_encode(['estado' => $t->estado]),
+                    'datos_nuevos'    => json_encode([
+                        'estado'      => 'RECHAZADO',
+                        'observacion' => $observacion,
+                        'origen'      => 'ANULACION_PAGO',
+                        'pago_id'     => $pago->id,
+                    ]),
+                    'ip'         => request()?->ip(),
+                    'user_agent' => request()?->userAgent(),
+                    'created_at' => now(),
+                ]);
+            }
 
             // El comprobante se CONSERVA como evidencia: solo se desliga del pago eliminado
             DB::table('documentos')->where('pago_id', $pago->id)->update(['pago_id' => null]);

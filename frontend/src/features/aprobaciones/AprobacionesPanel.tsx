@@ -4,6 +4,7 @@ import { Icon } from '@/components/ui/icons';
 import { money } from '@/lib/format';
 import type { Solicitud } from '@/types';
 import { useAprobar, useRechazar, useSolicitudesPendientes } from './hooks';
+import { PERIODOS_POR_MES } from '@/features/solicitudes/schema';
 
 const MOD_LABEL: Record<string, string> = {
   MENSUAL: 'Mensual', QUINCENAL: 'Quincenal', SEMANAL: 'Semanal', DIARIO: 'Diario',
@@ -80,11 +81,24 @@ function TarjetaAprobacion({ s, onAprobado }: { s: Solicitud; onAprobado: (s: So
   const [rechazando, setRechazando] = useState(false);
   const [motivo, setMotivo] = useState('');
   const [error, setError] = useState<string | null>(null);
+  // El capital aprobado se define aquí; por defecto se propone el solicitado.
+  const [montoAprobado, setMontoAprobado] = useState<number>(s.capital_solicitado ?? 0);
 
   const err = (e: unknown) => {
     const x = e as { response?: { data?: { message?: string } } };
     setError(x?.response?.data?.message ?? 'No se pudo completar la acción.');
   };
+
+  // Estimación en vivo del plan sobre el monto que se va a aprobar
+  const factor = PERIODOS_POR_MES[s.modalidad ?? 'MENSUAL'] ?? 1;
+  const plazoMeses = Math.max(1, Math.round((s.numero_cuotas ?? factor) / factor));
+  const tasa = Number(s.tasa_interes ?? 0);
+  const pctSeguro = s.seguro_exonerado ? 0 : Number(s.porcentaje_seguro ?? 0);
+  const valorSeguro = Math.round(montoAprobado * pctSeguro);
+  const interes = Math.round(montoAprobado * tasa * plazoMeses);
+  const totalRecaudar = Math.round(montoAprobado + interes);
+  const desembolso = Math.round(montoAprobado - valorSeguro);
+  const cuota = s.numero_cuotas ? Math.round(totalRecaudar / s.numero_cuotas) : 0;
 
   return (
     <div className="card card-pad">
@@ -100,21 +114,43 @@ function TarjetaAprobacion({ s, onAprobado }: { s: Solicitud; onAprobado: (s: So
         </div>
       </div>
 
+      {/* Datos para el análisis de la decisión */}
       <dl className="mt-3 grid grid-cols-2 gap-x-4 gap-y-1 text-sm sm:grid-cols-3">
-        <Item label="Capital aprobado" value={money(s.monto_aprobado)} />
-        <Item label="Seguro" value={money(s.valor_seguro)} />
-        <Item label="Interés" value={money(s.interes)} />
-        <Item label="Total a recaudar" value={money(s.total_recaudar)} />
-        <Item label="Desembolso neto" value={money(s.monto_desembolsado)} />
+        <Item label="Capital solicitado" value={money(s.capital_solicitado)} />
+        <Item label="Salario del cliente" value={s.cliente_salario != null ? money(s.cliente_salario) : 'No registrado'} />
+        <Item label="Tasa mensual" value={`${(tasa * 100).toFixed(1)}%`} />
+        <Item label="Modalidad" value={MOD_LABEL[s.modalidad ?? ''] ?? s.modalidad ?? ''} />
         <Item label="Cuotas" value={`${s.numero_cuotas}`} />
+        <Item label="Plazo" value={`${plazoMeses} mes(es)`} />
       </dl>
+
+      {!rechazando && (
+        <div className="mt-4 rounded-xl bg-brand-50 p-4 ring-1 ring-brand-100">
+          <label className="label">Capital a aprobar</label>
+          <input
+            type="number" step="any" value={montoAprobado}
+            onChange={(e) => setMontoAprobado(Number(e.target.value))}
+            className="input max-w-xs" />
+          <div className="mt-3 grid grid-cols-2 gap-x-4 gap-y-1 text-sm sm:grid-cols-3">
+            <Item label="Seguro" value={money(valorSeguro)} />
+            <Item label="Interés" value={money(interes)} />
+            <Item label="Total a recaudar" value={money(totalRecaudar)} />
+            <Item label="Desembolso neto" value={money(desembolso)} />
+            <Item label="Valor cuota" value={money(cuota)} />
+          </div>
+        </div>
+      )}
 
       {error && <p className="mt-3 alert-error">{error}</p>}
 
       {!rechazando ? (
         <div className="mt-4 flex gap-2">
           <button
-            onClick={() => { setError(null); aprobar.mutate(s.id, { onSuccess: () => onAprobado(s), onError: err }); }}
+            onClick={() => {
+              setError(null);
+              if (!montoAprobado || montoAprobado <= 0) { setError('Ingresa el capital a aprobar.'); return; }
+              aprobar.mutate({ id: s.id, monto_aprobado: montoAprobado }, { onSuccess: () => onAprobado(s), onError: err });
+            }}
             disabled={aprobar.isPending}
             className="btn-primary btn-sm">
             {aprobar.isPending ? 'Aprobando…' : 'Aprobar'}

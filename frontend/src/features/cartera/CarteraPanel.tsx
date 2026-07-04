@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { EstadoBadge } from '@/components/ui/EstadoBadge';
-import { money } from '@/lib/format';
+import { money, fecha, fechaHora } from '@/lib/format';
 import { Icon } from '@/components/ui/icons';
 import type { Solicitud } from '@/types';
 import { OtpConfirm } from '@/components/seguridad/OtpConfirm';
@@ -17,7 +17,7 @@ function reciboWhatsApp(credito: Solicitud, p: { fecha: string; hora?: string | 
     `🧾 *RECIBO DE PAGO*\n\n` +
     `Crédito: ${credito.numero_credito ?? `#${credito.id}`}\n` +
     `Cliente: ${credito.cliente ?? ''}\n` +
-    `Fecha: ${p.fecha}${p.hora ? ` · ${p.hora}` : ''}\n` +
+    `Fecha: ${fecha(p.fecha)}${p.hora ? ` · ${p.hora}` : ''}\n` +
     `Valor pagado: ${money(p.valor)}\n` +
     `Medio: ${p.metodo === 'TRANSFERENCIA' ? 'Transferencia' : 'Efectivo'}\n` +
     `Saldo pendiente: ${money(credito.saldo_pendiente)}\n\n` +
@@ -292,7 +292,7 @@ function FichaCredito({ creditoId }: { creditoId: number }) {
               {cuotas.map((q) => (
                 <tr key={q.numero_cuota} className="border-t">
                   <td className="px-3 py-2">{q.numero_cuota}</td>
-                  <td className="px-3 py-2">{q.fecha_vencimiento}</td>
+                  <td className="px-3 py-2">{fecha(q.fecha_vencimiento)}</td>
                   <td className="px-3 py-2">{money(q.abono_capital ?? 0)}</td>
                   <td className="px-3 py-2">{money(q.abono_interes ?? 0)}</td>
                   <td className="px-3 py-2">{money(q.valor)}</td>
@@ -373,7 +373,7 @@ function FichaCredito({ creditoId }: { creditoId: number }) {
               <tbody>
                 {pagosExtracto.map((p) => (
                   <tr key={p.id} className="border-t">
-                    <td className="px-3 py-2">{p.fecha}</td>
+                    <td className="px-3 py-2">{fecha(p.fecha)}</td>
                     <td className="px-3 py-2">{p.hora ?? '—'}</td>
                     <td className="px-3 py-2">
                       {p.metodo}
@@ -417,14 +417,6 @@ const EVENTO_COLOR: Record<string, string> = {
   DESEMBOLSO: 'bg-money-600', PAGO: 'bg-money-600', REAMORTIZACION: 'bg-amber-500', CIERRE: 'bg-ink',
 };
 
-function fmtEvento(iso: string) {
-  try {
-    return new Date(iso).toLocaleString('es-CO', {
-      day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit',
-    });
-  } catch { return iso; }
-}
-
 function HistorialCredito({ creditoId }: { creditoId: number }) {
   const [abierto, setAbierto] = useState(false);
   const { data: eventos, isLoading } = useEventosCredito(creditoId, abierto);
@@ -449,7 +441,7 @@ function HistorialCredito({ creditoId }: { creditoId: number }) {
                   <div className="text-sm font-semibold text-slate-800">{e.titulo}</div>
                   {e.detalle && <div className="text-sm text-slate-600">{e.detalle}</div>}
                   <div className="mt-0.5 text-xs text-slate-400">
-                    {fmtEvento(e.fecha)}{e.usuario ? ` · ${e.usuario}` : ''}
+                    {fechaHora(e.fecha)}{e.usuario ? ` · ${e.usuario}` : ''}
                   </div>
                 </li>
               ))}

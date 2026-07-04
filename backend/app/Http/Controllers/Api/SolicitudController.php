@@ -63,41 +63,39 @@ class SolicitudController extends Controller
         // Número de cuotas = plazo (meses) × periodos por mes de la modalidad
         $factor = \App\Services\LoanService::periodosPorMes($data['modalidad']);
         $numeroCuotas = (int) $data['plazo_meses'] * $factor;
-        $data['numero_cuotas'] = $numeroCuotas;
 
+        $exonerado = (bool) ($data['seguro_exonerado'] ?? false);
+
+        // NUEVO FLUJO: la solicitud se crea SIN monto aprobado. El capital aprobado,
+        // el seguro, los intereses y el cronograma se definen durante la APROBACIÓN.
+        // Aquí solo se registra lo solicitado y las condiciones base del préstamo.
         $solicitud = new Solicitud([
-            'cliente_id'         => $data['cliente_id'],
-            'area_id'            => $cliente->area_id,
-            'cobrador_id'        => $cliente->cobrador_id ?? $request->user()->id,
-            'producto_id'        => $data['producto_id'] ?? null,
-            'es_venta_financiada'=> $data['es_venta_financiada'] ?? false,
-            'capital_solicitado' => $data['capital_solicitado'],
-            'tipo_interes'       => $data['tipo_interes'] ?? 'FIJO',
-            'numero_cuotas'      => $numeroCuotas,
-            'tasa_interes'       => $data['tasa_interes'],
-            'modalidad'          => $data['modalidad'],
-            'estado'             => 'BORRADOR',
-            'created_by'         => $request->user()->id,
+            'cliente_id'          => $data['cliente_id'],
+            'area_id'             => $cliente->area_id,
+            'cobrador_id'         => $cliente->cobrador_id ?? $request->user()->id,
+            'producto_id'         => $data['producto_id'] ?? null,
+            'es_venta_financiada' => $data['es_venta_financiada'] ?? false,
+            'capital_solicitado'  => $data['capital_solicitado'],
+            'tipo_interes'        => $data['tipo_interes'] ?? 'FIJO',
+            'numero_cuotas'       => $numeroCuotas,
+            'tasa_interes'        => $data['tasa_interes'],
+            'modalidad'           => $data['modalidad'],
+            // Condiciones de seguro/plazo se guardan para aplicarlas al aprobar
+            'porcentaje_seguro'   => $exonerado ? 0 : ($data['porcentaje_seguro'] ?? 0),
+            'seguro_exonerado'    => $exonerado,
+            'motivo_exoneracion'  => $data['motivo_exoneracion'] ?? null,
+            'fecha_primer_pago'   => $data['fecha_primer_pago'] ?? null,
+            // Sin monto_aprobado todavía (queda NULL hasta la aprobación)
+            'estado'              => $exonerado ? 'PENDIENTE_ADMINISTRADOR' : 'PENDIENTE_SUPERVISOR',
+            'created_by'          => $request->user()->id,
         ]);
+        if ($exonerado) {
+            $solicitud->exoneracion_solicitada_por = $request->user()->id;
+        }
         $solicitud->save();
 
-        // Cálculo de seguro/montos + regla de exoneración
-        $solicitud = $this->loans->calcularMontos($solicitud, $data, $request->user()->id);
-
-        // Si no quedó en PENDIENTE_ADMINISTRADOR por exoneración, rutear normal
-        if ($solicitud->estado === 'BORRADOR') {
-            $solicitud->estado = $this->loans->rutearAprobacion($solicitud)->value;
-            $solicitud->save();
-        }
-
-        // Plan de cuotas al crear la solicitud (fecha provisional; se recalcula al desembolsar)
-        try {
-            $this->loans->generarCronograma($solicitud, $data['fecha_primer_pago'] ?? now());
-        } catch (\Throwable $e) {
-            \Illuminate\Support\Facades\Log::warning('No se pudo generar el plan al crear la solicitud: '.$e->getMessage());
-        }
-
-        return (new SolicitudResource($solicitud->fresh()->load('cuotas')))
+        // No se calculan montos ni se genera cronograma: eso ocurre al aprobar el capital.
+        return (new SolicitudResource($solicitud->fresh()))
             ->response()->setStatusCode(201);
     }
 
@@ -137,8 +135,44 @@ class SolicitudController extends Controller
     public function aprobar(Solicitud $solicitud, Request $request)
     {
         $this->authorize('approve', $solicitud);
+
+        // El capital aprobado se define AQUÍ, en la aprobación (no en la solicitud).
+        // El aprobador puede aprobar igual, menor o mayor al solicitado, según reglas.
+        $data = $request->validate([
+            'monto_aprobado' => ['required', 'numeric', 'gt:0'],
+        ]);
+
+        // Reconstruir los parámetros de cálculo desde la propia solicitud (guardados al crearla)
+        $factor = \App\Services\LoanService::periodosPorMes($solicitud->modalidad);
+        $plazoMeses = max(1, (int) round(((int) $solicitud->numero_cuotas) / $factor));
+
+        $datosCalculo = [
+            'monto_aprobado'     => $data['monto_aprobado'],
+            'tasa_interes'       => (float) $solicitud->tasa_interes,
+            'numero_cuotas'      => (int) $solicitud->numero_cuotas,
+            'modalidad'          => $solicitud->modalidad,
+            'plazo_meses'        => $plazoMeses,
+            'seguro_exonerado'   => (bool) $solicitud->seguro_exonerado,
+            'porcentaje_seguro'  => (float) $solicitud->porcentaje_seguro,
+            'motivo_exoneracion' => $solicitud->motivo_exoneracion,
+            'fecha_primer_pago'  => $solicitud->fecha_primer_pago,
+        ];
+
+        // 1) Calcular seguro, interés, total y cuota sobre el monto aprobado
+        $solicitud = $this->loans->calcularMontos($solicitud, $datosCalculo, $request->user()->id);
+        $solicitud->save();
+
+        // 2) Validar límite y transicionar a APROBADO (ApprovalService usa monto_aprobado ya fijado)
         $solicitud = $this->approvals->aprobar($solicitud, $request->user());
-        return new SolicitudResource($solicitud);
+
+        // 3) Generar el cronograma provisional (se recalcula al desembolsar con la fecha real)
+        try {
+            $this->loans->generarCronograma($solicitud, $solicitud->fecha_primer_pago ?? now());
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::warning("No se pudo generar el plan al aprobar (solicitud {$solicitud->id}): ".$e->getMessage());
+        }
+
+        return new SolicitudResource($solicitud->fresh()->load('cuotas'));
     }
 
     public function rechazar(Solicitud $solicitud, Request $request)

@@ -16,7 +16,6 @@ class StoreSolicitudRequest extends FormRequest
             'producto_id'         => ['nullable','integer','exists:productos,id'],
             'es_venta_financiada' => ['boolean'],
             'capital_solicitado'  => ['required','numeric','gt:0'],
-            'monto_aprobado'      => ['required','numeric','gt:0'],
             'tasa_interes'        => ['required','numeric','gte:0'],
             'tipo_interes'        => ['nullable','in:FIJO,SOBRE_SALDO'],
             'modalidad'           => ['required','in:DIARIO,SEMANAL,QUINCENAL,MENSUAL'],

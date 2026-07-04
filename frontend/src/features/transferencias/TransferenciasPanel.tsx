@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api/client';
-import { money } from '@/lib/format';
+import { money, fechaHora } from '@/lib/format';
 
 interface Transferencia {
   id: number;
@@ -31,14 +31,6 @@ function useTransferencias(estado: string) {
     queryFn: async () =>
       (await api.get<{ data: Transferencia[] }>('/transferencias', { params: { estado } })).data.data,
   });
-}
-
-function fmtFecha(iso: string) {
-  try {
-    return new Date(iso).toLocaleString('es-CO', {
-      day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit',
-    });
-  } catch { return iso; }
 }
 
 export function TransferenciasPanel() {
@@ -120,11 +112,11 @@ function TarjetaTransferencia({ t }: { t: Transferencia }) {
         <div>
           <div className="font-semibold">{t.cliente}{t.numero_credito ? ` · ${t.numero_credito}` : ''}</div>
           <div className="mt-0.5 text-sm text-slate-500">
-            {t.banco} · Ref. {t.referencia} · {fmtFecha(t.created_at)}
+            {t.banco} · Ref. {t.referencia} · {fechaHora(t.created_at)}
             {t.registrado_por ? ` · Registró: ${t.registrado_por}` : ''}
           </div>
           {t.estado === 'APROBADO' && (
-            <div className="mt-1 text-xs text-money-700">Aprobada{t.validado_por ? ` por ${t.validado_por}` : ''}{t.validado_at ? ` · ${fmtFecha(t.validado_at)}` : ''}</div>
+            <div className="mt-1 text-xs text-money-700">Aprobada{t.validado_por ? ` por ${t.validado_por}` : ''}{t.validado_at ? ` · ${fechaHora(t.validado_at)}` : ''}</div>
           )}
           {t.estado === 'RECHAZADO' && (
             <div className="mt-1 text-xs text-rose-600">Rechazada{t.validado_por ? ` por ${t.validado_por}` : ''}: {t.motivo_rechazo}</div>
@@ -158,7 +150,7 @@ function TarjetaTransferencia({ t }: { t: Transferencia }) {
                 <p className="mt-1 text-xs text-slate-400">
                   {comprobante.nombre}
                   {comprobante.subido_por ? ` · adjuntado por ${comprobante.subido_por}` : ''}
-                  {comprobante.fecha_carga ? ` · ${comprobante.fecha_carga}` : ''}
+                  {comprobante.fecha_carga ? ` · ${fechaHora(comprobante.fecha_carga)}` : ''}
                 </p>
                 <a href={`data:${comprobante.mime};base64,${comprobante.base64}`}
                   download={comprobante.nombre ?? 'comprobante'}

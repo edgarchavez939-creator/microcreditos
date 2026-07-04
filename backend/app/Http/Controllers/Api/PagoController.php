@@ -33,12 +33,15 @@ class PagoController extends Controller
     public function destroy(\Illuminate\Http\Request $request, \App\Models\Pago $pago, \App\Services\PaymentService $svc)
     {
         abort_unless($request->user()->esAdministrador(), 403, 'Solo el administrador puede anular pagos.');
-        $request->validate(['otp' => ['required', 'string', 'digits:6']]);
+        $request->validate([
+            'otp'    => ['required', 'string', 'digits:6'],
+            'motivo' => ['nullable', 'string', 'max:255'],
+        ]);
         if (! app(\App\Services\OtpService::class)->consumir($request->user(), 'ANULAR_PAGO', $request->input('otp'))) {
             abort(422, 'Código de seguridad incorrecto, vencido o ya utilizado. Genera uno nuevo.');
         }
 
-        $svc->revertirPago($pago);
+        $svc->revertirPago($pago, $request->user(), $request->input('motivo'));
 
         return response()->json(['message' => 'Pago anulado y crédito recalculado.']);
     }

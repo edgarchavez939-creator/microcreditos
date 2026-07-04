@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { api } from '@/lib/api/client';
-import { money } from '@/lib/format';
+import { money, fecha } from '@/lib/format';
 
 interface ResumenDia {
   fecha: string;
@@ -61,7 +61,7 @@ export function CajaPanel() {
       ) : (
         <div className="card card-pad mb-6">
           <div className="mb-3 flex items-center justify-between">
-            <h3 className="font-semibold">Hoy · {resumen.fecha}</h3>
+            <h3 className="font-semibold">Hoy · {fecha(resumen.fecha)}</h3>
             {resumen.ya_cerrada ? (
               <span className="rounded-full bg-money-50 px-3 py-1 text-xs text-money-700 ring-1 ring-money-100">Caja cerrada ✓</span>
             ) : (

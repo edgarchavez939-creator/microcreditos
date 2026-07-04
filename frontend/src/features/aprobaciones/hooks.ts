@@ -15,7 +15,8 @@ export function useSolicitudesPendientes() {
 export function useAprobar() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (id: number) => (await api.post(`/solicitudes/${id}/aprobar`)).data,
+    mutationFn: async ({ id, monto_aprobado }: { id: number; monto_aprobado: number }) =>
+      (await api.post(`/solicitudes/${id}/aprobar`, { monto_aprobado })).data,
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['aprobaciones'] });
       qc.invalidateQueries({ queryKey: ['solicitudes'] });

@@ -52,10 +52,7 @@ export function SolicitudForm({ clienteId, areaId }: { clienteId: number; areaId
       <div>
         <label className="label">Capital solicitado</label>
         <input type="number" step="any" {...register('capital_solicitado', { valueAsNumber: true })} className="input" />
-      </div>
-      <div>
-        <label className="label">Monto aprobado</label>
-        <input type="number" step="any" {...register('monto_aprobado', { valueAsNumber: true })} className="input" />
+        <p className="mt-1 text-xs text-slate-400">El capital aprobado lo definirá quien apruebe la solicitud.</p>
       </div>
 
       <div className="grid grid-cols-2 gap-3">
@@ -77,13 +74,13 @@ export function SolicitudForm({ clienteId, areaId }: { clienteId: number; areaId
         </select>
       </div>
 
-      {/* Simulación del plan según modalidad */}
+      {/* Simulación estimada del plan según modalidad (el monto real lo fija el aprobador) */}
       <div className="rounded-xl bg-brand-50 p-4 text-sm ring-1 ring-brand-100">
-        <div className="font-semibold text-brand-700">Plan simulado</div>
+        <div className="font-semibold text-brand-700">Plan estimado (sobre el capital solicitado)</div>
         <div className="mt-1 text-slate-700">
           {preview.numeroCuotas > 0
             ? <>{preview.numeroCuotas} cuotas {MODAL_LABEL[modalidad]} de <b>{money(preview.cuota)}</b></>
-            : 'Completa monto y plazo para ver el plan.'}
+            : 'Completa capital y plazo para ver el plan estimado.'}
         </div>
       </div>
 

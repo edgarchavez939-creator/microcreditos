@@ -85,14 +85,16 @@ class LoanService
         ]);
 
         // --- Regla de exoneración (prioridad absoluta) ---
+        // El ruteo de estado (PENDIENTE_ADMINISTRADOR) ya se define al CREAR la solicitud.
+        // Aquí solo se conserva el motivo y se valida su presencia.
         if ($exonerado) {
             if (empty($datos['motivo_exoneracion'])) {
                 throw new InvalidArgumentException('La exoneración requiere un motivo.');
             }
-            $solicitud->motivo_exoneracion           = $datos['motivo_exoneracion'];
-            $solicitud->exoneracion_solicitada_por   = $usuarioId;
-            // Fuerza aprobación administrativa, ignorando cualquier límite monetario.
-            $solicitud->estado = EstadoSolicitud::PENDIENTE_ADMINISTRADOR->value;
+            $solicitud->motivo_exoneracion = $datos['motivo_exoneracion'];
+            if (empty($solicitud->exoneracion_solicitada_por)) {
+                $solicitud->exoneracion_solicitada_por = $usuarioId;
+            }
         }
 
         $solicitud->save();
