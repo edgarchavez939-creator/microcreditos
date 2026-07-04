@@ -27,10 +27,11 @@ class PermisoService
         'reportes'       => ['etiqueta' => 'Reportes',                   'defecto' => ['ADMINISTRADOR', 'SUPERVISOR']],
         'usuarios'       => ['etiqueta' => 'Usuarios y áreas',           'defecto' => ['ADMINISTRADOR']],
         'parametros'     => ['etiqueta' => 'Parámetros',                 'defecto' => ['ADMINISTRADOR']],
+        'permisos'       => ['etiqueta' => 'Permisos',                   'defecto' => ['ADMINISTRADOR']],
     ];
 
     /** Módulos que el administrador conserva siempre (no se puede dejar sin llaves de la casa). */
-    private const SIEMPRE_ADMIN = ['usuarios', 'parametros'];
+    private const SIEMPRE_ADMIN = ['usuarios', 'parametros', 'permisos'];
 
     /** ¿Puede el usuario acceder al módulo? Resolución: regla de usuario > regla de rol > defecto. */
     public function permite(Usuario $u, string $modulo): bool

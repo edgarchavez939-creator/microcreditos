@@ -17,7 +17,7 @@ use App\Http\Controllers\Api\OtpController;
 use App\Http\Controllers\Api\PermisoController;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/health', fn () => response()->json(['status' => 'ok', 'version' => 'v33-otp-permisos-cliente', 'ts' => now()]));
+Route::get('/health', fn () => response()->json(['status' => 'ok', 'version' => 'v34-fix-modulo-permisos', 'ts' => now()]));
 
 // --- Auth (público con rate limiting) ---
 Route::prefix('auth')->group(function () {

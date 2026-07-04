@@ -57,7 +57,7 @@ function MatrizRoles({ data, fijar }: { data: NonNullable<ReturnType<typeof useM
               <td className="px-3 py-2 font-medium">{m.etiqueta}</td>
               {ROLES.map((rol) => {
                 const activo = estadoRol(data, m.id, rol, m.defecto);
-                const bloqueado = rol === 'ADMINISTRADOR' && (m.id === 'usuarios' || m.id === 'parametros');
+                const bloqueado = rol === 'ADMINISTRADOR' && (m.id === 'usuarios' || m.id === 'parametros' || m.id === 'permisos');
                 return (
                   <td key={rol} className="px-3 py-2 text-center">
                     <Interruptor
