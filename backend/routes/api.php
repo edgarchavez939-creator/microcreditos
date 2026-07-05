@@ -18,7 +18,7 @@ use App\Http\Controllers\Api\OtpController;
 use App\Http\Controllers\Api\PermisoController;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/health', fn () => response()->json(['status' => 'ok', 'version' => 'v47-solo-whatsapp', 'ts' => now()]));
+Route::get('/health', fn () => response()->json(['status' => 'ok', 'version' => 'v48-toasts-skeletons', 'ts' => now()]));
 
 // Extracto PDF: accesible por enlace firmado (para compartir por WhatsApp) o con JWT
 Route::get('solicitudes/{solicitud}/extracto.pdf', [SolicitudController::class, 'extractoPdf'])

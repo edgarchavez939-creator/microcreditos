@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import * as XLSX from 'xlsx';
 import { api } from '@/lib/api/client';
 import { money, fecha } from '@/lib/format';
+import { SkeletonTabla } from '@/components/ui/Skeleton';
 
 type Fila = Record<string, unknown>;
 
@@ -143,7 +144,7 @@ export function ReportesPanel() {
       </div>
 
       {isLoading ? (
-        <p className="text-sm text-slate-500">Cargando reporte…</p>
+        <SkeletonTabla filas={6} columnas={5} />
       ) : isError ? (
         <div className="alert-error">
           <p>No se pudo cargar el reporte. Intenta de nuevo.</p>

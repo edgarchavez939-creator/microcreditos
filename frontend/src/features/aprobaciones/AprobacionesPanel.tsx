@@ -3,6 +3,8 @@ import { EstadoBadge } from '@/components/ui/EstadoBadge';
 import { Icon } from '@/components/ui/icons';
 import { money } from '@/lib/format';
 import type { Solicitud } from '@/types';
+import { useToast } from '@/components/ui/Toast';
+import { SkeletonTarjetas } from '@/components/ui/Skeleton';
 import { useAprobar, useRechazar, useSolicitudesPendientes } from './hooks';
 import { PERIODOS_POR_MES } from '@/features/solicitudes/schema';
 
@@ -61,7 +63,7 @@ export function AprobacionesPanel() {
       )}
 
       {isLoading ? (
-        <p className="text-sm text-slate-500">Cargando…</p>
+        <SkeletonTarjetas cantidad={2} />
       ) : !data || data.length === 0 ? (
         <p className="card card-pad border-2 border-dashed border-slate-200 text-center text-sm text-slate-500 shadow-none ring-0">
           No hay solicitudes pendientes de aprobación.
@@ -76,6 +78,7 @@ export function AprobacionesPanel() {
 }
 
 function TarjetaAprobacion({ s, onAprobado }: { s: Solicitud; onAprobado: (s: Solicitud) => void }) {
+  const toast = useToast();
   const aprobar = useAprobar();
   const rechazar = useRechazar();
   const [rechazando, setRechazando] = useState(false);
@@ -152,6 +155,7 @@ function TarjetaAprobacion({ s, onAprobado }: { s: Solicitud; onAprobado: (s: So
               aprobar.mutate({ id: s.id, monto_aprobado: montoAprobado }, {
                 onSuccess: (resp) => {
                   const aprobada = (resp?.data ?? resp) as Solicitud;
+                  toast.exito(`Crédito de ${s.cliente ?? 'cliente'} aprobado por ${money(montoAprobado)} ✓`);
                   onAprobado({ ...s, ...aprobada });
                 },
                 onError: err,
@@ -171,7 +175,7 @@ function TarjetaAprobacion({ s, onAprobado }: { s: Solicitud; onAprobado: (s: So
             placeholder="Motivo del rechazo (mín. 5 caracteres)" className="input" />
           <div className="flex gap-2">
             <button
-              onClick={() => { setError(null); rechazar.mutate({ id: s.id, motivo }, { onError: err }); }}
+              onClick={() => { setError(null); rechazar.mutate({ id: s.id, motivo }, { onSuccess: () => toast.info('Solicitud rechazada.'), onError: err }); }}
               disabled={rechazar.isPending || motivo.trim().length < 5}
               className="btn btn-sm bg-rose-600 text-white hover:bg-rose-700 disabled:opacity-50">
               {rechazar.isPending ? 'Rechazando…' : 'Confirmar rechazo'}

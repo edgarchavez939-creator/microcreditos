@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api/client';
 import { money, fecha } from '@/lib/format';
+import { SkeletonTarjetas } from '@/components/ui/Skeleton';
 
 interface ParadaRuta {
   cuota_id: number;
@@ -50,7 +51,7 @@ export function RutaPanel() {
       </p>
 
       {isLoading ? (
-        <p className="text-sm text-slate-500">Cargando ruta…</p>
+        <SkeletonTarjetas cantidad={3} />
       ) : isError || !data ? (
         <p className="alert-error">No se pudo cargar la ruta del día.</p>
       ) : (

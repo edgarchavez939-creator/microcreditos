@@ -6,6 +6,8 @@ import type { Solicitud } from '@/types';
 import { OtpConfirm } from '@/components/seguridad/OtpConfirm';
 import { useAnularPago, useCreditoDetalle, useCreditos, useCuotasCredito, useDesembolsar, useEliminarCredito, useEventosCredito, useGenerarCronograma, useRegistrarPago } from './hooks';
 import { useAuthStore } from '@/stores/auth';
+import { useToast } from '@/components/ui/Toast';
+import { SkeletonTarjetas } from '@/components/ui/Skeleton';
 import { api } from '@/lib/api/client';
 
 const MODALIDAD_LABEL: Record<string, string> = { DIARIO: 'Diario', SEMANAL: 'Semanal', QUINCENAL: 'Quincenal', MENSUAL: 'Mensual' };
@@ -56,7 +58,7 @@ export function CarteraPanel() {
       </div>
 
       {isLoading ? (
-        <p className="text-sm text-slate-500">Cargando créditos…</p>
+        <SkeletonTarjetas cantidad={3} />
       ) : !data || data.length === 0 ? (
         <p className="card card-pad border-2 border-dashed border-slate-200 text-center text-sm text-slate-500 shadow-none ring-0">
           {buscar ? 'Sin resultados para esa búsqueda.' : 'No hay créditos operables. Aprueba una solicitud para verla aquí.'}
@@ -188,6 +190,7 @@ function CreditoCard({ c }: { c: Solicitud }) {
 
 function FichaCredito({ creditoId }: { creditoId: number }) {
   const { data: credito, isLoading, isError, error: qError } = useCreditoDetalle(creditoId);
+  const toast = useToast();
   const pagar = useRegistrarPago();
   const { data: cuotasData } = useCuotasCredito(creditoId);
   const cuotas = cuotasData?.data ?? [];
@@ -204,7 +207,7 @@ function FichaCredito({ creditoId }: { creditoId: number }) {
   const [msg, setMsg] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  if (isLoading) return <p className="mt-3 text-sm text-slate-500">Cargando ficha…</p>;
+  if (isLoading) return <div className="mt-3"><SkeletonTarjetas cantidad={1} /></div>;
   if (isError) {
     const e = qError as { response?: { data?: { message?: string; diag?: unknown }; status?: number } };
     return (
@@ -238,15 +241,22 @@ function FichaCredito({ creditoId }: { creditoId: number }) {
         comprobante: comp, client_uuid: crypto.randomUUID() },
       {
         onSuccess: () => {
-          setMsg(metodo === 'TRANSFERENCIA'
+          const m = metodo === 'TRANSFERENCIA'
             ? 'Pago por transferencia registrado. Se aplicará al saldo cuando el supervisor lo apruebe.'
-            : 'Pago registrado ✓');
+            : 'Pago registrado ✓';
+          setMsg(m);
+          toast.exito(m);
           setValor(''); setObs(''); setComprobante(null); setBanco(''); setReferencia('');
         },
         onError: (e) => {
           const x = e as { message?: string; response?: { data?: { message?: string } } };
-          if (x?.message === 'OFFLINE_ENCOLADO') setMsg('Sin conexión: el pago se guardó y se sincronizará al recuperar internet.');
-          else setError(x?.response?.data?.message ?? 'No se pudo registrar el pago.');
+          if (x?.message === 'OFFLINE_ENCOLADO') {
+            const m = 'Sin conexión: el pago se guardó y se sincronizará al recuperar internet.';
+            setMsg(m); toast.info(m);
+          } else {
+            const m = x?.response?.data?.message ?? 'No se pudo registrar el pago.';
+            setError(m); toast.error(m);
+          }
         },
       },
     );

@@ -4,6 +4,7 @@ import { api } from '@/lib/api/client';
 import { money } from '@/lib/format';
 import { useAuthStore } from '@/stores/auth';
 import { useAreas } from '@/features/clientes/hooks';
+import { SkeletonIndicadores } from '@/components/ui/Skeleton';
 const DashboardGraficas = lazy(() => import('./DashboardGraficas').then((m) => ({ default: m.DashboardGraficas })));
 
 interface Indicadores {
@@ -44,7 +45,7 @@ export function DashboardPanel() {
       {puedeFiltrar && <FiltroAreas seleccion={areas} onCambio={setAreas} />}
 
       {isLoading ? (
-        <p className="text-sm text-slate-500">Cargando indicadores…</p>
+        <SkeletonIndicadores cantidad={8} />
       ) : isError || !d ? (
         <p className="alert-error">No se pudieron cargar los indicadores. Intenta recargar.</p>
       ) : (
