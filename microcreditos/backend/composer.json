@@ -1,0 +1,41 @@
+{
+    "name": "empresa/microcreditos-api",
+    "version": "1.0.48",
+    "type": "project",
+    "description": "API de gestión de microcréditos, ventas financiadas y cobranza territorial",
+    "require": {
+        "php": "^8.2",
+        "laravel/framework": "^12.0",
+        "tymon/jwt-auth": "^2.1",
+        "league/flysystem-aws-s3-v3": "^3.0",
+        "predis/predis": "^2.2",
+        "pragmarx/google2fa": "^8.0",
+        "maatwebsite/excel": "^3.1",
+        "barryvdh/laravel-dompdf": "^3.0"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^11.0",
+        "mockery/mockery": "^1.6",
+        "laravel/pint": "^1.13",
+        "nunomaduro/collision": "^8.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "App\\": "app/",
+            "Database\\Factories\\": "database/factories/",
+            "Database\\Seeders\\": "database/seeders/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": { "Tests\\": "tests/" }
+    },
+    "scripts": {
+        "post-autoload-dump": [
+            "@php artisan package:discover --ansi"
+        ],
+        "test": ["@php artisan test"]
+    },
+    "config": { "optimize-autoloader": true, "sort-packages": true },
+    "minimum-stability": "stable",
+    "prefer-stable": true
+}

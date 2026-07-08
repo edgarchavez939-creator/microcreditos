@@ -1,0 +1,24 @@
+# --- Backend Laravel 12 (PHP-FPM + Nginx) ---
+FROM php:8.3-fpm-alpine AS base
+
+RUN apk add --no-cache nginx postgresql-dev libpng-dev libzip-dev oniguruma-dev \
+ && docker-php-ext-install pdo pdo_pgsql bcmath gd zip opcache
+
+# Redis
+RUN apk add --no-cache $PHPIZE_DEPS && pecl install redis && docker-php-ext-enable redis
+
+COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
+
+WORKDIR /var/www
+COPY backend/composer.json backend/composer.lock* ./
+RUN composer install --no-dev --no-scripts --no-interaction --prefer-dist || true
+COPY backend/ ./
+RUN composer dump-autoload --optimize || true \
+ && chown -R www-data:www-data storage bootstrap/cache 2>/dev/null || true
+
+COPY infra/docker/nginx.conf /etc/nginx/http.d/default.conf
+COPY infra/docker/entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
+EXPOSE 8080
+ENTRYPOINT ["/entrypoint.sh"]
