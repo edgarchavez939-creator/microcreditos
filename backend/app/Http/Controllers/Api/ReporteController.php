@@ -67,7 +67,7 @@ class ReporteController extends Controller
         $filas = DB::table('pagos as p')
             ->join('solicitudes as s', 's.id', '=', 'p.solicitud_id')
             ->join('clientes as c', 'c.id', '=', 'p.cliente_id')
-            ->leftJoin('usuarios as u', 'u.id', '=', 'p.registrado_por')
+            ->leftJoin('usuarios as u', 'u.id', '=', DB::raw('COALESCE(p.collected_by, p.registrado_por)'))
             ->whereIn('p.solicitud_id', $ids)
             ->where('p.aplicado', true)
             ->whereBetween('p.fecha', [$data['desde'], $data['hasta']])
@@ -180,13 +180,13 @@ class ReporteController extends Controller
                 ->pluck('id')->all();
 
             $recaudado = (float) DB::table('pagos')
-                ->where('registrado_por', $c->id)
+                ->where(DB::raw('COALESCE(collected_by, registrado_por)'), $c->id)
                 ->where('aplicado', true)
                 ->whereBetween('fecha', [$data['desde'], $data['hasta']])
                 ->sum('valor');
 
             $numPagos = (int) DB::table('pagos')
-                ->where('registrado_por', $c->id)
+                ->where(DB::raw('COALESCE(collected_by, registrado_por)'), $c->id)
                 ->where('aplicado', true)
                 ->whereBetween('fecha', [$data['desde'], $data['hasta']])
                 ->count();

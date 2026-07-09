@@ -34,11 +34,15 @@ class CajaService
         $cobrosTransfer = (float) (clone $cobros)->where('medio_pago', '!=', 'EFECTIVO')->sum('valor');
         $numCobros      = (clone $cobros)->count();
 
-        // --- Recaudo por seguros: suma del valor_seguro de los créditos DESEMBOLSADOS hoy ---
+        // --- Recaudo por seguros: suma del valor_seguro de los créditos DESEMBOLSADOS hoy.
+        // PROPIEDAD: pertenece a quien CREÓ la solicitud (gestión comercial), NO a quien
+        // aprueba ni a quien desembolsa. Por eso se filtra por s.created_by, no por
+        // d.registrado_por. El desembolso pudo hacerlo otro usuario, pero el seguro
+        // reconoce la captación comercial del asesor que registró la solicitud.
         $seguros = DB::table('desembolsos as d')
             ->join('solicitudes as s', 's.id', '=', 'd.solicitud_id')
             ->whereDate('d.fecha', $fecha)
-            ->where('d.registrado_por', $usuarioId)
+            ->where('s.created_by', $usuarioId)
             ->selectRaw('COALESCE(SUM(s.valor_seguro),0) as total, COUNT(*) as num')
             ->first();
         $recaudoSeguros = (float) ($seguros->total ?? 0);
@@ -57,18 +61,20 @@ class CajaService
         $totalGastos    = (float) (clone $gastos)->sum('valor');
         $gastosEfectivo = (float) (clone $gastos)->where('medio_pago', 'EFECTIVO')->sum('valor');
 
-        // --- Saldo del día (movimiento total, incluye transferencias) ---
-        // Base + cobros(todos) + seguros - desembolsos(todos) - gastos(todos)
+        // --- Saldo económico del día (incluye el recaudo comercial de seguros) ---
         $saldoFinal = round(
             $baseInicial + $cobrosEfectivo + $cobrosTransfer + $recaudoSeguros
             - $totalDesembolsos - $totalGastos, 2
         );
 
-        // --- Efectivo esperado en caja (SOLO físico) ---
-        // Base + cobros EFECTIVO + seguros - desembolsos EFECTIVO - gastos EFECTIVO
-        // (los seguros se retienen del desembolso, por eso suman al efectivo disponible)
+        // --- Efectivo esperado en caja (SOLO dinero físico que pasó por este usuario) ---
+        // Base + cobros EFECTIVO − desembolsos EFECTIVO − gastos EFECTIVO.
+        // NOTA: el recaudo por seguros NO entra aquí. El seguro se retiene dentro del
+        // desembolso (dinero que maneja quien desembolsa), mientras que su reconocimiento
+        // comercial pertenece a quien creó la solicitud —que puede ser otro usuario—.
+        // Mezclarlo distorsionaría el arqueo físico. Se reporta aparte como indicador.
         $efectivoEsperado = round(
-            $baseInicial + $cobrosEfectivo + $recaudoSeguros
+            $baseInicial + $cobrosEfectivo
             - $desembolsosEfectivo - $gastosEfectivo, 2
         );
 

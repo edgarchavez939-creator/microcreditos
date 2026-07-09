@@ -157,7 +157,6 @@ function ResumenCaja({ e }: { e: EstadoCaja }) {
     ['Base inicial', e.base_inicial, 'in'],
     ['Cobros en efectivo', e.cobros_efectivo, 'in'],
     ['Cobros por transferencia', e.cobros_transferencia, 'in'],
-    ['Recaudo por seguros', e.recaudo_seguros, 'in'],
     ['Desembolsos', e.total_desembolsos, 'out'],
     ['Gastos', e.total_gastos, 'out'],
   ];
@@ -191,6 +190,13 @@ function ResumenCaja({ e }: { e: EstadoCaja }) {
           <div className="mt-1 font-display text-lg font-bold text-slate-700">{money(e.movimiento_total)}</div>
           <div className="mt-1 text-xs text-slate-400">{e.numero_cobros} cobro(s) · {e.numero_seguros} seguro(s)</div>
         </div>
+        {e.recaudo_seguros > 0 && (
+          <div className="rounded-2xl bg-brand-50 p-4 ring-1 ring-brand-100">
+            <div className="text-xs font-medium uppercase tracking-wide text-brand-700/70">Recaudo por seguros (comercial)</div>
+            <div className="mt-1 font-display text-lg font-bold text-brand-700">{money(e.recaudo_seguros)}</div>
+            <div className="mt-1 text-xs text-brand-700/60">Tu gestión comercial de solicitudes creadas. No es efectivo en caja.</div>
+          </div>
+        )}
       </div>
     </div>
   );

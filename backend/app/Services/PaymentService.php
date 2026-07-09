@@ -44,6 +44,7 @@ class PaymentService
                 'valor'          => $valor,
                 'metodo'         => $d['metodo'],
                 'registrado_por' => $usuario->id,
+                'collected_by'   => $usuario->id, // quien recauda = propietario del movimiento económico
                 'observaciones'  => $d['observaciones'] ?? null,
                 'client_uuid'    => $d['client_uuid'] ?? null,
                 'aplicado'       => ! $esTransferencia,
@@ -187,6 +188,14 @@ class PaymentService
             // El comprobante se CONSERVA como evidencia: solo se desliga del pago eliminado
             DB::table('documentos')->where('pago_id', $pago->id)->update(['pago_id' => null]);
 
+            // Trazabilidad de la anulación (antes de borrar): quién y cuándo anuló.
+            if ($usuario) {
+                DB::table('pagos')->where('id', $pago->id)->update([
+                    'cancelled_by' => $usuario->id,
+                    'cancelled_at' => now(),
+                ]);
+            }
+
             // Eliminar el ingreso de caja y el pago
             MovimientoCaja::where('referencia_tipo', 'PAGO')->where('referencia_id', $pago->id)->delete();
             $pago->delete();
@@ -241,6 +250,11 @@ class PaymentService
 
             $this->aplicarACuotas($credito->id, (float) $pago->valor);
 
+            // PROPIEDAD DEL MOVIMIENTO ECONÓMICO: pertenece a quien recaudó el pago
+            // (collected_by), NO al supervisor que aprueba. El validador solo queda
+            // registrado como approved_by para auditoría, sin afectar su caja.
+            $recaudador = $pago->collected_by ?? $pago->registrado_por;
+
             MovimientoCaja::create([
                 'fecha'           => now()->toDateString(),
                 'tipo'            => 'INGRESO',
@@ -249,10 +263,11 @@ class PaymentService
                 'referencia_tipo' => 'PAGO',
                 'referencia_id'   => $pago->id,
                 'area_id'         => $credito->area_id,
-                'registrado_por'  => $validador->id,
+                'registrado_por'  => $recaudador, // caja del recaudador, no del validador
             ]);
 
             $pago->aplicado = true;
+            $pago->approved_by = $validador->id; // trazabilidad de la aprobación (no afecta caja)
             $pago->save();
 
             $this->cerrarSiSaldado($credito->fresh());
