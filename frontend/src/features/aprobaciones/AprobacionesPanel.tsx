@@ -7,6 +7,7 @@ import { useToast } from '@/components/ui/Toast';
 import { SkeletonTarjetas } from '@/components/ui/Skeleton';
 import { useAprobar, useRechazar, useSolicitudesPendientes } from './hooks';
 import { PERIODOS_POR_MES } from '@/features/solicitudes/schema';
+import { EstadoVacio, IconosVacio } from '@/components/ui/EstadoVacio';
 
 const MOD_LABEL: Record<string, string> = {
   MENSUAL: 'Mensual', QUINCENAL: 'Quincenal', SEMANAL: 'Semanal', DIARIO: 'Diario',
@@ -65,9 +66,7 @@ export function AprobacionesPanel() {
       {isLoading ? (
         <SkeletonTarjetas cantidad={2} />
       ) : !data || data.length === 0 ? (
-        <p className="card card-pad border-2 border-dashed border-slate-200 text-center text-sm text-slate-500 shadow-none ring-0">
-          No hay solicitudes pendientes de aprobación.
-        </p>
+        <EstadoVacio icono={IconosVacio.aprobacion} titulo="Todo al día" descripcion="No hay solicitudes pendientes de aprobación en este momento." />
       ) : (
         <div className="space-y-4">
           {data.map((s) => <TarjetaAprobacion key={s.id} s={s} onAprobado={setAprobado} />)}

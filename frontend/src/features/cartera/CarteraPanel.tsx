@@ -9,6 +9,7 @@ import { useAuthStore } from '@/stores/auth';
 import { useToast } from '@/components/ui/Toast';
 import { SkeletonTarjetas } from '@/components/ui/Skeleton';
 import { api } from '@/lib/api/client';
+import { EstadoVacio, IconosVacio } from '@/components/ui/EstadoVacio';
 
 const MODALIDAD_LABEL: Record<string, string> = { DIARIO: 'Diario', SEMANAL: 'Semanal', QUINCENAL: 'Quincenal', MENSUAL: 'Mensual' };
 
@@ -60,9 +61,9 @@ export function CarteraPanel() {
       {isLoading ? (
         <SkeletonTarjetas cantidad={3} />
       ) : !data || data.length === 0 ? (
-        <p className="card card-pad border-2 border-dashed border-slate-200 text-center text-sm text-slate-500 shadow-none ring-0">
-          {buscar ? 'Sin resultados para esa búsqueda.' : 'No hay créditos operables. Aprueba una solicitud para verla aquí.'}
-        </p>
+        buscar
+          ? <EstadoVacio icono={IconosVacio.busqueda} titulo="Sin resultados" descripcion="No encontramos créditos que coincidan con esa búsqueda. Prueba con otro documento o nombre." />
+          : <EstadoVacio icono={IconosVacio.cartera} titulo="No hay créditos operables" descripcion="Cuando apruebes una solicitud, el crédito aparecerá aquí para gestionar sus pagos." />
       ) : (
         <div className="space-y-4">
           {data.map((c) => <CreditoCard key={c.id} c={c} />)}

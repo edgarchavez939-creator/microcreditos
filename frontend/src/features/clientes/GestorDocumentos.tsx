@@ -4,6 +4,7 @@ import {
   useEliminarDocumento, verDocumento, type DocumentoMeta,
 } from './hooks';
 import { fecha } from '@/lib/format';
+import { EstadoVacio, IconosVacio } from '@/components/ui/EstadoVacio';
 
 const CATEGORIAS = [
   { v: 'CEDULA_FRONTAL', t: 'Cédula (frontal)' },
@@ -74,7 +75,7 @@ export function GestorDocumentos({ clienteId }: { clienteId: number }) {
       {isLoading ? (
         <p className="text-sm text-slate-500">Cargando documentos…</p>
       ) : !docs || docs.length === 0 ? (
-        <p className="text-sm text-slate-500">Este cliente aún no tiene documentos cargados.</p>
+        <EstadoVacio icono={IconosVacio.documento} titulo="Sin documentos" descripcion="Este cliente aún no tiene documentos cargados. Usa el botón de arriba para subir el primero." />
       ) : (
         <ul className="space-y-2">
           {docs.map((d) => <FilaDocumento key={d.id} clienteId={clienteId} doc={d} />)}

@@ -1,6 +1,8 @@
 import { Icon } from '@/components/ui/icons';
 import { useState } from 'react';
 import { useClientes } from './hooks';
+import { EstadoVacio, IconosVacio } from '@/components/ui/EstadoVacio';
+import { SkeletonTabla } from '@/components/ui/Skeleton';
 
 export function ClientesList({ onNuevo, onVerPerfil }: { onNuevo: () => void; onVerPerfil: (id: number) => void }) {
   const [buscar, setBuscar] = useState('');
@@ -18,43 +20,67 @@ export function ClientesList({ onNuevo, onVerPerfil }: { onNuevo: () => void; on
       </div>
 
       {isLoading ? (
-        <p className="text-sm text-slate-500">Cargando clientes…</p>
+        <SkeletonTabla filas={6} columnas={4} />
       ) : !clientes || clientes.length === 0 ? (
-        <p className="card card-pad border-2 border-dashed border-slate-200 text-center text-sm text-slate-500 shadow-none ring-0">
-          No hay clientes todavía. Crea el primero con el botón “Nuevo cliente”.
-        </p>
+        buscar
+          ? <EstadoVacio icono={IconosVacio.busqueda} titulo="Sin resultados"
+              descripcion="Ningún cliente coincide con esa búsqueda. Prueba con otro nombre o documento." />
+          : <EstadoVacio icono={IconosVacio.usuarios} titulo="Sin clientes"
+              descripcion="Aún no has registrado clientes. Crea el primero con el botón “Nuevo cliente”."
+              accion={{ label: 'Nuevo cliente', onClick: onNuevo }} />
       ) : (
-        <div className="table-wrap">
-          <table className="table-base">
-            <thead>
-              <tr>
-                <th className="px-3 py-2">#</th>
-                <th className="px-3 py-2">Nombre</th>
-                <th className="px-3 py-2">Documento</th>
-                <th className="px-3 py-2">Teléfono</th>
-                <th className="px-3 py-2">Área</th>
-                <th className="px-3 py-2">Mapa</th>
-              </tr>
-            </thead>
-            <tbody>
-              {clientes.map((c) => (
-                <tr key={c.id} onClick={() => onVerPerfil(c.id)} className="cursor-pointer border-t hover:bg-slate-50">
-                  <td className="px-3 py-2 text-slate-400">{c.id}</td>
-                  <td className="px-3 py-2 font-medium">{c.nombres} {c.apellidos}</td>
-                  <td className="px-3 py-2">{c.tipo_documento} {c.numero_documento}</td>
-                  <td className="px-3 py-2">{c.telefono_principal ?? '—'}</td>
-                  <td className="px-3 py-2">{c.area ?? '—'}</td>
-                  <td className="px-3 py-2">
-                    {c.latitud && c.longitud
-                      ? <a onClick={(e) => e.stopPropagation()} className="text-brand underline" target="_blank" rel="noreferrer"
-                          href={`https://www.google.com/maps?q=${c.latitud},${c.longitud}`}>Ver</a>
-                      : '—'}
-                  </td>
+        <>
+          {/* Escritorio: tabla */}
+          <div className="table-wrap hidden sm:block">
+            <table className="table-base">
+              <thead>
+                <tr>
+                  <th>#</th><th>Nombre</th><th>Documento</th><th>Teléfono</th><th>Área</th><th>Mapa</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody>
+                {clientes.map((c) => (
+                  <tr key={c.id} onClick={() => onVerPerfil(c.id)} className="cursor-pointer">
+                    <td className="text-slate-400">{c.id}</td>
+                    <td className="font-medium">{c.nombres} {c.apellidos}</td>
+                    <td>{c.tipo_documento} {c.numero_documento}</td>
+                    <td>{c.telefono_principal ?? '—'}</td>
+                    <td>{c.area ?? '—'}</td>
+                    <td>
+                      {c.latitud && c.longitud
+                        ? <a onClick={(e) => e.stopPropagation()} className="text-brand underline" target="_blank" rel="noreferrer"
+                            href={`https://www.google.com/maps?q=${c.latitud},${c.longitud}`}>Ver</a>
+                        : '—'}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Móvil: tarjetas apiladas */}
+          <div className="space-y-2.5 sm:hidden">
+            {clientes.map((c) => (
+              <button key={c.id} onClick={() => onVerPerfil(c.id)}
+                className="block w-full rounded-xl bg-white p-3.5 text-left shadow-card ring-1 ring-slate-100 transition active:scale-[0.99]">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <div className="truncate font-semibold text-ink">{c.nombres} {c.apellidos}</div>
+                    <div className="mt-0.5 text-xs text-slate-500">{c.tipo_documento} {c.numero_documento}</div>
+                  </div>
+                  <span className="shrink-0 rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-600">{c.area ?? 'Sin área'}</span>
+                </div>
+                <div className="mt-2 flex items-center justify-between text-sm">
+                  <span className="text-slate-600">{c.telefono_principal ?? 'Sin teléfono'}</span>
+                  {c.latitud && c.longitud && (
+                    <a onClick={(e) => e.stopPropagation()} className="font-medium text-brand" target="_blank" rel="noreferrer"
+                      href={`https://www.google.com/maps?q=${c.latitud},${c.longitud}`}>Ver en mapa</a>
+                  )}
+                </div>
+              </button>
+            ))}
+          </div>
+        </>
       )}
     </div>
   );

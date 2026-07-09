@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Logo } from '@/components/ui/Logo';
 import { useAuthStore } from '@/stores/auth';
 import { LoginForm } from '@/features/auth/LoginForm';
 import { Placeholder } from '@/components/Placeholder';
@@ -73,7 +74,7 @@ function AppShell() {
 
   const brand = (
     <div className="flex items-center gap-2.5 px-2">
-      <div className="grid h-9 w-9 place-items-center rounded-xl bg-gradient-to-br from-brand-400 to-brand-600 font-display text-lg font-bold text-white shadow-lift">M</div>
+      <Logo size={38} className="shadow-lift rounded-xl" />
       <div className="leading-tight">
         <div className="font-display text-sm font-bold text-white">Microcréditos</div>
         <div className="text-[11px] text-slate-400">Gestión territorial</div>

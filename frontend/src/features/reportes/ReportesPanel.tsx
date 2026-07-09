@@ -4,6 +4,7 @@ import * as XLSX from 'xlsx';
 import { api } from '@/lib/api/client';
 import { money, fecha } from '@/lib/format';
 import { SkeletonTabla } from '@/components/ui/Skeleton';
+import { EstadoVacio, IconosVacio } from '@/components/ui/EstadoVacio';
 
 type Fila = Record<string, unknown>;
 
@@ -158,9 +159,7 @@ export function ReportesPanel() {
           })()}
         </div>
       ) : filas.length === 0 ? (
-        <p className="card card-pad border-2 border-dashed border-slate-200 text-center text-sm text-slate-500 shadow-none ring-0">
-          No hay datos para este reporte.
-        </p>
+        <EstadoVacio icono={IconosVacio.reporte} titulo="Sin datos" descripcion="No hay información para el reporte y periodo seleccionados." />
       ) : (
         <>
           {typeof data?.total === 'number' && (

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useAreas } from '@/features/clientes/hooks';
 import { useActualizarArea, useActualizarUsuario, useCrearArea, useCrearUsuario, useUsuarios, type UsuarioAdmin } from './hooks';
+import { EstadoVacio, IconosVacio } from '@/components/ui/EstadoVacio';
 
 const ROLES = [
   { v: 'COBRADOR', t: 'Cobrador' },
@@ -30,7 +31,7 @@ export function UsuariosPanel() {
           {isLoading ? (
             <p className="text-sm text-slate-500">Cargando usuarios…</p>
           ) : !usuarios || usuarios.length === 0 ? (
-            <p className="text-sm text-slate-500">No hay usuarios registrados.</p>
+            <EstadoVacio icono={IconosVacio.usuarios} titulo="Sin usuarios" descripcion="Aún no hay usuarios registrados en el sistema." />
           ) : (
             <div className="table-wrap">
               <table className="table-base">

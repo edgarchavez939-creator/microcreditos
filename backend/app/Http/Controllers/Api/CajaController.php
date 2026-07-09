@@ -16,6 +16,9 @@ class CajaController extends Controller
         $mora->sincronizar();
         $u = $request->user();
 
+        // CONSOLIDADO POR CRÉDITO: una sola fila por solicitud, agrupando sus cuotas
+        // vencidas/del-día en la base de datos (sin consultas por cuota). Un cliente con
+        // dos créditos genera dos filas; un crédito con 8 cuotas vencidas genera una.
         $q = DB::table('cuotas as q')
             ->join('solicitudes as s', 's.id', '=', 'q.solicitud_id')
             ->join('clientes as c', 'c.id', '=', 's.cliente_id')
@@ -33,14 +36,24 @@ class CajaController extends Controller
             $q->whereIn('s.area_id', $areas);
         }
 
-        $filas = $q->orderByRaw("CASE WHEN q.estado = 'VENCIDA' THEN 0 ELSE 1 END")
-            ->orderBy('q.fecha_vencimiento')
+        $filas = $q
+            ->groupBy('s.id', 's.numero_credito', 'c.nombres', 'c.apellidos',
+                      'c.telefono_principal', 'c.direccion', 'c.barrio',
+                      'c.latitud', 'c.longitud', 'uc.nombre')
+            ->orderByRaw("CASE WHEN MAX(CASE WHEN q.estado='VENCIDA' THEN 1 ELSE 0 END)=1 THEN 0 ELSE 1 END")
+            ->orderByRaw('MIN(q.fecha_vencimiento)')
             ->limit(300)
             ->get([
-                'q.id as cuota_id', 'q.numero_cuota', 'q.fecha_vencimiento', 'q.estado',
-                DB::raw('CAST(q.valor - q.valor_pagado AS FLOAT) as valor_pendiente'),
-                'q.dias_mora',
                 's.id as solicitud_id', 's.numero_credito',
+                // ¿el crédito tiene al menos una cuota vencida? define su estado y sección
+                DB::raw("(CASE WHEN MAX(CASE WHEN q.estado='VENCIDA' THEN 1 ELSE 0 END)=1 THEN 'VENCIDA' ELSE 'HOY' END) as estado"),
+                DB::raw('COUNT(*) as cuotas_vencidas'),
+                DB::raw('MIN(q.numero_cuota) as cuota_desde'),
+                DB::raw('MAX(q.numero_cuota) as cuota_hasta'),
+                DB::raw('MIN(q.fecha_vencimiento) as fecha_mas_antigua'),
+                DB::raw('CAST(SUM(q.valor - q.valor_pagado) AS FLOAT) as valor_pendiente'),
+                // Días de mora de la cuota más antigua = el máximo de dias_mora del grupo
+                DB::raw('COALESCE(MAX(q.dias_mora),0) as dias_mora'),
                 DB::raw("TRIM(c.nombres || ' ' || c.apellidos) as cliente"),
                 'c.telefono_principal as telefono', 'c.direccion', 'c.barrio',
                 DB::raw('CAST(c.latitud AS FLOAT) as latitud'),
@@ -54,8 +67,8 @@ class CajaController extends Controller
         return response()->json([
             'data' => $filas->values(),
             'resumen' => [
-                'cobros_hoy'   => ['cantidad' => $hoy->count(), 'total' => (float) $hoy->sum('valor_pendiente')],
-                'en_mora'      => ['cantidad' => $vencidas->count(), 'total' => (float) $vencidas->sum('valor_pendiente')],
+                'cobros_hoy' => ['cantidad' => $hoy->count(), 'total' => (float) $hoy->sum('valor_pendiente')],
+                'en_mora'    => ['cantidad' => $vencidas->count(), 'total' => (float) $vencidas->sum('valor_pendiente')],
             ],
         ]);
     }

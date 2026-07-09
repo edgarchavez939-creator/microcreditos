@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api/client';
 import { money, fechaHora } from '@/lib/format';
+import { EstadoVacio, IconosVacio } from '@/components/ui/EstadoVacio';
 
 interface Transferencia {
   id: number;
@@ -56,9 +57,7 @@ export function TransferenciasPanel() {
       {isLoading ? (
         <p className="text-sm text-slate-500">Cargando transferencias…</p>
       ) : !data || data.length === 0 ? (
-        <p className="card card-pad border-2 border-dashed border-slate-200 text-center text-sm text-slate-500 shadow-none ring-0">
-          No hay transferencias en este estado.
-        </p>
+        <EstadoVacio icono={IconosVacio.transferencia} titulo="Sin transferencias" descripcion="No hay transferencias en este estado por ahora." />
       ) : (
         <div className="space-y-4">
           {data.map((t) => <TarjetaTransferencia key={t.id} t={t} />)}

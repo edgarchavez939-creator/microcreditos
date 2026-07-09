@@ -1,3 +1,4 @@
+import { Logo } from '@/components/ui/Logo';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -48,7 +49,7 @@ export function LoginForm() {
         <div className="absolute -right-24 -top-24 h-96 w-96 rounded-full bg-brand-500/20 blur-3xl" />
         <div className="absolute -bottom-32 -left-16 h-96 w-96 rounded-full bg-money-600/10 blur-3xl" />
         <div className="relative flex items-center gap-3">
-          <div className="grid h-11 w-11 place-items-center rounded-2xl bg-gradient-to-br from-brand-400 to-brand-600 font-display text-xl font-bold text-white shadow-lift">M</div>
+          <Logo size={44} className="shadow-lift" />
           <span className="font-display text-lg font-bold text-white">Microcréditos</span>
         </div>
         <div className="relative">
@@ -71,7 +72,7 @@ export function LoginForm() {
       <div className="flex min-h-screen items-center justify-center p-6 lg:min-h-0">
         <div className="w-full max-w-sm">
           <div className="mb-6 flex flex-col items-center lg:hidden">
-            <div className="grid h-14 w-14 place-items-center rounded-2xl bg-gradient-to-br from-brand-400 to-brand-600 font-display text-2xl font-bold text-white shadow-lift">M</div>
+            <Logo size={56} className="shadow-lift" />
             <h1 className="mt-3 font-display text-lg font-bold">Microcréditos</h1>
           </div>
 
