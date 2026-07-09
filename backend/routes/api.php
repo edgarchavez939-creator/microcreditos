@@ -18,7 +18,7 @@ use App\Http\Controllers\Api\OtpController;
 use App\Http\Controllers\Api\PermisoController;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/health', fn () => response()->json(['status' => 'ok', 'version' => 'v50-ruta-consolidada', 'ts' => now()]));
+Route::get('/health', fn () => response()->json(['status' => 'ok', 'version' => 'v51-caja-tesoreria', 'ts' => now()]));
 
 // Extracto PDF: accesible por enlace firmado (para compartir por WhatsApp) o con JWT
 Route::get('solicitudes/{solicitud}/extracto.pdf', [SolicitudController::class, 'extractoPdf'])
@@ -49,6 +49,9 @@ Route::middleware('auth:api')->group(function () {
     Route::get('mapa/clientes', [MapaController::class, 'clientes'])->middleware('modulo:mapa');
     Route::get('ruta-dia', [CajaController::class, 'rutaDia'])->middleware('modulo:ruta');
     Route::get('caja/resumen-dia', [CajaController::class, 'resumenDia'])->middleware('modulo:caja');
+    Route::post('caja/base', [CajaController::class, 'registrarBase'])->middleware('modulo:caja');
+    Route::post('caja/gasto', [CajaController::class, 'registrarGasto'])->middleware('modulo:caja');
+    Route::delete('caja/gasto/{id}', [CajaController::class, 'eliminarGasto'])->middleware('modulo:caja');
     Route::post('caja/cerrar', [CajaController::class, 'cerrar'])->middleware('modulo:caja');
     Route::get('caja/cierres', [CajaController::class, 'cierres'])->middleware('modulo:caja');
     Route::get('reportes/caja', [ReporteController::class, 'caja'])->middleware('modulo:reportes');

@@ -1,114 +1,149 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { api } from '@/lib/api/client';
-import { money, fecha } from '@/lib/format';
+import { money, fechaHora } from '@/lib/format';
+import { useToast } from '@/components/ui/Toast';
+import { SkeletonIndicadores } from '@/components/ui/Skeleton';
 
-interface ResumenDia {
+interface EstadoCaja {
   fecha: string;
-  total_ingresos: number;
-  total_egresos: number;
-  saldo: number;
-  numero_pagos: number;
+  base_inicial: number;
+  cobros_efectivo: number;
+  cobros_transferencia: number;
+  total_cobros: number;
+  numero_cobros: number;
+  recaudo_seguros: number;
+  numero_seguros: number;
+  total_desembolsos: number;
+  desembolsos_efectivo: number;
+  total_gastos: number;
+  gastos_efectivo: number;
+  saldo_final: number;
+  efectivo_esperado: number;
+  movimiento_total: number;
+  hora_apertura: string | null;
+  tiene_base: boolean;
   ya_cerrada: boolean;
+  cierre: Record<string, unknown> | null;
+  movimientos: MovimientoCaja[];
+  tipos_gasto: string[];
 }
 
-interface CierreFila {
+interface MovimientoCaja {
   id: number;
-  fecha: string;
-  total_ingresos: number;
-  total_egresos: number;
-  saldo: number;
-  cerrado_por?: string | null;
-  area?: string | null;
+  tipo: string;
+  concepto: string;
+  subtipo?: string | null;
+  valor: number;
+  medio_pago: string;
+  referencia_tipo?: string | null;
+  observacion?: string | null;
   created_at: string;
 }
 
+const LABEL_GASTO: Record<string, string> = {
+  ALIMENTACION: 'Alimentación', COMBUSTIBLE: 'Combustible', PARQUEADERO: 'Parqueadero',
+  PEAJES: 'Peajes', VEHICULO: 'Gastos del vehículo', PAPELERIA: 'Papelería', OTROS: 'Otros',
+};
+
 export function CajaPanel() {
   const qc = useQueryClient();
-  const [error, setError] = useState<string | null>(null);
-  const [msg, setMsg] = useState<string | null>(null);
-
-  const { data: resumen, isLoading } = useQuery({
+  const toast = useToast();
+  const { data: e, isLoading } = useQuery({
     queryKey: ['caja-resumen'],
-    queryFn: async () => (await api.get<{ data: ResumenDia }>('/caja/resumen-dia')).data.data,
+    queryFn: async () => (await api.get<{ data: EstadoCaja }>('/caja/resumen-dia')).data.data,
+    refetchInterval: 60_000,
   });
 
+  const invalidar = () => qc.invalidateQueries({ queryKey: ['caja-resumen'] });
+
+  if (isLoading || !e) {
+    return (
+      <div>
+        <h2 className="mb-1 text-xl font-bold">Caja del día</h2>
+        <p className="mb-5 text-sm text-slate-500">Cargando el estado de tu caja…</p>
+        <SkeletonIndicadores cantidad={6} />
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h2 className="mb-1 text-xl font-bold">Caja del día</h2>
+        <p className="text-sm text-slate-500">
+          {e.ya_cerrada
+            ? 'La caja de hoy ya está cerrada.'
+            : 'Registra tus movimientos durante la jornada. El resumen se actualiza en tiempo real.'}
+        </p>
+        {e.hora_apertura && (
+          <p className="mt-0.5 text-xs text-slate-400">Apertura: {fechaHora(e.hora_apertura)}</p>
+        )}
+      </div>
+
+      {/* RESUMEN EN TIEMPO REAL */}
+      <ResumenCaja e={e} />
+
+      {!e.ya_cerrada && (
+        <div className="grid gap-4 lg:grid-cols-2">
+          {!e.tiene_base && <BaseInicial onOk={invalidar} toast={toast} />}
+          <RegistrarGasto tipos={e.tipos_gasto} onOk={invalidar} toast={toast} />
+        </div>
+      )}
+
+      {/* LÍNEA DE TIEMPO DE MOVIMIENTOS */}
+      <Movimientos movimientos={e.movimientos} cerrada={e.ya_cerrada} onOk={invalidar} toast={toast} />
+
+      {/* CIERRE CON ARQUEO */}
+      {!e.ya_cerrada && e.tiene_base && <CierreArqueo e={e} onOk={invalidar} toast={toast} />}
+
+      {/* HISTORIAL DE CIERRES */}
+      <HistorialCierres />
+    </div>
+  );
+}
+
+interface CierreFila {
+  id: number; fecha: string; base_inicial?: number; efectivo_esperado?: number;
+  efectivo_contado?: number | null; diferencia?: number; saldo: number;
+  cerrado_por?: string | null; area?: string | null; created_at: string;
+}
+
+function HistorialCierres() {
   const { data: cierres } = useQuery({
     queryKey: ['caja-cierres'],
     queryFn: async () => (await api.get<{ data: CierreFila[] }>('/caja/cierres')).data.data,
   });
-
-  const cerrar = useMutation({
-    mutationFn: async () => (await api.post('/caja/cerrar')).data,
-    onSuccess: () => {
-      setMsg('Caja cerrada ✓');
-      qc.invalidateQueries({ queryKey: ['caja-resumen'] });
-      qc.invalidateQueries({ queryKey: ['caja-cierres'] });
-    },
-    onError: (e: unknown) => {
-      const x = e as { response?: { data?: { message?: string } } };
-      setError(x?.response?.data?.message ?? 'No se pudo cerrar la caja.');
-    },
-  });
+  const [abierto, setAbierto] = useState(false);
+  if (!cierres || cierres.length === 0) return null;
 
   return (
-    <div>
-      <h2 className="mb-1 text-xl font-bold">Caja</h2>
-      <p className="mb-5 text-sm text-slate-500">Tu movimiento del día y el cierre de caja.</p>
-
-      {isLoading || !resumen ? (
-        <p className="text-sm text-slate-500">Cargando…</p>
-      ) : (
-        <div className="card card-pad mb-6">
-          <div className="mb-3 flex items-center justify-between">
-            <h3 className="font-semibold">Hoy · {fecha(resumen.fecha)}</h3>
-            {resumen.ya_cerrada ? (
-              <span className="rounded-full bg-money-50 px-3 py-1 text-xs text-money-700 ring-1 ring-money-100">Caja cerrada ✓</span>
-            ) : (
-              <button
-                onClick={() => { setError(null); setMsg(null); cerrar.mutate(); }}
-                disabled={cerrar.isPending}
-                className="btn-primary btn-sm">
-                {cerrar.isPending ? 'Cerrando…' : 'Cerrar caja del día'}
-              </button>
-            )}
-          </div>
-
-          <div className="grid gap-4 sm:grid-cols-3">
-            <Kpi titulo="Recaudado (ingresos)" valor={money(resumen.total_ingresos)}
-              detalle={`${resumen.numero_pagos} pago${resumen.numero_pagos === 1 ? '' : 's'}`} />
-            <Kpi titulo="Egresos (desembolsos)" valor={money(resumen.total_egresos)} />
-            <Kpi titulo="Saldo del día" valor={money(resumen.saldo)} destaque />
-          </div>
-
-          {msg && <p className="mt-3 text-sm text-green-700">{msg}</p>}
-          {error && <p className="mt-3 alert-error">{error}</p>}
-          <p className="mt-2 text-xs text-slate-400">
-            El cierre registra los totales de tus movimientos de hoy. Solo puede hacerse una vez por día.
-          </p>
-        </div>
-      )}
-
-      <h3 className="mb-2 text-sm font-semibold text-slate-700">Cierres anteriores</h3>
-      {!cierres || cierres.length === 0 ? (
-        <p className="text-sm text-slate-500">Aún no hay cierres registrados.</p>
-      ) : (
-        <div className="table-wrap">
+    <div className="card card-pad">
+      <button onClick={() => setAbierto((v) => !v)} className="flex w-full items-center justify-between text-sm font-semibold text-slate-700">
+        Historial de cierres ({cierres.length})
+        <span className="text-slate-400">{abierto ? '▲' : '▼'}</span>
+      </button>
+      {abierto && (
+        <div className="table-wrap mt-3">
           <table className="table-base">
             <thead>
-              <tr><th>Fecha</th><th>Ingresos</th><th>Egresos</th><th>Saldo</th><th>Cerró</th><th>Área</th></tr>
+              <tr><th>Fecha</th><th>Esperado</th><th>Contado</th><th>Diferencia</th><th>Cerró</th></tr>
             </thead>
             <tbody>
-              {cierres.map((c) => (
-                <tr key={c.id} className="border-t">
-                  <td>{c.fecha?.slice(0, 10)}</td>
-                  <td className="text-right">{money(c.total_ingresos)}</td>
-                  <td className="text-right">{money(c.total_egresos)}</td>
-                  <td className="text-right font-medium">{money(c.saldo)}</td>
-                  <td>{c.cerrado_por ?? '—'}</td>
-                  <td>{c.area ?? '—'}</td>
-                </tr>
-              ))}
+              {cierres.map((c) => {
+                const dif = c.diferencia ?? 0;
+                return (
+                  <tr key={c.id}>
+                    <td>{fechaHora(c.created_at)}</td>
+                    <td>{money(c.efectivo_esperado ?? 0)}</td>
+                    <td>{c.efectivo_contado != null ? money(c.efectivo_contado) : '—'}</td>
+                    <td className={Math.abs(dif) >= 0.01 ? (dif < 0 ? 'text-rose-600' : 'text-amber-700') : 'text-slate-400'}>
+                      {Math.abs(dif) < 0.01 ? 'Cuadrada' : `${dif < 0 ? 'Faltante' : 'Sobrante'} ${money(Math.abs(dif))}`}
+                    </td>
+                    <td>{c.cerrado_por ?? '—'}</td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
@@ -117,12 +152,237 @@ export function CajaPanel() {
   );
 }
 
-function Kpi({ titulo, valor, detalle, destaque }: { titulo: string; valor: string; detalle?: string; destaque?: boolean }) {
+function ResumenCaja({ e }: { e: EstadoCaja }) {
+  const filas: [string, number, 'in' | 'out' | 'net'][] = [
+    ['Base inicial', e.base_inicial, 'in'],
+    ['Cobros en efectivo', e.cobros_efectivo, 'in'],
+    ['Cobros por transferencia', e.cobros_transferencia, 'in'],
+    ['Recaudo por seguros', e.recaudo_seguros, 'in'],
+    ['Desembolsos', e.total_desembolsos, 'out'],
+    ['Gastos', e.total_gastos, 'out'],
+  ];
   return (
-    <div className={`rounded-xl p-3 ring-1 ${destaque ? 'bg-money-50 ring-money-100' : 'bg-slate-50 ring-slate-100'}`}>
-      <div className="text-xs font-medium uppercase tracking-wide text-slate-500">{titulo}</div>
-      <div className="mt-0.5 font-display text-xl font-bold">{valor}</div>
-      {detalle && <div className="text-xs text-slate-400">{detalle}</div>}
+    <div className="grid gap-4 lg:grid-cols-3">
+      <div className="card card-pad lg:col-span-2">
+        <h3 className="mb-3 text-sm font-semibold text-slate-700">Movimientos del día</h3>
+        <dl className="divide-y divide-slate-100">
+          {filas.map(([label, val, dir]) => (
+            <div key={label} className="flex items-center justify-between py-2 text-sm">
+              <dt className="text-slate-600">{label}{label === 'Cobros por transferencia' && e.numero_cobros > 0 ? '' : ''}</dt>
+              <dd className={`font-semibold tabular-nums ${dir === 'out' ? 'text-rose-600' : 'text-slate-800'}`}>
+                {dir === 'out' ? '− ' : '+ '}{money(val)}
+              </dd>
+            </div>
+          ))}
+          <div className="flex items-center justify-between py-2.5">
+            <dt className="font-semibold">Saldo final del día</dt>
+            <dd className="font-display text-lg font-bold tabular-nums text-brand-700">{money(e.saldo_final)}</dd>
+          </div>
+        </dl>
+      </div>
+      <div className="flex flex-col gap-4">
+        <div className="rounded-2xl bg-money-50 p-4 ring-1 ring-money-100">
+          <div className="text-xs font-medium uppercase tracking-wide text-money-700/70">Efectivo esperado en caja</div>
+          <div className="mt-1 font-display text-2xl font-bold text-money-700">{money(e.efectivo_esperado)}</div>
+          <div className="mt-1 text-xs text-money-700/60">Solo dinero físico (excluye transferencias)</div>
+        </div>
+        <div className="rounded-2xl bg-slate-50 p-4 ring-1 ring-slate-100">
+          <div className="text-xs text-slate-500">Movimiento total del día</div>
+          <div className="mt-1 font-display text-lg font-bold text-slate-700">{money(e.movimiento_total)}</div>
+          <div className="mt-1 text-xs text-slate-400">{e.numero_cobros} cobro(s) · {e.numero_seguros} seguro(s)</div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+type ToastApi = ReturnType<typeof useToast>;
+
+function BaseInicial({ onOk, toast }: { onOk: () => void; toast: ToastApi }) {
+  const [valor, setValor] = useState('');
+  const [obs, setObs] = useState('');
+  const m = useMutation({
+    mutationFn: async () => (await api.post('/caja/base', { valor: Number(valor), observacion: obs || undefined })).data,
+    onSuccess: () => { toast.exito('Base inicial registrada ✓'); setValor(''); setObs(''); onOk(); },
+    onError: (err) => toast.error((err as { response?: { data?: { message?: string } } })?.response?.data?.message ?? 'No se pudo registrar la base.'),
+  });
+  return (
+    <div className="card card-pad">
+      <h3 className="mb-2 text-sm font-semibold text-slate-700">Base inicial</h3>
+      <p className="mb-3 text-xs text-slate-400">El efectivo con el que inicias la jornada. Se registra una vez al día.</p>
+      <div className="flex flex-wrap items-end gap-2">
+        <div className="flex-1 min-w-[140px]">
+          <label className="label">Valor</label>
+          <input type="number" step="any" value={valor} onChange={(ev) => setValor(ev.target.value)} className="input" placeholder="0" />
+        </div>
+        <div className="flex-1 min-w-[160px]">
+          <label className="label">Observación (opcional)</label>
+          <input value={obs} onChange={(ev) => setObs(ev.target.value)} className="input" />
+        </div>
+        <button onClick={() => m.mutate()} disabled={m.isPending || !valor} className="btn-primary btn-sm">
+          {m.isPending ? 'Guardando…' : 'Registrar base'}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function RegistrarGasto({ tipos, onOk, toast }: { tipos: string[]; onOk: () => void; toast: ToastApi }) {
+  const [subtipo, setSubtipo] = useState(tipos[0] ?? 'OTROS');
+  const [valor, setValor] = useState('');
+  const [medio, setMedio] = useState('EFECTIVO');
+  const [obs, setObs] = useState('');
+  const m = useMutation({
+    mutationFn: async () => (await api.post('/caja/gasto', {
+      subtipo, valor: Number(valor), medio_pago: medio, observacion: obs || undefined,
+    })).data,
+    onSuccess: () => { toast.exito('Gasto registrado ✓'); setValor(''); setObs(''); onOk(); },
+    onError: (err) => toast.error((err as { response?: { data?: { message?: string } } })?.response?.data?.message ?? 'No se pudo registrar el gasto.'),
+  });
+  return (
+    <div className="card card-pad">
+      <h3 className="mb-2 text-sm font-semibold text-slate-700">Registrar gasto</h3>
+      <p className="mb-3 text-xs text-slate-400">Puedes registrar gastos en cualquier momento del día.</p>
+      <div className="grid grid-cols-2 gap-2">
+        <div>
+          <label className="label">Tipo</label>
+          <select value={subtipo} onChange={(ev) => setSubtipo(ev.target.value)} className="input">
+            {tipos.map((t) => <option key={t} value={t}>{LABEL_GASTO[t] ?? t}</option>)}
+          </select>
+        </div>
+        <div>
+          <label className="label">Valor</label>
+          <input type="number" step="any" value={valor} onChange={(ev) => setValor(ev.target.value)} className="input" placeholder="0" />
+        </div>
+        <div>
+          <label className="label">Medio</label>
+          <select value={medio} onChange={(ev) => setMedio(ev.target.value)} className="input">
+            <option value="EFECTIVO">Efectivo</option>
+            <option value="TRANSFERENCIA">Transferencia</option>
+            <option value="NEQUI">Nequi</option>
+            <option value="DAVIPLATA">Daviplata</option>
+          </select>
+        </div>
+        <div>
+          <label className="label">Observación</label>
+          <input value={obs} onChange={(ev) => setObs(ev.target.value)} className="input" />
+        </div>
+      </div>
+      <button onClick={() => m.mutate()} disabled={m.isPending || !valor} className="btn-primary btn-sm mt-3">
+        {m.isPending ? 'Guardando…' : 'Agregar gasto'}
+      </button>
+    </div>
+  );
+}
+
+function Movimientos({ movimientos, cerrada, onOk, toast }: {
+  movimientos: MovimientoCaja[]; cerrada: boolean; onOk: () => void; toast: ToastApi;
+}) {
+  const eliminar = useMutation({
+    mutationFn: async (id: number) => (await api.delete(`/caja/gasto/${id}`)).data,
+    onSuccess: () => { toast.info('Gasto eliminado.'); onOk(); },
+    onError: (err) => toast.error((err as { response?: { data?: { message?: string } } })?.response?.data?.message ?? 'No se pudo eliminar.'),
+  });
+  if (movimientos.length === 0) return null;
+  return (
+    <div className="card card-pad">
+      <h3 className="mb-3 text-sm font-semibold text-slate-700">Movimientos de la jornada</h3>
+      <ul className="space-y-1.5">
+        {movimientos.map((m) => {
+          const esEgreso = m.tipo === 'EGRESO';
+          const esGasto = m.referencia_tipo === 'GASTO';
+          return (
+            <li key={m.id} className="flex items-center justify-between rounded-lg bg-slate-50 px-3 py-2 text-sm">
+              <div className="min-w-0">
+                <span className="font-medium text-slate-700">{m.concepto}</span>
+                <span className="ml-2 text-xs text-slate-400">
+                  {fechaHora(m.created_at)} · {m.medio_pago === 'EFECTIVO' ? 'Efectivo' : m.medio_pago}
+                  {m.observacion ? ` · ${m.observacion}` : ''}
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className={`font-semibold tabular-nums ${esEgreso ? 'text-rose-600' : 'text-money-700'}`}>
+                  {esEgreso ? '−' : '+'}{money(m.valor)}
+                </span>
+                {esGasto && !cerrada && (
+                  <button onClick={() => eliminar.mutate(m.id)} className="text-xs text-slate-300 hover:text-rose-500">✕</button>
+                )}
+              </div>
+            </li>
+          );
+        })}
+      </ul>
+    </div>
+  );
+}
+
+function CierreArqueo({ e, onOk, toast }: { e: EstadoCaja; onOk: () => void; toast: ToastApi }) {
+  const [contado, setContado] = useState('');
+  const [obs, setObs] = useState('');
+  const [confirmar, setConfirmar] = useState(false);
+
+  const diferencia = contado !== '' ? Number(contado) - e.efectivo_esperado : 0;
+  const hayDif = contado !== '' && Math.abs(diferencia) >= 0.01;
+
+  const m = useMutation({
+    mutationFn: async () => (await api.post('/caja/cerrar', {
+      efectivo_contado: Number(contado), observacion: obs || undefined,
+    })).data,
+    onSuccess: () => { toast.exito('Caja cerrada ✓'); onOk(); },
+    onError: (err) => toast.error((err as { response?: { data?: { message?: string } } })?.response?.data?.message ?? 'No se pudo cerrar la caja.'),
+  });
+
+  return (
+    <div className="card card-pad border-t-4 border-brand-500">
+      <h3 className="mb-1 text-sm font-semibold text-slate-700">Cierre y arqueo de caja</h3>
+      <p className="mb-3 text-xs text-slate-400">Cuenta el efectivo físico e ingrésalo. El sistema calculará la diferencia.</p>
+
+      <div className="grid gap-3 sm:grid-cols-2">
+        <div className="rounded-xl bg-money-50 p-3 ring-1 ring-money-100">
+          <div className="text-xs text-money-700/70">Efectivo esperado</div>
+          <div className="font-display text-xl font-bold text-money-700">{money(e.efectivo_esperado)}</div>
+        </div>
+        <div>
+          <label className="label">Efectivo contado (arqueo)</label>
+          <input type="number" step="any" value={contado} onChange={(ev) => setContado(ev.target.value)} className="input" placeholder="0" />
+        </div>
+      </div>
+
+      {hayDif && (
+        <div className={`mt-3 rounded-xl px-3.5 py-2.5 text-sm ring-1 ${diferencia < 0 ? 'bg-rose-50 text-rose-700 ring-rose-100' : 'bg-amber-50 text-amber-800 ring-amber-100'}`}>
+          {diferencia < 0 ? 'Faltante' : 'Sobrante'} de caja: <b>{money(Math.abs(diferencia))}</b>.
+          Debes registrar una observación explicando la novedad.
+        </div>
+      )}
+
+      {(hayDif || contado !== '') && (
+        <div className="mt-3">
+          <label className="label">Observación {hayDif && <span className="text-rose-500">*</span>}</label>
+          <textarea value={obs} onChange={(ev) => setObs(ev.target.value)} className="input" rows={2}
+            placeholder={hayDif ? 'Explica la diferencia (obligatorio)' : 'Observación del cierre (opcional)'} />
+        </div>
+      )}
+
+      {!confirmar ? (
+        <button onClick={() => setConfirmar(true)} disabled={contado === '' || (hayDif && obs.trim().length < 3)}
+          className="btn-primary btn-sm mt-4">
+          Revisar y cerrar caja
+        </button>
+      ) : (
+        <div className="mt-4 rounded-xl bg-slate-50 p-3 ring-1 ring-slate-200">
+          <p className="text-sm text-slate-700">
+            Vas a cerrar la caja con un efectivo contado de <b>{money(Number(contado))}</b>
+            {hayDif && <> y una diferencia de <b>{money(Math.abs(diferencia))}</b> ({diferencia < 0 ? 'faltante' : 'sobrante'})</>}.
+            Una vez cerrada, no podrás registrar más movimientos hoy.
+          </p>
+          <div className="mt-3 flex gap-2">
+            <button onClick={() => m.mutate()} disabled={m.isPending} className="btn-primary btn-sm">
+              {m.isPending ? 'Cerrando…' : 'Confirmar cierre'}
+            </button>
+            <button onClick={() => setConfirmar(false)} className="btn-outline btn-sm">Cancelar</button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
