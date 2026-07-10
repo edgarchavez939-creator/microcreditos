@@ -10,6 +10,7 @@ use App\Services\ApprovalService;
 use App\Services\DesembolsoService;
 use App\Services\LoanService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class SolicitudController extends Controller
 {
@@ -86,7 +87,11 @@ class SolicitudController extends Controller
             'motivo_exoneracion'  => $data['motivo_exoneracion'] ?? null,
             'fecha_primer_pago'   => $data['fecha_primer_pago'] ?? null,
             // Sin monto_aprobado todavía (queda NULL hasta la aprobación)
-            'estado'              => $exonerado ? 'PENDIENTE_ADMINISTRADOR' : 'PENDIENTE_SUPERVISOR',
+            // El estado inicial se decide por el MONTO SOLICITADO contra los límites
+            // vigentes en Parámetros (motor de aprobación por niveles).
+            'estado'              => $this->approvals->estadoInicial(
+                (float) $data['capital_solicitado'], $exonerado
+            ),
             'created_by'          => $request->user()->id,
         ]);
         if ($exonerado) {
@@ -162,8 +167,21 @@ class SolicitudController extends Controller
         $solicitud = $this->loans->calcularMontos($solicitud, $datosCalculo, $request->user()->id);
         $solicitud->save();
 
-        // 2) Validar límite y transicionar a APROBADO (ApprovalService usa monto_aprobado ya fijado)
-        $solicitud = $this->approvals->aprobar($solicitud, $request->user());
+        // 2) Validar límite y transicionar a APROBADO (con auditoría completa del intento)
+        $estadoAnterior = $solicitud->estado;
+        $limiteVigente = $this->approvals->limiteVigente($request->user()->rol);
+        try {
+            $solicitud = $this->approvals->aprobar($solicitud, $request->user());
+        } catch (\DomainException $e) {
+            // Auditar el intento FALLIDO de aprobación
+            $this->auditarAprobacion($request, $solicitud, $estadoAnterior, $estadoAnterior,
+                (float) $data['monto_aprobado'], $limiteVigente, 'FALLIDO', $e->getMessage());
+            return response()->json(['message' => $e->getMessage()], 422);
+        }
+
+        // Auditar la aprobación EXITOSA
+        $this->auditarAprobacion($request, $solicitud, $estadoAnterior, $solicitud->estado,
+            (float) $data['monto_aprobado'], $limiteVigente, 'APROBADO', null);
 
         // 3) Generar el cronograma provisional (se recalcula al desembolsar con la fecha real)
         try {
@@ -482,6 +500,32 @@ class SolicitudController extends Controller
     }
 
     /** 403 auto-explicativo: muestra qué evaluó el permiso y qué rama falló. */
+    /** Registra en auditoría cada aprobación o intento fallido con todos los datos del flujo. */
+    private function auditarAprobacion(Request $request, Solicitud $solicitud, string $estadoAnterior,
+        string $estadoNuevo, float $montoSolicitado, float $limiteVigente, string $resultado, ?string $mensaje): void
+    {
+        $u = $request->user();
+        DB::table('auditoria')->insert([
+            'usuario_id'  => $u->id,
+            'accion'      => $resultado === 'APROBADO' ? 'APPROVE' : 'APPROVE_DENIED',
+            'entidad'     => 'solicitud',
+            'entidad_id'  => $solicitud->id,
+            'datos_nuevos' => json_encode([
+                'rol'               => $u->rol,
+                'estado_anterior'   => $estadoAnterior,
+                'estado_nuevo'      => $estadoNuevo,
+                'monto_solicitado'  => $montoSolicitado,
+                'limite_vigente'    => $limiteVigente,
+                'resultado'         => $resultado,
+                'mensaje'           => $mensaje,
+                'created_by'        => $solicitud->created_by,
+            ], JSON_UNESCAPED_UNICODE),
+            'ip'          => $request->ip(),
+            'user_agent'  => $request->userAgent(),
+            'created_at'  => now(),
+        ]);
+    }
+
     private function denegarConDiagnostico(Solicitud $solicitud)
     {
         $u = request()->user();

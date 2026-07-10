@@ -13,14 +13,20 @@ class DocumentoController extends Controller
         'PAGARE', 'COMPROBANTE_PAGO', 'SOPORTE_DESEMBOLSO', 'OTRO',
     ];
 
-    /** Lista los documentos de un cliente (metadatos, sin el binario). */
+    /** Lista SOLO los documentos propios del cliente (excluye soportes de pago del crédito). */
     public function index(Request $request, int $cliente)
     {
         $this->autorizarCliente($request, $cliente);
 
+        // Separación documental: el perfil del cliente muestra únicamente su documentación
+        // personal. Los comprobantes de pago (categoria COMPROBANTE_PAGO o con pago_id/
+        // transferencia_id) pertenecen al crédito y se consultan desde el historial de pagos.
         $docs = DB::table('documentos')
             ->leftJoin('usuarios', 'usuarios.id', '=', 'documentos.subido_por')
             ->where('documentos.cliente_id', $cliente)
+            ->where('documentos.categoria', '!=', 'COMPROBANTE_PAGO')
+            ->whereNull('documentos.pago_id')
+            ->whereNull('documentos.transferencia_id')
             ->orderByDesc('documentos.created_at')
             ->get([
                 'documentos.id', 'documentos.categoria', 'documentos.nombre_original',
@@ -36,7 +42,8 @@ class DocumentoController extends Controller
     {
         $this->autorizarCliente($request, $cliente);
 
-        $doc = DB::table('documentos')->where('id', $documento)->where('cliente_id', $cliente)->first();
+        $doc = DB::table('documentos')->where('id', $documento)->where('cliente_id', $cliente)
+            ->where('categoria', '!=', 'COMPROBANTE_PAGO')->whereNull('pago_id')->whereNull('transferencia_id')->first();
         abort_unless($doc, 404, 'Documento no encontrado.');
 
         return response()->json(['data' => [
@@ -92,7 +99,8 @@ class DocumentoController extends Controller
             'contenido_base64' => ['required', 'string'],
         ]);
 
-        $doc = DB::table('documentos')->where('id', $documento)->where('cliente_id', $cliente)->first();
+        $doc = DB::table('documentos')->where('id', $documento)->where('cliente_id', $cliente)
+            ->where('categoria', '!=', 'COMPROBANTE_PAGO')->whereNull('pago_id')->whereNull('transferencia_id')->first();
         abort_unless($doc, 404, 'Documento no encontrado.');
 
         // Sobrescribir = eliminar físicamente el contenido anterior
@@ -118,7 +126,8 @@ class DocumentoController extends Controller
     {
         $this->autorizarCliente($request, $cliente);
 
-        $doc = DB::table('documentos')->where('id', $documento)->where('cliente_id', $cliente)->first();
+        $doc = DB::table('documentos')->where('id', $documento)->where('cliente_id', $cliente)
+            ->where('categoria', '!=', 'COMPROBANTE_PAGO')->whereNull('pago_id')->whereNull('transferencia_id')->first();
         abort_unless($doc, 404, 'Documento no encontrado.');
 
         DB::table('documentos')->where('id', $documento)->delete();

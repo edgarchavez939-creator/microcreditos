@@ -6,17 +6,24 @@ import {
 import { fecha } from '@/lib/format';
 import { EstadoVacio, IconosVacio } from '@/components/ui/EstadoVacio';
 
+// Categorías que el usuario PUEDE subir desde el perfil del cliente (documentación personal).
+// Los comprobantes de pago y soportes de desembolso NO están aquí: pertenecen al crédito.
 const CATEGORIAS = [
   { v: 'CEDULA_FRONTAL', t: 'Cédula (frontal)' },
   { v: 'CEDULA_POSTERIOR', t: 'Cédula (posterior)' },
   { v: 'CARTA_LABORAL', t: 'Carta laboral' },
   { v: 'SOPORTE_INGRESOS', t: 'Soporte de ingresos' },
   { v: 'PAGARE', t: 'Pagaré' },
-  { v: 'COMPROBANTE_PAGO', t: 'Comprobante de pago' },
-  { v: 'SOPORTE_DESEMBOLSO', t: 'Soporte de desembolso' },
   { v: 'OTRO', t: 'Otro' },
 ];
-const ETIQUETA = (v: string) => CATEGORIAS.find((c) => c.v === v)?.t ?? v;
+// Etiquetas para MOSTRAR cualquier categoría (incluye las que ya no son subibles aquí).
+const ETIQUETAS_TODAS: Record<string, string> = {
+  CEDULA_FRONTAL: 'Cédula (frontal)', CEDULA_POSTERIOR: 'Cédula (posterior)',
+  CARTA_LABORAL: 'Carta laboral', SOPORTE_INGRESOS: 'Soporte de ingresos',
+  PAGARE: 'Pagaré', COMPROBANTE_PAGO: 'Comprobante de pago',
+  SOPORTE_DESEMBOLSO: 'Soporte de desembolso', OTRO: 'Otro',
+};
+const ETIQUETA = (v: string) => ETIQUETAS_TODAS[v] ?? v;
 
 async function leerArchivo(file: File): Promise<{ base64: string; mime: string; nombre: string }> {
   const base64 = await new Promise<string>((res, rej) => {

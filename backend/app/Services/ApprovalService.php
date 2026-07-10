@@ -12,6 +12,33 @@ use Illuminate\Support\Facades\DB;
 class ApprovalService
 {
     /**
+     * Decide el estado inicial de una solicitud recién creada según el monto solicitado
+     * y los límites vigentes en Parámetros. Regla:
+     *  - monto <= máximo del supervisor  => PENDIENTE_SUPERVISOR (aprueba supervisor o admin)
+     *  - monto  > máximo del supervisor  => PENDIENTE_ADMINISTRADOR (solo admin)
+     *  - exoneración de seguro           => siempre PENDIENTE_ADMINISTRADOR
+     * Nunca usa valores fijos: lee el parámetro configurable.
+     */
+    public function estadoInicial(float $montoSolicitado, bool $exonerado): string
+    {
+        if ($exonerado) {
+            return EstadoSolicitud::PENDIENTE_ADMINISTRADOR->value;
+        }
+        $maxSupervisor = (float) \App\Models\Parametro::valor('aprobacion.max_supervisor', 2000000);
+        return $montoSolicitado > $maxSupervisor
+            ? EstadoSolicitud::PENDIENTE_ADMINISTRADOR->value
+            : EstadoSolicitud::PENDIENTE_SUPERVISOR->value;
+    }
+
+    /** Límite vigente para un rol (para auditoría y validaciones externas). */
+    public function limiteVigente(string $rol): float
+    {
+        $clave = $rol === 'ADMINISTRADOR' ? 'aprobacion.max_administrador' : 'aprobacion.max_supervisor';
+        $porDefecto = $rol === 'ADMINISTRADOR' ? 50000000 : 2000000;
+        return (float) \App\Models\Parametro::valor($clave, $porDefecto);
+    }
+
+    /**
      * Aprueba una solicitud validando rol, exoneración y límite (desde BD).
      */
     public function aprobar(Solicitud $solicitud, Usuario $aprobador): Solicitud
@@ -24,13 +51,19 @@ class ApprovalService
         }
 
         if ($aprobador->rol === 'SUPERVISOR') {
+            // El supervisor no puede tocar solicitudes escaladas a administrador.
+            if ($estadoActual === EstadoSolicitud::PENDIENTE_ADMINISTRADOR) {
+                throw new DomainException(
+                    'Esta solicitud supera el monto máximo autorizado para su perfil. Debe ser aprobada por un Administrador.'
+                );
+            }
             if ($estadoActual !== EstadoSolicitud::PENDIENTE_SUPERVISOR) {
                 throw new DomainException('La solicitud no está pendiente de supervisor.');
             }
             $limite = $this->limiteDe($aprobador, $solicitud);
             if ((float) $solicitud->monto_aprobado > $limite) {
                 throw new DomainException(
-                    "El monto supera el límite del supervisor ({$limite}). Debe escalar a administrador."
+                    'Esta solicitud supera el monto máximo autorizado para su perfil. Debe ser aprobada por un Administrador.'
                 );
             }
         } elseif ($aprobador->rol === 'ADMINISTRADOR') {
