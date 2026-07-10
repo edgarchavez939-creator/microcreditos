@@ -177,4 +177,108 @@ class AdminFuncionalController extends Controller
             'respaldos'   => ['configurado' => false],
         ]]);
     }
+
+    // ===================== MODO MANTENIMIENTO =====================
+
+    public function verMantenimiento(Request $request)
+    {
+        $this->soloFuncional($request);
+        return response()->json(['data' => DB::table('mantenimiento')->where('id', 1)->first()]);
+    }
+
+    public function guardarMantenimiento(Request $request)
+    {
+        $this->soloFuncional($request);
+        $data = $request->validate([
+            'activo'  => ['required', 'boolean'],
+            'mensaje' => ['nullable', 'string', 'max:500'],
+        ]);
+
+        $anterior = DB::table('mantenimiento')->where('id', 1)->first();
+        DB::table('mantenimiento')->where('id', 1)->update([
+            'activo'       => $data['activo'],
+            'mensaje'      => $data['mensaje'] ?? null,
+            'inicio'       => $data['activo'] ? ($anterior->inicio ?? now()) : $anterior->inicio,
+            'fin'          => $data['activo'] ? null : now(),
+            'activado_por' => $request->user()->id,
+            'updated_at'   => now(),
+        ]);
+        $this->auditar($request, 'MANTENIMIENTO', $anterior, $data);
+        \Illuminate\Support\Facades\Cache::forget('mantenimiento:estado');
+
+        return response()->json(['message' => $data['activo'] ? 'Modo mantenimiento activado.' : 'Modo mantenimiento desactivado.']);
+    }
+
+    // ===================== ADMINISTRACIÓN DE VERSIONES =====================
+
+    public function listarVersiones(Request $request)
+    {
+        $this->soloFuncional($request);
+        return response()->json(['data' => DB::table('versiones as v')
+            ->leftJoin('usuarios as u', 'u.id', '=', 'v.registrado_por')
+            ->orderByDesc('v.fecha_liberacion')->orderByDesc('v.id')
+            ->get(['v.*', 'u.nombre as registrado_por_nombre'])]);
+    }
+
+    public function guardarVersion(Request $request)
+    {
+        $this->soloFuncional($request);
+        $data = $request->validate([
+            'version'          => ['required', 'string', 'max:40'],
+            'fecha_liberacion' => ['nullable', 'date'],
+            'mejoras'          => ['nullable', 'string'],
+            'estado'           => ['required', 'in:PRODUCCION,PRUEBAS,DEPRECADA'],
+        ]);
+        DB::table('versiones')->insert(array_merge($data, [
+            'fecha_liberacion' => $data['fecha_liberacion'] ?? now()->toDateString(),
+            'registrado_por'   => $request->user()->id,
+            'created_at'       => now(),
+        ]));
+        $this->auditar($request, 'VERSION', null, $data);
+        return response()->json(['message' => 'Versión registrada.'], 201);
+    }
+
+    // ===================== AUDITORÍA GLOBAL =====================
+
+    public function auditoriaGlobal(Request $request)
+    {
+        $this->soloFuncional($request);
+
+        $q = DB::table('auditoria as a')
+            ->leftJoin('usuarios as u', 'u.id', '=', 'a.usuario_id');
+
+        if ($request->filled('entidad'))  $q->where('a.entidad', $request->query('entidad'));
+        if ($request->filled('accion'))   $q->where('a.accion', 'like', $request->query('accion') . '%');
+        if ($request->filled('usuario_id')) $q->where('a.usuario_id', (int) $request->query('usuario_id'));
+        if ($request->filled('desde'))    $q->whereDate('a.created_at', '>=', $request->query('desde'));
+        if ($request->filled('hasta'))    $q->whereDate('a.created_at', '<=', $request->query('hasta'));
+
+        $filas = $q->orderByDesc('a.created_at')->limit(200)->get([
+            'a.id', 'a.accion', 'a.entidad', 'a.entidad_id', 'a.datos_nuevos',
+            'a.ip', 'a.created_at', 'u.nombre as usuario', 'u.rol as rol',
+        ]);
+
+        return response()->json(['data' => $filas]);
+    }
+
+    // ===================== GESTIÓN DE PARÁMETROS =====================
+
+    public function listarParametros(Request $request)
+    {
+        $this->soloFuncional($request);
+        return response()->json(['data' => DB::table('parametros')->orderBy('clave')->get(['clave', 'valor', 'descripcion', 'updated_at'])]);
+    }
+
+    public function guardarParametro(Request $request)
+    {
+        $this->soloFuncional($request);
+        $data = $request->validate([
+            'clave' => ['required', 'string', 'max:120'],
+            'valor' => ['required'],
+        ]);
+        $anterior = \App\Models\Parametro::valor($data['clave']);
+        \App\Models\Parametro::setValor($data['clave'], $data['valor']);
+        $this->auditar($request, 'PARAMETRO', ['clave' => $data['clave'], 'valor' => $anterior], $data);
+        return response()->json(['message' => 'Parámetro actualizado.']);
+    }
 }

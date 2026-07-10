@@ -18,7 +18,7 @@ use App\Http\Controllers\Api\OtpController;
 use App\Http\Controllers\Api\PermisoController;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/health', fn () => response()->json(['status' => 'ok', 'version' => 'v58-fix-permisos-medio', 'ts' => now()]));
+Route::get('/health', fn () => response()->json(['status' => 'ok', 'version' => 'v59-admin-funcional-f2', 'ts' => now()]));
 
 // Extracto PDF: accesible por enlace firmado (para compartir por WhatsApp) o con JWT
 Route::get('solicitudes/{solicitud}/extracto.pdf', [SolicitudController::class, 'extractoPdf'])
@@ -31,7 +31,7 @@ Route::prefix('auth')->group(function () {
 });
 
 // --- Rutas protegidas ---
-Route::middleware('auth:api')->group(function () {
+Route::middleware(['auth:api', 'mantenimiento'])->group(function () {
     Route::get('auth/me', [AuthController::class, 'me']);
 
     // Áreas y Clientes
@@ -50,6 +50,13 @@ Route::middleware('auth:api')->group(function () {
         Route::put('marca', [\App\Http\Controllers\Api\AdminFuncionalController::class, 'guardarMarca']);
         Route::post('cache/limpiar', [\App\Http\Controllers\Api\AdminFuncionalController::class, 'limpiarCache']);
         Route::get('monitoreo', [\App\Http\Controllers\Api\AdminFuncionalController::class, 'monitoreo']);
+        Route::get('mantenimiento', [\App\Http\Controllers\Api\AdminFuncionalController::class, 'verMantenimiento']);
+        Route::put('mantenimiento', [\App\Http\Controllers\Api\AdminFuncionalController::class, 'guardarMantenimiento']);
+        Route::get('versiones', [\App\Http\Controllers\Api\AdminFuncionalController::class, 'listarVersiones']);
+        Route::post('versiones', [\App\Http\Controllers\Api\AdminFuncionalController::class, 'guardarVersion']);
+        Route::get('auditoria', [\App\Http\Controllers\Api\AdminFuncionalController::class, 'auditoriaGlobal']);
+        Route::get('parametros', [\App\Http\Controllers\Api\AdminFuncionalController::class, 'listarParametros']);
+        Route::put('parametros', [\App\Http\Controllers\Api\AdminFuncionalController::class, 'guardarParametro']);
     });
     Route::get('reportes/mora', [ReporteController::class, 'mora'])->middleware('modulo:reportes');
     Route::get('transferencias', [TransferenciaController::class, 'index'])->middleware('modulo:transferencias');

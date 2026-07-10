@@ -1,15 +1,20 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { api } from '@/lib/api/client';
+import { fechaHora } from '@/lib/format';
 import { useToast } from '@/components/ui/Toast';
 
 
 export function AdminFuncionalPanel() {
-  const [tab, setTab] = useState<'licencia' | 'flags' | 'marca' | 'monitoreo' | 'herramientas'>('licencia');
+  const [tab, setTab] = useState<'licencia' | 'flags' | 'marca' | 'mantenimiento' | 'versiones' | 'auditoria' | 'parametros' | 'monitoreo' | 'herramientas'>('licencia');
   const tabs = [
     ['licencia', 'Licenciamiento'],
     ['flags', 'Funcionalidades'],
     ['marca', 'Marca'],
+    ['mantenimiento', 'Mantenimiento'],
+    ['versiones', 'Versiones'],
+    ['auditoria', 'Auditoría'],
+    ['parametros', 'Parámetros'],
     ['monitoreo', 'Monitoreo'],
     ['herramientas', 'Herramientas'],
   ] as const;
@@ -31,6 +36,10 @@ export function AdminFuncionalPanel() {
       {tab === 'licencia' && <Licencia />}
       {tab === 'flags' && <Flags />}
       {tab === 'marca' && <Marca />}
+      {tab === 'mantenimiento' && <Mantenimiento />}
+      {tab === 'versiones' && <Versiones />}
+      {tab === 'auditoria' && <Auditoria />}
+      {tab === 'parametros' && <Parametros />}
       {tab === 'monitoreo' && <Monitoreo />}
       {tab === 'herramientas' && <Herramientas />}
     </div>
@@ -213,6 +222,184 @@ function Herramientas() {
       <button onClick={() => limpiar.mutate()} disabled={limpiar.isPending} className="btn-outline btn-sm">
         {limpiar.isPending ? 'Limpiando…' : 'Limpiar caché del sistema'}
       </button>
+    </div>
+  );
+}
+
+function Mantenimiento() {
+  const qc = useQueryClient();
+  const toast = useToast();
+  const { data } = useQuery({
+    queryKey: ['af-mantenimiento'],
+    queryFn: async () => (await api.get('/admin-funcional/mantenimiento')).data.data,
+  });
+  const [form, setForm] = useState<{ activo: boolean; mensaje: string } | null>(null);
+  const est = form ?? (data ? { activo: !!data.activo, mensaje: data.mensaje ?? '' } : null);
+  const m = useMutation({
+    mutationFn: async () => (await api.put('/admin-funcional/mantenimiento', est)).data,
+    onSuccess: (r) => { toast.exito((r as { message?: string })?.message ?? 'Actualizado ✓'); qc.invalidateQueries({ queryKey: ['af-mantenimiento'] }); setForm(null); },
+    onError: () => toast.error('No se pudo actualizar.'),
+  });
+  if (!est) return <p className="text-sm text-slate-400">Cargando…</p>;
+  return (
+    <div className="card card-pad max-w-xl space-y-4">
+      <div className={`rounded-xl px-3.5 py-2.5 text-sm ${est.activo ? 'bg-amber-50 text-amber-800 ring-1 ring-amber-100' : 'bg-money-50 text-money-700 ring-1 ring-money-100'}`}>
+        Estado actual: <b>{est.activo ? 'EN MANTENIMIENTO' : 'Operativo'}</b>
+      </div>
+      <label className="flex items-center gap-2 text-sm">
+        <input type="checkbox" checked={est.activo} onChange={(e) => setForm({ ...est, activo: e.target.checked })} />
+        Activar modo mantenimiento (bloquea el acceso a todos menos al Administrador Funcional)
+      </label>
+      <div>
+        <label className="label">Mensaje para los usuarios</label>
+        <textarea value={est.mensaje} onChange={(e) => setForm({ ...est, mensaje: e.target.value })} className="input" rows={2}
+          placeholder="Estamos realizando mejoras. Volvemos pronto." />
+      </div>
+      <button onClick={() => m.mutate()} disabled={m.isPending || !form} className="btn-primary btn-sm">
+        {m.isPending ? 'Guardando…' : 'Guardar'}
+      </button>
+    </div>
+  );
+}
+
+function Versiones() {
+  const qc = useQueryClient();
+  const toast = useToast();
+  const { data: versiones } = useQuery({
+    queryKey: ['af-versiones'],
+    queryFn: async () => (await api.get('/admin-funcional/versiones')).data.data as Array<Record<string, unknown>>,
+  });
+  const [form, setForm] = useState({ version: '', mejoras: '', estado: 'PRODUCCION' });
+  const m = useMutation({
+    mutationFn: async () => (await api.post('/admin-funcional/versiones', form)).data,
+    onSuccess: () => { toast.exito('Versión registrada ✓'); qc.invalidateQueries({ queryKey: ['af-versiones'] }); setForm({ version: '', mejoras: '', estado: 'PRODUCCION' }); },
+    onError: () => toast.error('No se pudo registrar.'),
+  });
+  return (
+    <div className="space-y-4">
+      <div className="card card-pad max-w-xl">
+        <h3 className="mb-2 text-sm font-semibold text-slate-700">Registrar versión</h3>
+        <div className="grid grid-cols-2 gap-2">
+          <input value={form.version} onChange={(e) => setForm({ ...form, version: e.target.value })} className="input" placeholder="v58" />
+          <select value={form.estado} onChange={(e) => setForm({ ...form, estado: e.target.value })} className="input">
+            <option value="PRODUCCION">Producción</option>
+            <option value="PRUEBAS">Pruebas</option>
+            <option value="DEPRECADA">Deprecada</option>
+          </select>
+        </div>
+        <textarea value={form.mejoras} onChange={(e) => setForm({ ...form, mejoras: e.target.value })} className="input mt-2" rows={2} placeholder="Mejoras de esta versión…" />
+        <button onClick={() => m.mutate()} disabled={m.isPending || !form.version} className="btn-primary btn-sm mt-2">Registrar</button>
+      </div>
+      {versiones && versiones.length > 0 && (
+        <div className="table-wrap">
+          <table className="table-base">
+            <thead><tr><th>Versión</th><th>Fecha</th><th>Estado</th><th>Mejoras</th></tr></thead>
+            <tbody>
+              {versiones.map((v) => (
+                <tr key={v.id as number}>
+                  <td className="font-medium">{v.version as string}</td>
+                  <td>{v.fecha_liberacion as string}</td>
+                  <td>{v.estado as string}</td>
+                  <td className="text-slate-500">{(v.mejoras as string) ?? '—'}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function Auditoria() {
+  const [filtros, setFiltros] = useState<{ entidad?: string; desde?: string; hasta?: string }>({});
+  const params = new URLSearchParams();
+  if (filtros.entidad) params.set('entidad', filtros.entidad);
+  if (filtros.desde) params.set('desde', filtros.desde);
+  if (filtros.hasta) params.set('hasta', filtros.hasta);
+  const { data } = useQuery({
+    queryKey: ['af-auditoria', params.toString()],
+    queryFn: async () => (await api.get(`/admin-funcional/auditoria?${params.toString()}`)).data.data as Array<Record<string, unknown>>,
+  });
+  return (
+    <div>
+      <div className="mb-3 flex flex-wrap items-end gap-2">
+        <div>
+          <label className="label text-xs">Entidad</label>
+          <select value={filtros.entidad ?? ''} onChange={(e) => setFiltros((f) => ({ ...f, entidad: e.target.value || undefined }))} className="input py-1 text-sm">
+            <option value="">Todas</option>
+            <option value="solicitud">Solicitud</option>
+            <option value="caja">Caja</option>
+            <option value="admin_funcional">Admin funcional</option>
+            <option value="usuario">Usuario</option>
+          </select>
+        </div>
+        <div><label className="label text-xs">Desde</label><input type="date" value={filtros.desde ?? ''} onChange={(e) => setFiltros((f) => ({ ...f, desde: e.target.value }))} className="input py-1 text-sm" /></div>
+        <div><label className="label text-xs">Hasta</label><input type="date" value={filtros.hasta ?? ''} onChange={(e) => setFiltros((f) => ({ ...f, hasta: e.target.value }))} className="input py-1 text-sm" /></div>
+      </div>
+      {!data || data.length === 0 ? (
+        <p className="py-4 text-center text-sm text-slate-400">Sin registros de auditoría para los filtros.</p>
+      ) : (
+        <div className="table-wrap">
+          <table className="table-base">
+            <thead><tr><th>Fecha</th><th>Usuario</th><th>Acción</th><th>Entidad</th><th>IP</th></tr></thead>
+            <tbody>
+              {data.map((a) => (
+                <tr key={a.id as number}>
+                  <td>{fechaHora(a.created_at as string)}</td>
+                  <td>{(a.usuario as string) ?? '—'} <span className="text-xs text-slate-400">{(a.rol as string) ?? ''}</span></td>
+                  <td className="font-medium">{a.accion as string}</td>
+                  <td>{a.entidad as string}{a.entidad_id ? ` #${a.entidad_id}` : ''}</td>
+                  <td className="text-xs text-slate-400">{(a.ip as string) ?? '—'}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function Parametros() {
+  const qc = useQueryClient();
+  const toast = useToast();
+  const { data } = useQuery({
+    queryKey: ['af-parametros'],
+    queryFn: async () => (await api.get('/admin-funcional/parametros')).data.data as Array<Record<string, unknown>>,
+  });
+  const [editando, setEditando] = useState<string | null>(null);
+  const [valor, setValor] = useState('');
+  const m = useMutation({
+    mutationFn: async (clave: string) => (await api.put('/admin-funcional/parametros', { clave, valor: parseVal(valor) })).data,
+    onSuccess: () => { toast.exito('Parámetro actualizado ✓'); qc.invalidateQueries({ queryKey: ['af-parametros'] }); setEditando(null); },
+    onError: () => toast.error('No se pudo actualizar.'),
+  });
+  const parseVal = (v: string): unknown => { const n = Number(v); return v !== '' && !isNaN(n) ? n : v; };
+  if (!data) return <p className="text-sm text-slate-400">Cargando…</p>;
+  return (
+    <div className="table-wrap">
+      <table className="table-base">
+        <thead><tr><th>Clave</th><th>Valor</th><th>Descripción</th><th></th></tr></thead>
+        <tbody>
+          {data.map((p) => {
+            const clave = p.clave as string;
+            const enEd = editando === clave;
+            return (
+              <tr key={clave}>
+                <td className="font-mono text-xs">{clave}</td>
+                <td>{enEd ? <input value={valor} onChange={(e) => setValor(e.target.value)} className="input py-1 text-sm" /> : <span className="tabular-nums">{JSON.stringify(p.valor)}</span>}</td>
+                <td className="text-slate-500">{(p.descripcion as string) ?? '—'}</td>
+                <td>
+                  {enEd
+                    ? <button onClick={() => m.mutate(clave)} disabled={m.isPending} className="btn-primary btn-sm">Guardar</button>
+                    : <button onClick={() => { setEditando(clave); setValor(String(p.valor)); }} className="text-brand text-sm">Editar</button>}
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
     </div>
   );
 }
