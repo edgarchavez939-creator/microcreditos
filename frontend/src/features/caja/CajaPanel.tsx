@@ -432,7 +432,11 @@ function Movimientos({ movimientos, cerrada, onOk, toast }: {
               <div className="min-w-0">
                 <span className="font-medium text-slate-700">{m.concepto}</span>
                 <span className="ml-2 text-xs text-slate-400">
-                  {fechaHora(m.created_at)} · {m.medio_pago === 'EFECTIVO' ? 'Efectivo' : m.medio_pago}
+                  {fechaHora(m.created_at)} · {
+                    m.medio_pago === 'EFECTIVO' ? 'Efectivo'
+                    : m.medio_pago === 'TRANSFERENCIA' ? 'Transferencia'
+                    : m.medio_pago.charAt(0) + m.medio_pago.slice(1).toLowerCase()
+                  }
                   {m.observacion ? ` · ${m.observacion}` : ''}
                 </span>
               </div>

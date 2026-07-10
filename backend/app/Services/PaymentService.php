@@ -94,6 +94,7 @@ class PaymentService
                 'tipo'            => 'INGRESO',
                 'concepto'        => "Pago crédito #{$credito->id}",
                 'valor'           => $valor,
+                'medio_pago'      => $d['metodo'], // conserva el medio real (EFECTIVO/NEQUI/DAVIPLATA)
                 'referencia_tipo' => 'PAGO',
                 'referencia_id'   => $pago->id,
                 'area_id'         => $credito->area_id,
@@ -260,6 +261,7 @@ class PaymentService
                 'tipo'            => 'INGRESO',
                 'concepto'        => "Pago crédito #{$credito->id} (transferencia aprobada)",
                 'valor'           => (float) $pago->valor,
+                'medio_pago'      => 'TRANSFERENCIA', // conserva el medio original; NO es efectivo
                 'referencia_tipo' => 'PAGO',
                 'referencia_id'   => $pago->id,
                 'area_id'         => $credito->area_id,

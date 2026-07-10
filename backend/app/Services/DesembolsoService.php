@@ -43,12 +43,13 @@ class DesembolsoService
                 $this->loans->generarCronograma($credito, $d['fecha'] ?? now());
             }
 
-            // Caja: egreso por el desembolso
+            // Caja: egreso por el desembolso (conserva el medio real)
             MovimientoCaja::create([
                 'fecha'           => now()->toDateString(),
                 'tipo'            => 'EGRESO',
                 'concepto'        => "Desembolso crédito #{$credito->id}",
                 'valor'           => $valor,
+                'medio_pago'      => $d['metodo'], // EFECTIVO/TRANSFERENCIA: define si afecta el efectivo
                 'referencia_tipo' => 'DESEMBOLSO',
                 'referencia_id'   => $credito->id,
                 'area_id'         => $credito->area_id,

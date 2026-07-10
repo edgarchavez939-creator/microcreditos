@@ -38,10 +38,12 @@ class CajaService
         // PROPIEDAD: pertenece a quien CREÓ la solicitud (gestión comercial), NO a quien
         // aprueba ni a quien desembolsa. Por eso se filtra por s.created_by, no por
         // d.registrado_por. El desembolso pudo hacerlo otro usuario, pero el seguro
-        // reconoce la captación comercial del asesor que registró la solicitud.
-        $seguros = DB::table('desembolsos as d')
-            ->join('solicitudes as s', 's.id', '=', 'd.solicitud_id')
-            ->whereDate('d.fecha', $fecha)
+        // Se cruza con el MOVIMIENTO de caja del desembolso (fecha de hoy consistente),
+        // y el valor_seguro se atribuye a quien creó la solicitud (gestión comercial).
+        $seguros = DB::table('movimientos_caja as mc')
+            ->join('solicitudes as s', 's.id', '=', 'mc.referencia_id')
+            ->whereDate('mc.fecha', $fecha)
+            ->where('mc.referencia_tipo', 'DESEMBOLSO')
             ->where('s.created_by', $usuarioId)
             ->selectRaw('COALESCE(SUM(s.valor_seguro),0) as total, COUNT(*) as num')
             ->first();
@@ -49,10 +51,15 @@ class CajaService
         $numSeguros     = (int) ($seguros->num ?? 0);
 
         // --- Desembolsos entregados hoy (egreso de efectivo cuando el método es efectivo) ---
-        $desembolsos = DB::table('desembolsos')
-            ->whereDate('fecha', $fecha)->where('registrado_por', $usuarioId);
-        $totalDesembolsos       = (float) (clone $desembolsos)->sum('valor');
-        $desembolsosEfectivo    = (float) (clone $desembolsos)->where('metodo', 'EFECTIVO')->sum('valor');
+        // --- Desembolsos entregados hoy: se leen desde movimientos_caja (fuente única
+        // de la caja), NO desde la tabla desembolsos. Así el medio_pago y la fecha del
+        // movimiento son consistentes con el resto de la caja. Un desembolso en efectivo
+        // reduce el efectivo esperado; uno por transferencia solo afecta el movimiento total.
+        $desembolsos = DB::table('movimientos_caja')
+            ->whereDate('fecha', $fecha)->where('registrado_por', $usuarioId)
+            ->where('referencia_tipo', 'DESEMBOLSO');
+        $totalDesembolsos    = (float) (clone $desembolsos)->sum('valor');
+        $desembolsosEfectivo = (float) (clone $desembolsos)->where('medio_pago', 'EFECTIVO')->sum('valor');
 
         // --- Gastos del día, por medio de pago ---
         $gastos = DB::table('movimientos_caja')
