@@ -216,22 +216,31 @@ class CajaController extends Controller
         $cierre = CierreCaja::create([
             'fecha'                => $hoy,
             'area_id'              => $areaId,
+            'rol_usuario'          => $u->rol,
+            'abierto_por'          => $u->id,
             'base_inicial'         => $e['base_inicial'],
             'cobros_efectivo'      => $e['cobros_efectivo'],
             'cobros_transferencia' => $e['cobros_transferencia'],
             'recaudo_seguros'      => $e['recaudo_seguros'],
             'total_desembolsos'    => $e['total_desembolsos'],
             'total_gastos'         => $e['total_gastos'],
+            'movimiento_total'     => $e['movimiento_total'],
             'total_ingresos'       => round($e['base_inicial'] + $e['total_cobros'] + $e['recaudo_seguros'], 2),
             'total_egresos'        => round($e['total_desembolsos'] + $e['total_gastos'], 2),
             'saldo'                => $e['saldo_final'],
             'efectivo_esperado'    => $e['efectivo_esperado'],
             'efectivo_contado'     => $data['efectivo_contado'],
             'diferencia'           => $diferencia,
+            'numero_pagos'         => $e['numero_cobros'],
+            'numero_desembolsos'   => $e['numero_desembolsos'],
+            'numero_gastos'        => $e['numero_gastos'],
+            'numero_seguros'       => $e['numero_seguros'],
             'hora_apertura'        => $e['hora_apertura'],
             'hora_cierre'          => now(),
             'observacion'          => $data['observacion'] ?? null,
             'cerrado_por'          => $u->id,
+            'ip'                   => $request->ip(),
+            'user_agent'           => $request->userAgent(),
         ]);
 
         $accion = abs($diferencia) >= 0.01 ? 'CLOSE_DIFF' : 'CLOSE';
@@ -262,18 +271,47 @@ class CajaController extends Controller
 
         $q = DB::table('cierres_caja as cc')
             ->leftJoin('usuarios as us', 'us.id', '=', 'cc.cerrado_por')
+            ->leftJoin('usuarios as ua', 'ua.id', '=', 'cc.abierto_por')
             ->leftJoin('areas as a', 'a.id', '=', 'cc.area_id');
 
-        if ($u->esCobrador()) {
-            $q->where('cc.cerrado_por', $u->id);
-        } elseif ($u->esSupervisor()) {
-            $areas = DB::table('usuario_area')->where('usuario_id', $u->id)->pluck('area_id');
-            $q->where(fn ($w) => $w->whereIn('cc.area_id', $areas)->orWhere('cc.cerrado_por', $u->id));
-        }
+        // --- Segregación por rol ---
+        // Cobrador: SOLO sus propios cierres.
+        // Supervisor: SOLO sus propios cierres (no de otros supervisores ni de cobradores).
+        // Administrador / Administrador funcional: todos, con filtros.
+        $esAdmin = $u->esAdministrador() || (method_exists($u, 'esAdministradorFuncional') && $u->esAdministradorFuncional());
 
-        $filas = $q->orderByDesc('cc.fecha')->limit(60)->get([
-            'cc.id', 'cc.fecha', 'cc.total_ingresos', 'cc.total_egresos', 'cc.saldo',
-            'us.nombre as cerrado_por', 'a.nombre as area', 'cc.created_at',
+        if (! $esAdmin) {
+            $q->where('cc.cerrado_por', $u->id);
+        } else {
+            // Filtros disponibles solo para administradores
+            if ($request->filled('usuario_id')) {
+                $q->where('cc.cerrado_por', (int) $request->query('usuario_id'));
+            }
+            if ($request->filled('rol')) {
+                $q->where('cc.rol_usuario', $request->query('rol'));
+            }
+            if ($request->filled('estado')) {
+                // Estado del cierre: CUADRADA | SOBRANTE | FALTANTE
+                $estado = $request->query('estado');
+                if ($estado === 'CUADRADA') $q->whereRaw('ABS(cc.diferencia) < 0.01');
+                elseif ($estado === 'FALTANTE') $q->where('cc.diferencia', '<', -0.009);
+                elseif ($estado === 'SOBRANTE') $q->where('cc.diferencia', '>', 0.009);
+            }
+        }
+        // Filtros de fecha (para todos los roles)
+        if ($request->filled('desde')) $q->whereDate('cc.fecha', '>=', $request->query('desde'));
+        if ($request->filled('hasta')) $q->whereDate('cc.fecha', '<=', $request->query('hasta'));
+
+        $filas = $q->orderByDesc('cc.fecha')->orderByDesc('cc.id')->limit(120)->get([
+            'cc.id', 'cc.fecha',
+            'cc.base_inicial', 'cc.cobros_efectivo', 'cc.cobros_transferencia',
+            'cc.recaudo_seguros', 'cc.total_desembolsos', 'cc.total_gastos',
+            'cc.movimiento_total', 'cc.total_ingresos', 'cc.total_egresos', 'cc.saldo',
+            'cc.efectivo_esperado', 'cc.efectivo_contado', 'cc.diferencia',
+            'cc.numero_pagos', 'cc.numero_desembolsos', 'cc.numero_gastos', 'cc.numero_seguros',
+            'cc.hora_apertura', 'cc.hora_cierre', 'cc.observacion', 'cc.rol_usuario',
+            'us.nombre as cerrado_por', 'ua.nombre as abierto_por',
+            'a.nombre as area', 'cc.created_at',
         ]);
 
         return response()->json(['data' => $filas]);

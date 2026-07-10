@@ -83,10 +83,16 @@ class CajaService
             + $totalDesembolsos + $totalGastos, 2
         );
 
-        // Hora de apertura = primer movimiento del día
-        $horaApertura = DB::table('movimientos_caja')
+        // Hora de apertura = primer movimiento del día; abierto_por = quien registró la base
+        $apertura = DB::table('movimientos_caja')
             ->whereDate('fecha', $fecha)->where('registrado_por', $usuarioId)
-            ->min('created_at');
+            ->orderBy('created_at')->first(['created_at', 'registrado_por']);
+        $horaApertura = $apertura->created_at ?? null;
+
+        $numDesembolsos = (int) (clone $desembolsos)->count();
+        $numGastos = (int) DB::table('movimientos_caja')
+            ->whereDate('fecha', $fecha)->where('registrado_por', $usuarioId)
+            ->where('referencia_tipo', 'GASTO')->count();
 
         return [
             'fecha'                => $fecha,
@@ -99,8 +105,10 @@ class CajaService
             'numero_seguros'       => $numSeguros,
             'total_desembolsos'    => $totalDesembolsos,
             'desembolsos_efectivo' => $desembolsosEfectivo,
+            'numero_desembolsos'   => $numDesembolsos,
             'total_gastos'         => $totalGastos,
             'gastos_efectivo'      => $gastosEfectivo,
+            'numero_gastos'        => $numGastos,
             'saldo_final'          => $saldoFinal,
             'efectivo_esperado'    => $efectivoEsperado,
             'movimiento_total'     => $movimientoTotal,

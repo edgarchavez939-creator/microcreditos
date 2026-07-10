@@ -1,9 +1,10 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useState } from 'react';
+import { Fragment, useState } from 'react';
 import { api } from '@/lib/api/client';
-import { money, fechaHora } from '@/lib/format';
+import { money, fecha, fechaHora } from '@/lib/format';
 import { useToast } from '@/components/ui/Toast';
 import { SkeletonIndicadores } from '@/components/ui/Skeleton';
+import { useAuthStore } from '@/stores/auth';
 
 interface EstadoCaja {
   fecha: string;
@@ -104,50 +105,179 @@ export function CajaPanel() {
 }
 
 interface CierreFila {
-  id: number; fecha: string; base_inicial?: number; efectivo_esperado?: number;
-  efectivo_contado?: number | null; diferencia?: number; saldo: number;
-  cerrado_por?: string | null; area?: string | null; created_at: string;
+  id: number; fecha: string;
+  base_inicial?: number; cobros_efectivo?: number; cobros_transferencia?: number;
+  recaudo_seguros?: number; total_desembolsos?: number; total_gastos?: number;
+  movimiento_total?: number; total_ingresos?: number; total_egresos?: number; saldo: number;
+  efectivo_esperado?: number; efectivo_contado?: number | null; diferencia?: number;
+  numero_pagos?: number; numero_desembolsos?: number; numero_gastos?: number; numero_seguros?: number;
+  hora_apertura?: string | null; hora_cierre?: string | null; observacion?: string | null;
+  rol_usuario?: string | null; cerrado_por?: string | null; abierto_por?: string | null;
+  area?: string | null; created_at: string;
 }
 
 function HistorialCierres() {
-  const { data: cierres } = useQuery({
-    queryKey: ['caja-cierres'],
-    queryFn: async () => (await api.get<{ data: CierreFila[] }>('/caja/cierres')).data.data,
-  });
+  const rol = useAuthStore((st) => st.usuario?.rol);
+  const esAdmin = rol === 'ADMINISTRADOR';
   const [abierto, setAbierto] = useState(false);
-  if (!cierres || cierres.length === 0) return null;
+  const [filtros, setFiltros] = useState<{ desde?: string; hasta?: string; estado?: string; rol?: string }>({});
+  const [expandido, setExpandido] = useState<number | null>(null);
+
+  const params = new URLSearchParams();
+  if (filtros.desde) params.set('desde', filtros.desde);
+  if (filtros.hasta) params.set('hasta', filtros.hasta);
+  if (esAdmin && filtros.estado) params.set('estado', filtros.estado);
+  if (esAdmin && filtros.rol) params.set('rol', filtros.rol);
+
+  const { data: cierres } = useQuery({
+    queryKey: ['caja-cierres', params.toString()],
+    queryFn: async () => (await api.get<{ data: CierreFila[] }>(`/caja/cierres?${params.toString()}`)).data.data,
+  });
+
+  const estadoCierre = (dif?: number) => {
+    const d = dif ?? 0;
+    if (Math.abs(d) < 0.01) return { txt: 'Cuadrada', cls: 'text-money-700 bg-money-50' };
+    return d < 0
+      ? { txt: 'Faltante', cls: 'text-rose-700 bg-rose-50' }
+      : { txt: 'Sobrante', cls: 'text-amber-800 bg-amber-50' };
+  };
 
   return (
     <div className="card card-pad">
       <button onClick={() => setAbierto((v) => !v)} className="flex w-full items-center justify-between text-sm font-semibold text-slate-700">
-        Historial de cierres ({cierres.length})
+        Historial de cierres{cierres ? ` (${cierres.length})` : ''}
         <span className="text-slate-400">{abierto ? '▲' : '▼'}</span>
       </button>
+
       {abierto && (
-        <div className="table-wrap mt-3">
-          <table className="table-base">
-            <thead>
-              <tr><th>Fecha</th><th>Esperado</th><th>Contado</th><th>Diferencia</th><th>Cerró</th></tr>
-            </thead>
-            <tbody>
-              {cierres.map((c) => {
-                const dif = c.diferencia ?? 0;
-                return (
-                  <tr key={c.id}>
-                    <td>{fechaHora(c.created_at)}</td>
-                    <td>{money(c.efectivo_esperado ?? 0)}</td>
-                    <td>{c.efectivo_contado != null ? money(c.efectivo_contado) : '—'}</td>
-                    <td className={Math.abs(dif) >= 0.01 ? (dif < 0 ? 'text-rose-600' : 'text-amber-700') : 'text-slate-400'}>
-                      {Math.abs(dif) < 0.01 ? 'Cuadrada' : `${dif < 0 ? 'Faltante' : 'Sobrante'} ${money(Math.abs(dif))}`}
-                    </td>
-                    <td>{c.cerrado_por ?? '—'}</td>
+        <div className="mt-3">
+          {/* Filtros */}
+          <div className="mb-3 flex flex-wrap items-end gap-2">
+            <div>
+              <label className="label text-xs">Desde</label>
+              <input type="date" value={filtros.desde ?? ''} onChange={(e) => setFiltros((f) => ({ ...f, desde: e.target.value }))} className="input py-1 text-sm" />
+            </div>
+            <div>
+              <label className="label text-xs">Hasta</label>
+              <input type="date" value={filtros.hasta ?? ''} onChange={(e) => setFiltros((f) => ({ ...f, hasta: e.target.value }))} className="input py-1 text-sm" />
+            </div>
+            {esAdmin && (
+              <>
+                <div>
+                  <label className="label text-xs">Estado</label>
+                  <select value={filtros.estado ?? ''} onChange={(e) => setFiltros((f) => ({ ...f, estado: e.target.value || undefined }))} className="input py-1 text-sm">
+                    <option value="">Todos</option>
+                    <option value="CUADRADA">Cuadrada</option>
+                    <option value="FALTANTE">Faltante</option>
+                    <option value="SOBRANTE">Sobrante</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="label text-xs">Rol</label>
+                  <select value={filtros.rol ?? ''} onChange={(e) => setFiltros((f) => ({ ...f, rol: e.target.value || undefined }))} className="input py-1 text-sm">
+                    <option value="">Todos</option>
+                    <option value="COBRADOR">Cobrador</option>
+                    <option value="SUPERVISOR">Supervisor</option>
+                    <option value="ADMINISTRADOR">Administrador</option>
+                  </select>
+                </div>
+              </>
+            )}
+            {(filtros.desde || filtros.hasta || filtros.estado || filtros.rol) && (
+              <button onClick={() => setFiltros({})} className="btn-outline btn-sm">Limpiar</button>
+            )}
+          </div>
+
+          {!cierres || cierres.length === 0 ? (
+            <p className="py-4 text-center text-sm text-slate-400">No hay cierres para los filtros seleccionados.</p>
+          ) : (
+            <div className="table-wrap">
+              <table className="table-base">
+                <thead>
+                  <tr>
+                    <th>Fecha</th>{esAdmin && <th>Usuario</th>}<th>Esperado</th><th>Contado</th><th>Diferencia</th><th>Estado</th><th></th>
                   </tr>
-                );
-              })}
-            </tbody>
-          </table>
+                </thead>
+                <tbody>
+                  {cierres.map((c) => {
+                    const est = estadoCierre(c.diferencia);
+                    const abiertoFila = expandido === c.id;
+                    return (
+                      <Fragment key={c.id}>
+                        <tr onClick={() => setExpandido(abiertoFila ? null : c.id)} className="cursor-pointer">
+                          <td>{fecha(c.fecha)}</td>
+                          {esAdmin && <td>{c.cerrado_por ?? '—'}{c.rol_usuario ? <span className="ml-1 text-xs text-slate-400">({c.rol_usuario.toLowerCase()})</span> : ''}</td>}
+                          <td>{money(c.efectivo_esperado ?? 0)}</td>
+                          <td>{c.efectivo_contado != null ? money(c.efectivo_contado) : '—'}</td>
+                          <td className={Math.abs(c.diferencia ?? 0) >= 0.01 ? ((c.diferencia ?? 0) < 0 ? 'text-rose-600' : 'text-amber-700') : 'text-slate-400'}>
+                            {Math.abs(c.diferencia ?? 0) < 0.01 ? '—' : money(Math.abs(c.diferencia ?? 0))}
+                          </td>
+                          <td><span className={`rounded-full px-2 py-0.5 text-xs ${est.cls}`}>{est.txt}</span></td>
+                          <td className="text-slate-300">{abiertoFila ? '▲' : '▼'}</td>
+                        </tr>
+                        {abiertoFila && (
+                          <tr>
+                            <td colSpan={esAdmin ? 7 : 6} className="bg-slate-50/60">
+                              <DetalleCierre c={c} />
+                            </td>
+                          </tr>
+                        )}
+                      </Fragment>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
       )}
+    </div>
+  );
+}
+
+function DetalleCierre({ c }: { c: CierreFila }) {
+  const dato = (label: string, val: string) => (
+    <div className="flex justify-between py-1 text-sm"><span className="text-slate-500">{label}</span><span className="font-medium tabular-nums">{val}</span></div>
+  );
+  const dur = c.hora_apertura && c.hora_cierre
+    ? (() => {
+        const ms = new Date(c.hora_cierre!).getTime() - new Date(c.hora_apertura!).getTime();
+        const h = Math.floor(ms / 3_600_000); const m = Math.round((ms % 3_600_000) / 60_000);
+        return `${h}h ${m}m`;
+      })()
+    : '—';
+  return (
+    <div className="grid gap-x-8 gap-y-1 px-2 py-3 sm:grid-cols-2 lg:grid-cols-3">
+      <div>
+        <div className="mb-1 text-xs font-semibold uppercase text-slate-400">Jornada</div>
+        {dato('Apertura', c.hora_apertura ? fechaHora(c.hora_apertura) : '—')}
+        {dato('Cierre', c.hora_cierre ? fechaHora(c.hora_cierre) : '—')}
+        {dato('Duración', dur)}
+        {dato('Abrió', c.abierto_por ?? '—')}
+        {dato('Cerró', c.cerrado_por ?? '—')}
+      </div>
+      <div>
+        <div className="mb-1 text-xs font-semibold uppercase text-slate-400">Ingresos</div>
+        {dato('Base inicial', money(c.base_inicial ?? 0))}
+        {dato('Cobros efectivo', money(c.cobros_efectivo ?? 0))}
+        {dato('Cobros transferencia', money(c.cobros_transferencia ?? 0))}
+        {dato('Recaudo seguros', money(c.recaudo_seguros ?? 0))}
+      </div>
+      <div>
+        <div className="mb-1 text-xs font-semibold uppercase text-slate-400">Egresos y arqueo</div>
+        {dato('Desembolsos', money(c.total_desembolsos ?? 0))}
+        {dato('Gastos', money(c.total_gastos ?? 0))}
+        {dato('Efectivo esperado', money(c.efectivo_esperado ?? 0))}
+        {dato('Efectivo contado', c.efectivo_contado != null ? money(c.efectivo_contado) : '—')}
+        {dato('Diferencia', money(c.diferencia ?? 0))}
+      </div>
+      <div className="sm:col-span-2 lg:col-span-3 mt-1 flex flex-wrap gap-x-6 gap-y-1 border-t border-slate-200 pt-2 text-xs text-slate-400">
+        <span>{c.numero_pagos ?? 0} pago(s)</span>
+        <span>{c.numero_desembolsos ?? 0} desembolso(s)</span>
+        <span>{c.numero_gastos ?? 0} gasto(s)</span>
+        <span>{c.numero_seguros ?? 0} seguro(s)</span>
+        {c.observacion && <span className="text-slate-500">Obs: {c.observacion}</span>}
+      </div>
     </div>
   );
 }
