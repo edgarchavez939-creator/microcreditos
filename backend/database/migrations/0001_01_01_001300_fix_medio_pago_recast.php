@@ -4,20 +4,16 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Support\Facades\DB;
 
 /**
- * Corrige el medio_pago de movimientos de caja históricos que quedaron como
- * 'EFECTIVO' por defecto cuando en realidad correspondían a otro medio.
- * Toma el medio real desde la transacción original (pagos / desembolsos).
- *
- * NOTA: pagos.metodo y desembolsos.metodo son de tipo ENUM (metodo_pago), mientras
- * que movimientos_caja.medio_pago es VARCHAR. Postgres no compara varchar con enum
- * directamente, por eso se castea el enum a ::text en ambos lados de la comparación
- * y en la asignación. Idempotente: solo ajusta lo que esté mal clasificado.
+ * Reaplica la corrección de medio_pago histórico con el cast ::text correcto.
+ * (La migración 001100 falló antes por comparar varchar con enum sin castear;
+ * como quedó marcada como ejecutada, esta nueva migración garantiza la corrección.)
+ * Idempotente y seguro.
  */
 return new class extends Migration
 {
     public function up(): void
     {
-        // 1) Pagos: el movimiento de caja debe reflejar el metodo real del pago.
+        // Pagos
         DB::statement("
             UPDATE movimientos_caja mc
             SET medio_pago = p.metodo::text
@@ -27,7 +23,7 @@ return new class extends Migration
               AND mc.medio_pago <> p.metodo::text
         ");
 
-        // 2) Desembolsos: el movimiento debe reflejar el metodo real del desembolso.
+        // Desembolsos
         DB::statement("
             UPDATE movimientos_caja mc
             SET medio_pago = d.metodo::text
@@ -40,6 +36,6 @@ return new class extends Migration
 
     public function down(): void
     {
-        // No revertible: es una corrección de datos.
+        // No revertible: corrección de datos.
     }
 };

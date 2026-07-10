@@ -28,6 +28,7 @@ class PermisoService
         'usuarios'       => ['etiqueta' => 'Usuarios y áreas',           'defecto' => ['ADMINISTRADOR']],
         'parametros'     => ['etiqueta' => 'Parámetros',                 'defecto' => ['ADMINISTRADOR']],
         'permisos'       => ['etiqueta' => 'Permisos',                   'defecto' => ['ADMINISTRADOR']],
+        'admin-funcional' => ['etiqueta' => 'Administración de plataforma', 'defecto' => ['ADMIN_FUNCIONAL']],
     ];
 
     /** Módulos que el administrador conserva siempre (no se puede dejar sin llaves de la casa). */
@@ -39,8 +40,12 @@ class PermisoService
         if (! array_key_exists($modulo, self::MODULOS)) {
             return true; // módulo no catalogado: no bloquear
         }
+        // El módulo de administración de plataforma es exclusivo del Administrador Funcional.
+        if ($modulo === 'admin-funcional') {
+            return $u->esAdminFuncional();
+        }
         if ($u->esAdministrador()) {
-            return true; // el administrador siempre accede a todo
+            return true; // el administrador siempre accede a todo lo operativo
         }
 
         return in_array($modulo, $this->modulosDe($u), true);
@@ -49,8 +54,12 @@ class PermisoService
     /** Lista de módulos permitidos para el usuario (con caché corto para efecto casi inmediato). */
     public function modulosDe(Usuario $u): array
     {
+        if ($u->esAdminFuncional()) {
+            return array_keys(self::MODULOS); // acceso total, incluido admin-funcional
+        }
         if ($u->esAdministrador()) {
-            return array_keys(self::MODULOS);
+            // Admin operativo: todo MENOS el módulo exclusivo del funcional
+            return array_values(array_filter(array_keys(self::MODULOS), fn ($m) => $m !== 'admin-funcional'));
         }
 
         return Cache::remember("permisos:u{$u->id}", 30, function () use ($u) {
