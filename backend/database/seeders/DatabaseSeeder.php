@@ -19,6 +19,12 @@ class DatabaseSeeder extends Seeder
             ['nombre' => 'Administrador', 'password' => Hash::make('Admin12345*'), 'rol' => 'ADMINISTRADOR', 'activo' => true]
         );
 
+        // Administrador Funcional (super-admin técnico, oculto para la operación).
+        Usuario::firstOrCreate(
+            ['email' => 'funcional@empresa.com'],
+            ['nombre' => 'Admin Funcional', 'password' => Hash::make('Funcional12345*'), 'rol' => 'ADMIN_FUNCIONAL', 'activo' => true]
+        );
+
         $supervisor = Usuario::firstOrCreate(
             ['email' => 'supervisor@empresa.com'],
             ['nombre' => 'Supervisor Norte', 'password' => Hash::make('Super12345*'), 'rol' => 'SUPERVISOR', 'activo' => true]

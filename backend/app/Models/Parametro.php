@@ -18,4 +18,11 @@ class Parametro extends Model
             return $p ? $p->valor : $default;
         });
     }
+
+    /** Guarda (o crea) un parámetro y limpia su caché. */
+    public static function setValor(string $clave, $valor): void
+    {
+        static::updateOrCreate(['clave' => $clave], ['valor' => $valor, 'updated_at' => now()]);
+        Cache::forget("param:{$clave}");
+    }
 }

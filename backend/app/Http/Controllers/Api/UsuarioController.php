@@ -21,6 +21,8 @@ class UsuarioController extends Controller
         $this->soloAdmin($request);
 
         $usuarios = Usuario::with('areas:id,nombre')
+            // El Administrador Funcional es transparente para la operación: solo él se ve a sí mismo.
+            ->when(! $request->user()->esAdminFuncional(), fn ($q) => $q->where('rol', '!=', 'ADMIN_FUNCIONAL'))
             ->orderBy('nombre')
             ->get()
             ->map(fn ($u) => $this->presentar($u));
@@ -41,6 +43,9 @@ class UsuarioController extends Controller
             'areas'    => ['required', 'array', 'min:1'],
             'areas.*'  => ['integer', 'exists:areas,id'],
         ]);
+
+        // Control de licencia: impedir crear usuarios cuando se alcanza el límite configurado.
+        $this->validarLimiteLicencia($data['rol']);
 
         $usuario = Usuario::create([
             'nombre'   => $data['nombre'],
@@ -93,6 +98,39 @@ class UsuarioController extends Controller
         if ($areas !== null) $usuario->areas()->sync($areas);
 
         return response()->json(['data' => $this->presentar($usuario->fresh()->load('areas:id,nombre'))]);
+    }
+
+    /** Impide crear usuarios si se alcanzó el límite de la licencia (total o por rol). */
+    private function validarLimiteLicencia(string $rol): void
+    {
+        $lic = \Illuminate\Support\Facades\DB::table('licencia')->where('id', 1)->first();
+        if (! $lic) return; // sin licencia configurada, no se restringe
+
+        if ($lic->estado !== 'ACTIVA') {
+            abort(422, 'La licencia no está activa. Contacta al administrador de la plataforma.');
+        }
+        if ($lic->vence_el && now()->gt(\Carbon\Carbon::parse($lic->vence_el)->endOfDay())) {
+            abort(422, 'La licencia está vencida. No se pueden crear más usuarios.');
+        }
+
+        $totalActual = \Illuminate\Support\Facades\DB::table('usuarios')->where('activo', true)
+            ->where('rol', '!=', 'ADMIN_FUNCIONAL')->count();
+        if ($totalActual >= $lic->max_usuarios) {
+            abort(422, "Se alcanzó el límite de usuarios de la licencia ({$lic->max_usuarios}).");
+        }
+
+        $porRol = [
+            'ADMINISTRADOR' => $lic->max_administradores,
+            'SUPERVISOR'    => $lic->max_supervisores,
+            'COBRADOR'      => $lic->max_cobradores,
+        ];
+        if (isset($porRol[$rol])) {
+            $actualRol = \Illuminate\Support\Facades\DB::table('usuarios')->where('activo', true)->where('rol', $rol)->count();
+            if ($actualRol >= $porRol[$rol]) {
+                $etiqueta = ['ADMINISTRADOR' => 'administradores', 'SUPERVISOR' => 'supervisores', 'COBRADOR' => 'cobradores'][$rol];
+                abort(422, "Se alcanzó el límite de {$etiqueta} de la licencia ({$porRol[$rol]}).");
+            }
+        }
     }
 
     private function presentar(Usuario $u): array

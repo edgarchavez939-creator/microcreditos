@@ -15,6 +15,7 @@ import { MapaPanel } from '@/features/mapa/MapaPanel';
 import { RutaPanel } from '@/features/ruta/RutaPanel';
 import { CajaPanel } from '@/features/caja/CajaPanel';
 import { PermisosPanel } from '@/features/permisos/PermisosPanel';
+import { AdminFuncionalPanel } from '@/features/adminfuncional/AdminFuncionalPanel';
 import { useMisPermisos } from '@/features/permisos/hooks';
 import { BuscadorClienteSolicitud } from '@/features/solicitudes/BuscadorClienteSolicitud';
 import { BuscadorReamortizacion } from '@/features/renovaciones/BuscadorReamortizacion';
@@ -39,10 +40,11 @@ const MENU: MenuItem[] = [
   { id: 'usuarios',       label: 'Usuarios',         icon: 'usuarios',       roles: ['ADMINISTRADOR'] },
   { id: 'parametros',     label: 'Parámetros',       icon: 'parametros',     roles: ['ADMINISTRADOR'] },
   { id: 'permisos',       label: 'Permisos',         icon: 'permisos',       roles: ['ADMINISTRADOR'] },
+  { id: 'admin-funcional', label: 'Administración',  icon: 'parametros',     roles: ['ADMIN_FUNCIONAL'] },
 ];
 
 const ROL_LABEL: Record<Rol, string> = {
-  ADMINISTRADOR: 'Administrador', SUPERVISOR: 'Supervisor', COBRADOR: 'Cobrador',
+  ADMINISTRADOR: 'Administrador', SUPERVISOR: 'Supervisor', COBRADOR: 'Cobrador', ADMIN_FUNCIONAL: 'Admin. Funcional',
 };
 
 function iniciales(nombre: string) {
@@ -61,7 +63,7 @@ function AppShell() {
   // Primero por rol (defensa base) y luego por permisos dinámicos del servidor.
   // Mientras cargan los permisos, se usa solo el filtro por rol para no parpadear.
   const visibles = MENU
-    .filter((m) => m.roles.includes(usuario.rol))
+    .filter((m) => usuario.rol === 'ADMIN_FUNCIONAL' || m.roles.includes(usuario.rol))
     .filter((m) => !permitidos || permitidos.includes(m.id));
   const [activo, setActivo] = useState(visibles[0]?.id ?? 'solicitud');
   const [drawer, setDrawer] = useState(false);
@@ -163,6 +165,7 @@ function Pantalla({ id }: { id: string }) {
     case 'usuarios':       return <UsuariosPanel />;
     case 'parametros':     return <ParametrosPanel />;
     case 'permisos':       return <PermisosPanel />;
+    case 'admin-funcional': return <AdminFuncionalPanel />;
     default:
       return <Placeholder titulo="Módulo" descripcion="Pantalla no encontrada." />;
   }

@@ -18,7 +18,7 @@ use App\Http\Controllers\Api\OtpController;
 use App\Http\Controllers\Api\PermisoController;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/health', fn () => response()->json(['status' => 'ok', 'version' => 'v56-separacion-documentos', 'ts' => now()]));
+Route::get('/health', fn () => response()->json(['status' => 'ok', 'version' => 'v57-admin-funcional', 'ts' => now()]));
 
 // Extracto PDF: accesible por enlace firmado (para compartir por WhatsApp) o con JWT
 Route::get('solicitudes/{solicitud}/extracto.pdf', [SolicitudController::class, 'extractoPdf'])
@@ -39,6 +39,18 @@ Route::middleware('auth:api')->group(function () {
     Route::get('dashboard/graficas', [DashboardController::class, 'graficas'])->middleware('modulo:inicio');
     Route::get('reportes/cartera', [ReporteController::class, 'cartera'])->middleware('modulo:reportes');
     Route::get('reportes/pagos', [ReporteController::class, 'pagos'])->middleware('modulo:reportes');
+
+    // ===== Administrador Funcional (acceso exclusivo, validado en el controlador) =====
+    Route::prefix('admin-funcional')->group(function () {
+        Route::get('licencia', [\App\Http\Controllers\Api\AdminFuncionalController::class, 'verLicencia']);
+        Route::put('licencia', [\App\Http\Controllers\Api\AdminFuncionalController::class, 'guardarLicencia']);
+        Route::get('flags', [\App\Http\Controllers\Api\AdminFuncionalController::class, 'listarFlags']);
+        Route::put('flags', [\App\Http\Controllers\Api\AdminFuncionalController::class, 'guardarFlag']);
+        Route::get('marca', [\App\Http\Controllers\Api\AdminFuncionalController::class, 'verMarca']);
+        Route::put('marca', [\App\Http\Controllers\Api\AdminFuncionalController::class, 'guardarMarca']);
+        Route::post('cache/limpiar', [\App\Http\Controllers\Api\AdminFuncionalController::class, 'limpiarCache']);
+        Route::get('monitoreo', [\App\Http\Controllers\Api\AdminFuncionalController::class, 'monitoreo']);
+    });
     Route::get('reportes/mora', [ReporteController::class, 'mora'])->middleware('modulo:reportes');
     Route::get('transferencias', [TransferenciaController::class, 'index'])->middleware('modulo:transferencias');
     Route::get('transferencias/{transferencia}/comprobante', [TransferenciaController::class, 'comprobante']);

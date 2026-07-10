@@ -1,4 +1,4 @@
-export type Rol = 'ADMINISTRADOR' | 'SUPERVISOR' | 'COBRADOR';
+export type Rol = 'ADMINISTRADOR' | 'SUPERVISOR' | 'COBRADOR' | 'ADMIN_FUNCIONAL';
 
 export interface Usuario {
   id: number; uuid: string; nombre: string; email: string;

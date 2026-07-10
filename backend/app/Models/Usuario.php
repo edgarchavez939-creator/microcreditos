@@ -27,9 +27,12 @@ class Usuario extends Authenticatable implements JWTSubject
         return $this->belongsToMany(Area::class, 'usuario_area', 'usuario_id', 'area_id');
     }
 
-    public function esAdministrador(): bool { return $this->rol === 'ADMINISTRADOR'; }
+    public function esAdminFuncional(): bool { return $this->rol === 'ADMIN_FUNCIONAL'; }
+    public function esAdministrador(): bool { return $this->rol === 'ADMINISTRADOR' || $this->rol === 'ADMIN_FUNCIONAL'; }
     public function esSupervisor(): bool   { return $this->rol === 'SUPERVISOR'; }
     public function esCobrador(): bool      { return $this->rol === 'COBRADOR'; }
+    /** Solo el rol administrador operativo puro (sin incluir al funcional). */
+    public function esAdministradorOperativo(): bool { return $this->rol === 'ADMINISTRADOR'; }
 
     public function estaBloqueado(): bool
     {
