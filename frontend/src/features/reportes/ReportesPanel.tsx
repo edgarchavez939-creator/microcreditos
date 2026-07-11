@@ -111,7 +111,7 @@ export function ReportesPanel() {
 
   return (
     <div>
-      <h2 className="mb-1 text-xl font-bold">Reportes</h2>
+      <h2 className="page-title">Reportes</h2>
       <p className="mb-5 text-sm text-slate-500">Consulta la cartera, los pagos y la mora, y expórtalos a Excel.</p>
 
       <div className="mb-4 flex flex-wrap items-end gap-3">

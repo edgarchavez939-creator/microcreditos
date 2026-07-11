@@ -5,6 +5,10 @@ import { ToastProvider } from './components/ui/Toast';
 import { App } from './App';
 import './index.css';
 import { APP_VERSION } from './lib/version';
+import { cargarYAplicarMarca } from './lib/marca';
+
+// Cargar y aplicar la marca (nombre + color) antes de renderizar, para evitar parpadeo.
+cargarYAplicarMarca();
 
 // Purga única por versión: elimina service workers y cachés viejos que
 // puedan estar sirviendo datos o código antiguo (ejecuta una sola vez por versión).

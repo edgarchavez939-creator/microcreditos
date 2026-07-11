@@ -42,7 +42,7 @@ export function AprobacionesPanel() {
 
   return (
     <div>
-      <h2 className="mb-1 text-xl font-bold">Aprobaciones</h2>
+      <h2 className="page-title">Aprobaciones</h2>
       <p className="mb-5 text-sm text-slate-500">Revisa y resuelve las solicitudes que esperan tu decisión.</p>
 
       {aprobado && (
@@ -162,7 +162,7 @@ function TarjetaAprobacion({ s, onAprobado }: { s: Solicitud; onAprobado: (s: So
             }}
             disabled={aprobar.isPending}
             className="btn-primary btn-sm">
-            {aprobar.isPending ? 'Aprobando…' : 'Aprobar'}
+            {aprobar.isPending && <span className="spinner" />}{aprobar.isPending ? 'Aprobando…' : 'Aprobar'}
           </button>
           <button onClick={() => { setError(null); setRechazando(true); }} className="btn-danger btn-sm">
             Rechazar

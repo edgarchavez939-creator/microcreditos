@@ -78,7 +78,7 @@ function AppShell() {
     <div className="flex items-center gap-2.5 px-2">
       <Logo size={38} className="shadow-lift rounded-xl" />
       <div className="leading-tight">
-        <div className="font-display text-sm font-bold text-white">Microcréditos</div>
+        <div className="font-display text-sm font-bold text-white" data-marca-nombre>Microcréditos</div>
         <div className="text-[11px] text-slate-400">Gestión territorial</div>
       </div>
     </div>

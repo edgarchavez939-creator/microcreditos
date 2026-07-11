@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { api } from '@/lib/api/client';
 import { fechaHora } from '@/lib/format';
+import { aplicarColorMarca, aplicarNombreMarca } from '@/lib/marca';
 import { useToast } from '@/components/ui/Toast';
 
 
@@ -21,7 +22,7 @@ export function AdminFuncionalPanel() {
 
   return (
     <div>
-      <h2 className="mb-1 text-xl font-bold">Administración de la plataforma</h2>
+      <h2 className="page-title">Administración de la plataforma</h2>
       <p className="mb-4 text-sm text-slate-500">Centro técnico exclusivo del Administrador Funcional. Cada acción queda auditada.</p>
 
       <div className="mb-5 flex flex-wrap gap-1.5 border-b border-slate-200">
@@ -149,7 +150,14 @@ function Marca() {
   const marca = form ?? data ?? null;
   const m = useMutation({
     mutationFn: async () => (await api.put('/admin-funcional/marca', marca)).data,
-    onSuccess: () => { toast.exito('Marca actualizada ✓'); qc.invalidateQueries({ queryKey: ['af-marca'] }); setForm(null); },
+    onSuccess: () => {
+      toast.exito('Marca actualizada ✓');
+      // Aplicar de inmediato en la sesión actual (sin recargar)
+      if (marca?.color_primario) aplicarColorMarca(marca.color_primario);
+      if (marca?.nombre_plataforma) aplicarNombreMarca(marca.nombre_plataforma);
+      qc.invalidateQueries({ queryKey: ['af-marca'] });
+      setForm(null);
+    },
     onError: () => toast.error('No se pudo actualizar.'),
   });
   if (!marca) return <p className="text-sm text-slate-400">Cargando…</p>;

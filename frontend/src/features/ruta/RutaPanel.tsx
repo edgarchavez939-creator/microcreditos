@@ -77,7 +77,7 @@ export function RutaPanel() {
 
   return (
     <div>
-      <h2 className="mb-1 text-xl font-bold">Ruta del día</h2>
+      <h2 className="page-title">Ruta del día</h2>
       <p className="mb-1 text-sm text-slate-500">
         Los cobros de hoy y la mora pendiente, ordenados para recorrer menos distancia.
       </p>

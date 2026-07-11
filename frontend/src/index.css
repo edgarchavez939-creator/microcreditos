@@ -13,7 +13,7 @@
     @apply tracking-tight;
   }
   td, th, .tabular { font-variant-numeric: tabular-nums; }
-  :focus-visible { @apply outline-none ring-2 ring-brand-400/60 ring-offset-1; }
+  :focus-visible { @apply outline-none ring-2 ring-brand-300 ring-offset-1; }
 }
 
 @layer components {
@@ -44,4 +44,51 @@
 
   .alert-error { @apply rounded-xl bg-rose-50 px-3.5 py-2.5 text-sm text-rose-700 ring-1 ring-rose-100; }
   .alert-ok { @apply rounded-xl bg-money-50 px-3.5 py-2.5 text-sm text-money-700 ring-1 ring-money-100; }
+
+  /* --- Cambio 3: encabezado de módulo consistente en toda la app --- */
+  .page-title { @apply text-xl font-bold text-ink; }
+  .page-subtitle { @apply mt-0.5 text-sm text-slate-500; }
+  .page-header { @apply mb-5; }
+
+  /* --- Cambio 2: spinner para botones en estado de carga --- */
+  .spinner {
+    @apply inline-block h-4 w-4 shrink-0 animate-spin rounded-full border-2 border-current border-t-transparent;
+  }
+
+  /* --- Cambio 1: micro-animaciones de entrada --- */
+  .card { @apply animate-fade-in; }
+}
+
+@layer utilities {
+  /* --- Personalización de color de marca ---
+     Cuando el admin funcional define un color, se setean estas variables y se
+     sobreescriben las utilidades del color primario de acción. Los tonos con
+     opacidad (brand-500/20, etc.) mantienen su definición fija de Tailwind. */
+  :root[data-marca] .bg-brand,
+  :root[data-marca] .bg-brand-500 { background-color: var(--brand-500) !important; }
+  :root[data-marca] .hover\:bg-brand-600:hover { background-color: var(--brand-600) !important; }
+  :root[data-marca] .active\:bg-brand-700:active { background-color: var(--brand-700) !important; }
+  :root[data-marca] .text-brand,
+  :root[data-marca] .text-brand-500 { color: var(--brand-500) !important; }
+  :root[data-marca] .text-brand-700 { color: var(--brand-700) !important; }
+  :root[data-marca] .ring-brand-500 { --tw-ring-color: var(--brand-500) !important; }
+  :root[data-marca] .border-brand-500 { border-color: var(--brand-500) !important; }
+
+  /* Cambio 1: fade-in suave para tarjetas, modales y contenido que aparece */
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(4px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .animate-fade-in { animation: fadeIn 0.2s ease-out; }
+
+  @keyframes fadeInScale {
+    from { opacity: 0; transform: scale(0.98); }
+    to { opacity: 1; transform: scale(1); }
+  }
+  .animate-fade-in-scale { animation: fadeInScale 0.16s ease-out; }
+
+  /* Respeta la preferencia de reducir movimiento (accesibilidad) */
+  @media (prefers-reduced-motion: reduce) {
+    .animate-fade-in, .animate-fade-in-scale { animation: none; }
+  }
 }

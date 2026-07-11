@@ -40,7 +40,7 @@ export function TransferenciasPanel() {
 
   return (
     <div>
-      <h2 className="mb-1 text-xl font-bold">Transferencias</h2>
+      <h2 className="page-title">Transferencias</h2>
       <p className="mb-5 text-sm text-slate-500">Valida los pagos recibidos por transferencia: revisa el comprobante y aprueba o rechaza.</p>
 
       <div className="mb-4 flex rounded-xl bg-slate-100 p-1 w-fit">

@@ -61,7 +61,7 @@ export function CajaPanel() {
   if (isLoading || !e) {
     return (
       <div>
-        <h2 className="mb-1 text-xl font-bold">Caja del día</h2>
+        <h2 className="page-title">Caja del día</h2>
         <p className="mb-5 text-sm text-slate-500">Cargando el estado de tu caja…</p>
         <SkeletonIndicadores cantidad={6} />
       </div>
@@ -71,7 +71,7 @@ export function CajaPanel() {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="mb-1 text-xl font-bold">Caja del día</h2>
+        <h2 className="page-title">Caja del día</h2>
         <p className="text-sm text-slate-500">
           {e.ya_cerrada
             ? 'La caja de hoy ya está cerrada.'

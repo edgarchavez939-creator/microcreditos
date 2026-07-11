@@ -49,7 +49,7 @@ export function CarteraPanel() {
 
   return (
     <div>
-      <h2 className="mb-1 text-xl font-bold">Cartera y pagos</h2>
+      <h2 className="page-title">Cartera y pagos</h2>
       <p className="mb-5 text-sm text-slate-500">Desembolsa créditos aprobados y registra los pagos de cada cuota.</p>
 
       <div className="mb-4">
@@ -144,7 +144,7 @@ function CreditoCard({ c }: { c: Solicitud }) {
             }}
             disabled={desembolsar.isPending}
             className="btn-primary btn-sm">
-            {desembolsar.isPending ? 'Desembolsando…' : 'Desembolsar y activar'}
+            {desembolsar.isPending && <span className="spinner" />}{desembolsar.isPending ? 'Desembolsando…' : 'Desembolsar y activar'}
           </button>
           <p className="w-full text-xs text-slate-400">La primera cuota vence un período después de esta fecha, según la modalidad.</p>
         </div>
@@ -286,7 +286,7 @@ function FichaCredito({ creditoId }: { creditoId: number }) {
                   });
                 }} disabled={generar.isPending}
                 className="btn-primary btn-sm mt-2">
-                {generar.isPending ? 'Generando…' : 'Generar plan de pagos'}
+                {generar.isPending && <span className="spinner" />}{generar.isPending ? 'Generando…' : 'Generar plan de pagos'}
               </button>
             )}
             {error && <p className="mt-2 alert-error">{error}</p>}
@@ -345,7 +345,7 @@ function FichaCredito({ creditoId }: { creditoId: number }) {
           </label>
           <button onClick={onPagar} disabled={pagar.isPending}
             className="btn-primary btn-sm">
-            {pagar.isPending ? 'Registrando…' : 'Registrar pago'}
+            {pagar.isPending && <span className="spinner" />}{pagar.isPending ? 'Registrando…' : 'Registrar pago'}
           </button>
         </div>
         {metodo === 'TRANSFERENCIA' && (

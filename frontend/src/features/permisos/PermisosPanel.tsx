@@ -15,7 +15,7 @@ export function PermisosPanel() {
 
   return (
     <div>
-      <h2 className="mb-1 text-xl font-bold">Permisos</h2>
+      <h2 className="page-title">Permisos</h2>
       <p className="mb-4 text-sm text-slate-500">
         Habilita o restringe el acceso a cada módulo. Los cambios aplican de inmediato; el módulo desaparece del menú de quien no lo tenga.
       </p>

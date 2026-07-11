@@ -39,7 +39,7 @@ export function DashboardPanel() {
 
   return (
     <div>
-      <h2 className="mb-1 text-xl font-bold">Inicio</h2>
+      <h2 className="page-title">Inicio</h2>
       <p className="mb-4 text-sm text-slate-500">Resumen {alcance} al día de hoy.</p>
 
       {puedeFiltrar && <FiltroAreas seleccion={areas} onCambio={setAreas} />}

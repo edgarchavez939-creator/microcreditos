@@ -50,7 +50,7 @@ export function LoginForm() {
         <div className="absolute -bottom-32 -left-16 h-96 w-96 rounded-full bg-money-600/10 blur-3xl" />
         <div className="relative flex items-center gap-3">
           <Logo size={44} className="shadow-lift" />
-          <span className="font-display text-lg font-bold text-white">Microcréditos</span>
+          <span className="font-display text-lg font-bold text-white" data-marca-nombre>Microcréditos</span>
         </div>
         <div className="relative">
           <h1 className="font-display text-4xl font-extrabold leading-tight text-white">
@@ -73,7 +73,7 @@ export function LoginForm() {
         <div className="w-full max-w-sm">
           <div className="mb-6 flex flex-col items-center lg:hidden">
             <Logo size={56} className="shadow-lift" />
-            <h1 className="mt-3 font-display text-lg font-bold">Microcréditos</h1>
+            <h1 className="mt-3 font-display text-lg font-bold" data-marca-nombre>Microcréditos</h1>
           </div>
 
           <div className="card card-pad">

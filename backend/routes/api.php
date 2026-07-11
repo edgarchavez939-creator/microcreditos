@@ -18,7 +18,15 @@ use App\Http\Controllers\Api\OtpController;
 use App\Http\Controllers\Api\PermisoController;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/health', fn () => response()->json(['status' => 'ok', 'version' => 'v60-robustez-demo', 'ts' => now()]));
+Route::get('/health', fn () => response()->json(['status' => 'ok', 'version' => 'v61-pulido-marca', 'ts' => now()]));
+
+// Marca pública (sin auth): nombre y color para aplicar en login y en toda la app.
+Route::get('/marca-publica', function () {
+    return response()->json(['data' => [
+        'nombre' => \App\Models\Parametro::valor('marca.nombre', 'Microcréditos'),
+        'color'  => \App\Models\Parametro::valor('marca.color', '#4F46E5'),
+    ]]);
+});
 
 // Extracto PDF: accesible por enlace firmado (para compartir por WhatsApp) o con JWT
 Route::get('solicitudes/{solicitud}/extracto.pdf', [SolicitudController::class, 'extractoPdf'])

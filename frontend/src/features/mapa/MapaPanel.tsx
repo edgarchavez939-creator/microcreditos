@@ -131,7 +131,7 @@ export function MapaPanel() {
 
   return (
     <div>
-      <h2 className="mb-1 text-xl font-bold">Mapa territorial</h2>
+      <h2 className="page-title">Mapa territorial</h2>
       <p className="mb-4 text-sm text-slate-500">
         Ubicación de tus clientes con su estado de cartera. Toca un punto para ver el detalle y navegar.
       </p>

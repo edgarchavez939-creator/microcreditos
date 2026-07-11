@@ -12,7 +12,7 @@ export function ClientesPanel() {
   if (editando) {
     return (
       <div>
-        <h2 className="mb-1 text-xl font-bold">Editar cliente</h2>
+        <h2 className="page-title">Editar cliente</h2>
         <p className="mb-5 text-sm text-slate-500">
           Todos los campos se pueden modificar, excepto el número de documento.
         </p>
@@ -27,7 +27,7 @@ export function ClientesPanel() {
 
   return (
     <div>
-      <h2 className="mb-1 text-xl font-bold">Clientes</h2>
+      <h2 className="page-title">Clientes</h2>
       <p className="mb-5 text-sm text-slate-500">Registra, consulta y actualiza los clientes de tu territorio.</p>
 
       {perfilId ? (

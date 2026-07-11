@@ -10,14 +10,18 @@ interface Props {
 /** Bloque centrado y con diseño para pantallas sin datos. */
 export function EstadoVacio({ icono, titulo, descripcion, accion }: Props) {
   return (
-    <div className="flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50/50 px-6 py-12 text-center">
-      <div className="mb-3 grid h-14 w-14 place-items-center rounded-2xl bg-white text-slate-400 shadow-card ring-1 ring-slate-100">
-        {icono ?? <IconoDefecto />}
+    <div className="animate-fade-in flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-slate-200 bg-gradient-to-b from-slate-50/80 to-white px-6 py-14 text-center">
+      <div className="relative mb-4">
+        {/* Halo decorativo detrás del ícono */}
+        <div className="absolute inset-0 -z-10 animate-pulse rounded-full bg-brand-100/40 blur-xl" />
+        <div className="grid h-16 w-16 place-items-center rounded-2xl bg-white text-brand-400 shadow-card ring-1 ring-slate-100">
+          {icono ?? <IconoDefecto />}
+        </div>
       </div>
-      <p className="text-sm font-semibold text-slate-700">{titulo}</p>
-      {descripcion && <p className="mt-1 max-w-sm text-sm text-slate-500">{descripcion}</p>}
+      <p className="text-base font-semibold text-slate-700">{titulo}</p>
+      {descripcion && <p className="mt-1.5 max-w-sm text-sm leading-relaxed text-slate-500">{descripcion}</p>}
       {accion && (
-        <button onClick={accion.onClick} className="btn-primary btn-sm mt-4">
+        <button onClick={accion.onClick} className="btn-primary btn-sm mt-5">
           {accion.label}
         </button>
       )}
