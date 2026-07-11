@@ -6,6 +6,9 @@ import { encolarOffline } from '@/lib/api/offlineQueue';
 export const api = axios.create({
   baseURL: API_BASE,
   headers: { 'Content-Type': 'application/json' },
+  // Timeout generoso: el plan gratuito de Render puede tardar ~40s en el primer
+  // arranque (cold start). 60s da margen sin colgar indefinidamente si algo falla.
+  timeout: 60_000,
 });
 
 api.interceptors.request.use((config) => {

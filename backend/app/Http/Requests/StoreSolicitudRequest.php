@@ -32,9 +32,13 @@ class StoreSolicitudRequest extends FormRequest
         $validator->after(function ($v) {
             $exonerado = (bool) $this->input('seguro_exonerado', false);
             $pct = (float) $this->input('porcentaje_seguro', 0);
-            // Si NO exonerado y hay seguro, el rango debe ser 5%–10%
-            if (! $exonerado && $pct > 0 && ($pct < 0.05 || $pct > 0.10)) {
-                $v->errors()->add('porcentaje_seguro', 'El seguro debe estar entre 5% y 10%.');
+            // Rango configurable (no hardcodeado): usa los parámetros del sistema.
+            $min = (float) \App\Models\Parametro::valor('seguro.porcentaje_min', 0.05);
+            $max = (float) \App\Models\Parametro::valor('seguro.porcentaje_max', 0.10);
+            if (! $exonerado && $pct > 0 && ($pct < $min || $pct > $max)) {
+                $pctMin = rtrim(rtrim(number_format($min * 100, 1), '0'), '.');
+                $pctMax = rtrim(rtrim(number_format($max * 100, 1), '0'), '.');
+                $v->errors()->add('porcentaje_seguro', "El seguro debe estar entre {$pctMin}% y {$pctMax}%.");
             }
         });
     }
