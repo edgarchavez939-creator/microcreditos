@@ -18,7 +18,7 @@ use App\Http\Controllers\Api\OtpController;
 use App\Http\Controllers\Api\PermisoController;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/health', fn () => response()->json(['status' => 'ok', 'version' => 'v61-pulido-marca', 'ts' => now()]));
+Route::get('/health', fn () => response()->json(['status' => 'ok', 'version' => 'v62-caja-general', 'ts' => now()]));
 
 // Marca pública (sin auth): nombre y color para aplicar en login y en toda la app.
 Route::get('/marca-publica', function () {
@@ -46,6 +46,14 @@ Route::middleware(['auth:api', 'mantenimiento'])->group(function () {
     Route::get('dashboard', [DashboardController::class, 'index'])->middleware('modulo:inicio');
     Route::get('dashboard/graficas', [DashboardController::class, 'graficas'])->middleware('modulo:inicio');
     Route::get('reportes/cartera', [ReporteController::class, 'cartera'])->middleware('modulo:reportes');
+
+    // ===== Caja General (exclusivo administrador; validado en el controlador) =====
+    Route::prefix('caja-general')->group(function () {
+        Route::get('estado', [\App\Http\Controllers\Api\CajaGeneralController::class, 'estado']);
+        Route::post('recibir/{cierre}', [\App\Http\Controllers\Api\CajaGeneralController::class, 'recibir']);
+        Route::post('cerrar', [\App\Http\Controllers\Api\CajaGeneralController::class, 'cerrarGeneral']);
+        Route::get('historial', [\App\Http\Controllers\Api\CajaGeneralController::class, 'historial']);
+    });
     Route::get('reportes/pagos', [ReporteController::class, 'pagos'])->middleware('modulo:reportes');
 
     // ===== Administrador Funcional (acceso exclusivo, validado en el controlador) =====

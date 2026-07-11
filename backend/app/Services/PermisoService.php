@@ -16,7 +16,8 @@ class PermisoService
     public const MODULOS = [
         'inicio'         => ['etiqueta' => 'Inicio (indicadores)',       'defecto' => ['ADMINISTRADOR', 'SUPERVISOR', 'COBRADOR']],
         'ruta'           => ['etiqueta' => 'Ruta del día',               'defecto' => ['ADMINISTRADOR', 'SUPERVISOR', 'COBRADOR']],
-        'caja'           => ['etiqueta' => 'Caja y cierres',             'defecto' => ['ADMINISTRADOR', 'SUPERVISOR', 'COBRADOR']],
+        'caja'           => ['etiqueta' => 'Caja individual',            'defecto' => ['SUPERVISOR', 'COBRADOR']],
+        'caja-general'   => ['etiqueta' => 'Caja general',               'defecto' => ['ADMINISTRADOR']],
         'solicitud'      => ['etiqueta' => 'Nueva solicitud',            'defecto' => ['ADMINISTRADOR', 'SUPERVISOR', 'COBRADOR']],
         'aprobaciones'   => ['etiqueta' => 'Aprobaciones',               'defecto' => ['ADMINISTRADOR', 'SUPERVISOR']],
         'pagos'          => ['etiqueta' => 'Cartera y pagos',            'defecto' => ['ADMINISTRADOR', 'SUPERVISOR', 'COBRADOR']],
@@ -44,8 +45,17 @@ class PermisoService
         if ($modulo === 'admin-funcional') {
             return $u->esAdminFuncional();
         }
+        // La caja individual es solo operativa: el administrador (que no recauda) no la usa;
+        // en su lugar tiene la Caja General. El admin funcional sí puede verla todo.
+        if ($modulo === 'caja' && $u->esAdministradorOperativo()) {
+            return false;
+        }
+        // La caja general es exclusiva del administrador (operativo o funcional).
+        if ($modulo === 'caja-general') {
+            return $u->esAdministrador();
+        }
         if ($u->esAdministrador()) {
-            return true; // el administrador siempre accede a todo lo operativo
+            return true; // el administrador accede a todo lo operativo (salvo lo anterior)
         }
 
         return in_array($modulo, $this->modulosDe($u), true);
@@ -58,8 +68,11 @@ class PermisoService
             return array_keys(self::MODULOS); // acceso total, incluido admin-funcional
         }
         if ($u->esAdministrador()) {
-            // Admin operativo: todo MENOS el módulo exclusivo del funcional
-            return array_values(array_filter(array_keys(self::MODULOS), fn ($m) => $m !== 'admin-funcional'));
+            // Admin operativo: todo MENOS la caja individual (no recauda) y el módulo del funcional.
+            return array_values(array_filter(
+                array_keys(self::MODULOS),
+                fn ($m) => $m !== 'admin-funcional' && $m !== 'caja'
+            ));
         }
 
         return Cache::remember("permisos:u{$u->id}", 30, function () use ($u) {

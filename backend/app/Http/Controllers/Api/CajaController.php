@@ -237,6 +237,7 @@ class CajaController extends Controller
             'numero_seguros'       => $e['numero_seguros'],
             'hora_apertura'        => $e['hora_apertura'],
             'hora_cierre'          => now(),
+            'estado'               => 'PENDIENTE_ENTREGA', // flujo de tesorería: espera entrega al administrador
             'observacion'          => $data['observacion'] ?? null,
             'cerrado_por'          => $u->id,
             'ip'                   => $request->ip(),
