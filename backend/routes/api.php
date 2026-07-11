@@ -18,7 +18,7 @@ use App\Http\Controllers\Api\OtpController;
 use App\Http\Controllers\Api\PermisoController;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/health', fn () => response()->json(['status' => 'ok', 'version' => 'v62-caja-general', 'ts' => now()]));
+Route::get('/health', fn () => response()->json(['status' => 'ok', 'version' => 'v63-gestion-mora', 'ts' => now()]));
 
 // Marca pública (sin auth): nombre y color para aplicar en login y en toda la app.
 Route::get('/marca-publica', function () {
@@ -46,6 +46,14 @@ Route::middleware(['auth:api', 'mantenimiento'])->group(function () {
     Route::get('dashboard', [DashboardController::class, 'index'])->middleware('modulo:inicio');
     Route::get('dashboard/graficas', [DashboardController::class, 'graficas'])->middleware('modulo:inicio');
     Route::get('reportes/cartera', [ReporteController::class, 'cartera'])->middleware('modulo:reportes');
+
+    // ===== Gestión de mora / cobranza =====
+    Route::prefix('mora')->group(function () {
+        Route::get('cartera', [\App\Http\Controllers\Api\MoraController::class, 'cartera'])->middleware('modulo:mora');
+        Route::get('promesas', [\App\Http\Controllers\Api\MoraController::class, 'promesas'])->middleware('modulo:mora');
+        Route::get('historial/{cliente}', [\App\Http\Controllers\Api\MoraController::class, 'historial'])->middleware('modulo:mora');
+        Route::post('gestion', [\App\Http\Controllers\Api\MoraController::class, 'registrar'])->middleware('modulo:mora');
+    });
 
     // ===== Caja General (exclusivo administrador; validado en el controlador) =====
     Route::prefix('caja-general')->group(function () {

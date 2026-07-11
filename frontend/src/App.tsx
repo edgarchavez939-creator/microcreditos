@@ -12,6 +12,7 @@ import { ReportesPanel } from '@/features/reportes/ReportesPanel';
 import { TransferenciasPanel } from '@/features/transferencias/TransferenciasPanel';
 import { ParametrosPanel } from '@/features/parametros/ParametrosPanel';
 import { MapaPanel } from '@/features/mapa/MapaPanel';
+import { MoraPanel } from '@/features/mora/MoraPanel';
 import { RutaPanel } from '@/features/ruta/RutaPanel';
 import { CajaPanel } from '@/features/caja/CajaPanel';
 import { CajaGeneralPanel } from '@/features/cajageneral/CajaGeneralPanel';
@@ -36,6 +37,7 @@ const MENU: MenuItem[] = [
   { id: 'pagos',          label: 'Cartera y pagos',  icon: 'cartera',        roles: ['ADMINISTRADOR', 'SUPERVISOR', 'COBRADOR'] },
   { id: 'reamortizacion', label: 'Reamortización',   icon: 'reamortizacion', roles: ['ADMINISTRADOR', 'SUPERVISOR', 'COBRADOR'] },
   { id: 'mapa',           label: 'Mapa territorial', icon: 'mapa',           roles: ['ADMINISTRADOR', 'SUPERVISOR', 'COBRADOR'] },
+  { id: 'mora',           label: 'Gestión de mora',  icon: 'mapa',           roles: ['ADMINISTRADOR', 'SUPERVISOR', 'COBRADOR'] },
   { id: 'aprobaciones',   label: 'Aprobaciones',     icon: 'aprobaciones',   roles: ['ADMINISTRADOR', 'SUPERVISOR'] },
   { id: 'transferencias', label: 'Transferencias',   icon: 'transferencias', roles: ['ADMINISTRADOR', 'SUPERVISOR'] },
   { id: 'reportes',       label: 'Reportes',         icon: 'reportes',       roles: ['ADMINISTRADOR', 'SUPERVISOR'] },
@@ -163,6 +165,7 @@ function Pantalla({ id }: { id: string }) {
     case 'aprobaciones':   return <AprobacionesPanel />;
     case 'pagos':          return <CarteraPanel />;
     case 'mapa':           return <MapaPanel />;
+    case 'mora':           return <MoraPanel />;
     case 'transferencias': return <TransferenciasPanel />;
     case 'reportes':       return <ReportesPanel />;
     case 'usuarios':       return <UsuariosPanel />;
