@@ -7,6 +7,7 @@ import { OtpConfirm } from '@/components/seguridad/OtpConfirm';
 import { useAnularPago, useCreditoDetalle, useCreditos, useCuotasCredito, useDesembolsar, useEliminarCredito, useEventosCredito, useGenerarCronograma, useRegistrarPago } from './hooks';
 import { useAuthStore } from '@/stores/auth';
 import { useToast } from '@/components/ui/Toast';
+import { EvaluacionRenovacion } from './EvaluacionRenovacion';
 import { SkeletonTarjetas } from '@/components/ui/Skeleton';
 import { api } from '@/lib/api/client';
 import { EstadoVacio, IconosVacio } from '@/components/ui/EstadoVacio';
@@ -267,6 +268,9 @@ function FichaCredito({ creditoId }: { creditoId: number }) {
     <div className="mt-3 space-y-5">
       {/* EXTRACTO PDF */}
       <ExtractoPdf credito={credito} />
+
+      {/* EVALUACIÓN DE RENOVACIÓN (scoring) */}
+      <EvaluacionRenovacion creditoId={creditoId} />
 
       {/* PLAN DE PAGOS */}
       <div>

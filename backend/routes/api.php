@@ -18,7 +18,7 @@ use App\Http\Controllers\Api\OtpController;
 use App\Http\Controllers\Api\PermisoController;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/health', fn () => response()->json(['status' => 'ok', 'version' => 'v64-ruta-cobranza', 'ts' => now()]));
+Route::get('/health', fn () => response()->json(['status' => 'ok', 'version' => 'v66-renovacion-pagados', 'ts' => now()]));
 
 // Marca pública (sin auth): nombre y color para aplicar en login y en toda la app.
 Route::get('/marca-publica', function () {
@@ -131,6 +131,7 @@ Route::middleware(['auth:api', 'mantenimiento'])->group(function () {
     Route::post('solicitudes/{solicitud}/rechazar', [SolicitudController::class, 'rechazar']);
     Route::post('solicitudes/{solicitud}/cronograma', [SolicitudController::class, 'generarCronograma']);
     Route::get('solicitudes/{solicitud}/eventos', [SolicitudController::class, 'eventos']);
+    Route::get('solicitudes/{solicitud}/evaluar-renovacion', [SolicitudController::class, 'evaluarRenovacion']);
     Route::get('solicitudes/{solicitud}/cuotas', [SolicitudController::class, 'cuotas']);
     Route::get('solicitudes/{solicitud}/extracto-enlace', [SolicitudController::class, 'extractoEnlace']);
 

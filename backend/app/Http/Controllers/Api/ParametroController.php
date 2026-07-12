@@ -26,6 +26,26 @@ class ParametroController extends Controller
             'descripcion' => 'Valor que se descuenta del cupo del cliente cada vez que reamortiza.',
             'default' => 100000,
         ],
+        'scoring.umbral_excelente' => [
+            'etiqueta' => 'Scoring: umbral nivel excelente', 'tipo' => 'numero',
+            'descripcion' => 'Puntaje (0-100) desde el cual la renovación se recomienda con aumento de cupo.',
+            'default' => 80,
+        ],
+        'scoring.umbral_bueno' => [
+            'etiqueta' => 'Scoring: umbral nivel bueno', 'tipo' => 'numero',
+            'descripcion' => 'Puntaje desde el cual se recomienda renovar por el mismo monto.',
+            'default' => 60,
+        ],
+        'scoring.umbral_regular' => [
+            'etiqueta' => 'Scoring: umbral nivel regular', 'tipo' => 'numero',
+            'descripcion' => 'Puntaje desde el cual se recomienda renovar con cupo reducido. Por debajo, no renovar.',
+            'default' => 40,
+        ],
+        'scoring.aumento_cupo' => [
+            'etiqueta' => 'Scoring: aumento de cupo nivel excelente (%)', 'tipo' => 'porcentaje',
+            'descripcion' => 'Porcentaje de aumento del cupo sugerido para clientes con scoring excelente (0.30 = 30%).',
+            'default' => 0.30,
+        ],
         'aprobacion.max_supervisor' => [
             'etiqueta' => 'Monto máximo aprobable por supervisor ($)', 'tipo' => 'dinero',
             'descripcion' => 'Si el crédito supera este monto, el supervisor no puede aprobarlo y debe hacerlo un administrador.',

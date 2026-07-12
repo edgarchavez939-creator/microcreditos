@@ -42,7 +42,9 @@ export function makeReamortizacionSchema(saldo: number, cupo: number) {
           ctx.addIssue({ code: 'custom', path: ['motivo_exoneracion'],
             message: 'La exoneración requiere un motivo (mín. 5 caracteres).' });
         }
-      } else if (d.porcentaje_seguro > 0 && (d.porcentaje_seguro < 0.05 || d.porcentaje_seguro > 0.1)) {
+      } else if (d.porcentaje_seguro > 0 && (d.porcentaje_seguro < 5 || d.porcentaje_seguro > 10)) {
+        // El campo está en escala porcentual (el usuario escribe 8 para 8%);
+        // la conversión a decimal (÷100) ocurre al enviar. Validar en la misma escala.
         ctx.addIssue({ code: 'custom', path: ['porcentaje_seguro'],
           message: 'El seguro debe estar entre 5% y 10%.' });
       }

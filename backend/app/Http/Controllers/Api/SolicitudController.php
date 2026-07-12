@@ -261,6 +261,30 @@ class SolicitudController extends Controller
     }
 
     /** Línea de tiempo del crédito: creación, aprobación, desembolso, pagos, reamortizaciones. */
+    /** Evalúa el scoring de renovación de un crédito (variables de comportamiento de pago). */
+    public function evaluarRenovacion(Request $request, Solicitud $solicitud, \App\Services\RenovacionService $renovaciones)
+    {
+        $eleg = $renovaciones->esElegible($solicitud);
+        if (! $eleg['elegible']) {
+            return response()->json(['data' => ['elegible' => false, 'motivo' => $eleg['motivo']]]);
+        }
+        $scoring = $renovaciones->evaluar($solicitud->cliente_id, $solicitud->id);
+
+        // Auditar la consulta de scoring (trazabilidad de decisiones de crédito)
+        DB::table('auditoria')->insert([
+            'usuario_id'  => $request->user()->id,
+            'accion'      => 'SCORING_RENOVACION',
+            'entidad'     => 'solicitud',
+            'entidad_id'  => $solicitud->id,
+            'datos_nuevos'=> json_encode($scoring, JSON_UNESCAPED_UNICODE),
+            'ip'          => $request->ip(),
+            'user_agent'  => $request->userAgent(),
+            'created_at'  => now(),
+        ]);
+
+        return response()->json(['data' => array_merge(['elegible' => true], $scoring)]);
+    }
+
     public function eventos(Solicitud $solicitud)
     {
         $this->authorize('view', $solicitud);

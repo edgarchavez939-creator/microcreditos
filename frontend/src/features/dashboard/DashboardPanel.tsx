@@ -18,6 +18,13 @@ interface Indicadores {
   creditos_activos: number;
   pendientes_aprobacion: number;
   exoneraciones_pendientes: number;
+  kpis?: {
+    indice_mora: number;
+    cartera_riesgo_30: number;
+    pct_cartera_riesgo: number;
+    tasa_recuperacion: number;
+    promesas_vigentes: number;
+  };
 }
 
 function useIndicadores(areas: number[]) {
@@ -78,6 +85,26 @@ export function DashboardPanel() {
               detalle="Requieren administrador" tono={d.exoneraciones_pendientes > 0 ? 'alerta' : 'neutro'} />
           </div>
 
+          {/* KPIs gerenciales de cartera */}
+          {d.kpis && (
+            <div>
+              <h3 className="mb-2 text-sm font-semibold text-slate-700">Salud de la cartera</h3>
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                <Tarjeta titulo="Índice de mora" valor={`${d.kpis.indice_mora}%`}
+                  detalle="Saldo vencido sobre saldo en calle"
+                  tono={d.kpis.indice_mora > 15 ? 'alerta' : d.kpis.indice_mora > 8 ? 'atencion' : 'positivo'} />
+                <Tarjeta titulo="Cartera en riesgo" valor={`${d.kpis.pct_cartera_riesgo}%`}
+                  detalle={`${money(d.kpis.cartera_riesgo_30)} con mora > 30 días`}
+                  tono={d.kpis.pct_cartera_riesgo > 10 ? 'alerta' : d.kpis.pct_cartera_riesgo > 5 ? 'atencion' : 'positivo'} />
+                <Tarjeta titulo="Tasa de recuperación" valor={`${d.kpis.tasa_recuperacion}%`}
+                  detalle="Recaudado sobre lo colocado"
+                  tono={d.kpis.tasa_recuperacion >= 70 ? 'positivo' : 'neutro'} />
+                <Tarjeta titulo="Promesas vigentes" valor={`${d.kpis.promesas_vigentes}`}
+                  detalle="Acuerdos de pago activos" />
+              </div>
+            </div>
+          )}
+
           <Suspense fallback={<div className="h-40 animate-pulse rounded-2xl bg-slate-100" />}>
             <DashboardGraficas areas={areas} />
           </Suspense>
@@ -91,6 +118,8 @@ const TONOS: Record<string, string> = {
   brand:  'bg-brand-50 ring-brand-100 text-brand-700',
   money:  'bg-money-50 ring-money-100 text-money-700',
   alerta: 'bg-amber-50 ring-amber-100 text-amber-800',
+  atencion: 'bg-amber-50 ring-amber-100 text-amber-800',
+  positivo: 'bg-money-50 ring-money-100 text-money-700',
   neutro: 'bg-white ring-slate-100 text-slate-800',
 };
 

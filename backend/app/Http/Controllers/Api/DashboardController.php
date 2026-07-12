@@ -82,6 +82,32 @@ class DashboardController extends Controller
             ->where('seguro_exonerado', true)
             ->count();
 
+        // ===== KPIs gerenciales (indicadores financieros de cartera) =====
+        // Índice de mora: saldo vencido / saldo total en calle
+        $indiceMora = $saldoEnCalle > 0
+            ? round(((float) ($vencidas->total ?? 0)) / $saldoEnCalle * 100, 1) : 0.0;
+
+        // Cartera en riesgo (CER >30): saldo de créditos con cuotas vencidas hace más de 30 días
+        $carteraRiesgo = (float) Cuota::whereIn('solicitud_id', $ids)
+            ->whereDate('fecha_vencimiento', '<', now()->subDays(30)->toDateString())
+            ->whereIn('estado', ['PENDIENTE', 'PARCIAL', 'VENCIDA'])
+            ->sum(DB::raw('valor - valor_pagado'));
+        $pctCarteraRiesgo = $saldoEnCalle > 0 ? round($carteraRiesgo / $saldoEnCalle * 100, 1) : 0.0;
+
+        // Tasa de recuperación: recaudado / total a recaudar de créditos colocados
+        $totalColocado = (float) Solicitud::whereIn('id', $ids)
+            ->whereIn('estado', ['ACTIVO', 'DESEMBOLSADO', 'PAGADO'])
+            ->sum('total_recaudar');
+        $tasaRecuperacion = $totalColocado > 0 ? round($recuperado / $totalColocado * 100, 1) : 0.0;
+
+        // Promesas de pago vigentes (compromisos activos de la cobranza)
+        $clienteIds = Solicitud::whereIn('id', $ids)->pluck('cliente_id')->unique();
+        $promesasVigentes = (int) DB::table('gestiones_mora')
+            ->whereIn('cliente_id', $clienteIds)
+            ->where('tipo', 'ACUERDO_PAGO')
+            ->whereDate('fecha_acuerdo', '>=', now()->toDateString())
+            ->count();
+
         return response()->json(['data' => [
             'prestado'        => $prestado,
             'por_recaudar'    => $porRecaudar,
@@ -93,6 +119,13 @@ class DashboardController extends Controller
             'creditos_activos'   => $activos,
             'pendientes_aprobacion' => $pendientes,
             'exoneraciones_pendientes' => $exoneraciones,
+            'kpis' => [
+                'indice_mora'        => $indiceMora,          // % del saldo en calle que está vencido
+                'cartera_riesgo_30'  => $carteraRiesgo,       // $ con mora > 30 días
+                'pct_cartera_riesgo' => $pctCarteraRiesgo,    // % del saldo en calle
+                'tasa_recuperacion'  => $tasaRecuperacion,    // % recaudado de lo colocado
+                'promesas_vigentes'  => $promesasVigentes,    // compromisos de pago activos
+            ],
         ]]);
     }
 
