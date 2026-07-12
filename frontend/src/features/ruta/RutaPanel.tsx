@@ -5,10 +5,12 @@ import { money } from '@/lib/format';
 import { SkeletonTarjetas } from '@/components/ui/Skeleton';
 import { EstadoVacio, IconosVacio } from '@/components/ui/EstadoVacio';
 import { optimizarRuta } from './optimizarRuta';
+import { ModalGestion } from '@/features/mora/ModalGestion';
 
 /** Parada consolidada por crédito (una por solicitud, no por cuota). */
 interface ParadaRuta {
   solicitud_id: number;
+  cliente_id: number;
   numero_credito?: string | null;
   estado: string;
   cuotas_vencidas: number;
@@ -63,33 +65,57 @@ export function RutaPanel() {
   const { data, isLoading, isError } = useRutaDia();
   const { pos, estado: estadoGps } = useUbicacionGestor();
   const paradas = useMemo(() => data?.data ?? [], [data]);
+  const [vista, setVista] = useState<'ruta' | 'prioridad'>('ruta');
 
   const { vencidas, deHoy } = useMemo(() => {
     const v = paradas.filter((p) => p.estado === 'VENCIDA');
     const h = paradas.filter((p) => p.estado !== 'VENCIDA');
+    if (vista === 'prioridad') {
+      // Orden por prioridad de mora (más días primero), sin optimización geográfica
+      const porMora = (arr: ParadaRuta[]) => [...arr].sort((a, b) => b.dias_mora - a.dias_mora);
+      return {
+        vencidas: { orden: porMora(v), tramos: [] as { km: number; min: number }[], totalKm: 0 },
+        deHoy: { orden: porMora(h), tramos: [] as { km: number; min: number }[], totalKm: 0 },
+      };
+    }
     const optV = optimizarRuta(v, pos);
     const optH = optimizarRuta(h, pos);
     return {
       vencidas: { orden: optV.orden as ParadaRuta[], tramos: optV.tramos, totalKm: optV.totalKm },
       deHoy: { orden: optH.orden as ParadaRuta[], tramos: optH.tramos, totalKm: optH.totalKm },
     };
-  }, [paradas, pos]);
+  }, [paradas, pos, vista]);
 
   return (
     <div>
-      <h2 className="page-title">Ruta del día</h2>
-      <p className="mb-1 text-sm text-slate-500">
-        Los cobros de hoy y la mora pendiente, ordenados para recorrer menos distancia.
-      </p>
-      {estadoGps === 'ok' && (
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h2 className="page-title">Ruta y cobranza del día</h2>
+          <p className="mb-1 text-sm text-slate-500">
+            Cobros y mora del día. Registra el pago o la gestión en cada parada.
+          </p>
+        </div>
+        <div className="flex rounded-xl bg-slate-100 p-0.5">
+          <button onClick={() => setVista('ruta')}
+            className={`rounded-lg px-3 py-1.5 text-sm font-medium transition ${vista === 'ruta' ? 'bg-white text-brand-700 shadow-sm' : 'text-slate-500'}`}>
+            Ruta óptima
+          </button>
+          <button onClick={() => setVista('prioridad')}
+            className={`rounded-lg px-3 py-1.5 text-sm font-medium transition ${vista === 'prioridad' ? 'bg-white text-brand-700 shadow-sm' : 'text-slate-500'}`}>
+            Por prioridad
+          </button>
+        </div>
+      </div>
+      {vista === 'ruta' && estadoGps === 'ok' && (
         <p className="mb-5 text-xs text-money-700">Ruta optimizada desde tu ubicación actual.</p>
       )}
-      {(estadoGps === 'denegado' || estadoGps === 'no-disponible') && (
+      {vista === 'ruta' && (estadoGps === 'denegado' || estadoGps === 'no-disponible') && (
         <p className="mb-5 text-xs text-slate-400">
           Activa la ubicación para optimizar la ruta desde donde estás. Por ahora se ordena desde la primera parada.
         </p>
       )}
-      {estadoGps === 'idle' && <p className="mb-5 text-xs text-slate-400">Obteniendo tu ubicación…</p>}
+      {vista === 'ruta' && estadoGps === 'idle' && <p className="mb-5 text-xs text-slate-400">Obteniendo tu ubicación…</p>}
+      {vista === 'prioridad' && <p className="mb-5 text-xs text-slate-400">Ordenado por días de mora, de mayor a menor.</p>}
 
       {isLoading ? (
         <SkeletonTarjetas cantidad={3} />
@@ -147,6 +173,7 @@ function Seccion({ titulo, paradas, tramos, totalKm, tono }: {
 }
 
 function Parada({ p, orden, tramo }: { p: ParadaRuta; orden: number; tramo?: { km: number; min: number } }) {
+  const [gestionar, setGestionar] = useState(false);
   const gps = p.latitud != null && p.longitud != null
     ? `https://www.google.com/maps/dir/?api=1&destination=${p.latitud},${p.longitud}`
     : null;
@@ -182,11 +209,16 @@ function Parada({ p, orden, tramo }: { p: ParadaRuta; orden: number; tramo?: { k
           <div className="font-display text-lg font-bold">{money(p.valor_pendiente)}</div>
           <div className="text-xs text-slate-400">en mora</div>
         </div>
-        <div className="flex gap-1.5">
+        <div className="flex flex-wrap justify-end gap-1.5">
           {wa && <a href={wa} target="_blank" rel="noreferrer" className="btn-outline btn-sm">WhatsApp</a>}
-          {gps && <a href={gps} target="_blank" rel="noreferrer" className="btn-primary btn-sm">Ir →</a>}
+          {gps && <a href={gps} target="_blank" rel="noreferrer" className="btn-outline btn-sm">Ir →</a>}
+          <button onClick={() => setGestionar(true)} className="btn-primary btn-sm">Gestionar</button>
         </div>
       </div>
+      {gestionar && (
+        <ModalGestion clienteId={p.cliente_id} solicitudId={p.solicitud_id} nombre={p.cliente}
+          saldo={p.valor_pendiente} onClose={() => setGestionar(false)} />
+      )}
     </div>
   );
 }

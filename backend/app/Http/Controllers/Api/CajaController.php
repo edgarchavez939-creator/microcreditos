@@ -36,8 +36,26 @@ class CajaController extends Controller
             $q->whereIn('s.area_id', $areas);
         }
 
+        // --- Regla de gestión de ruta ---
+        // 1) Un crédito cuyo cliente ya fue gestionado HOY sale de la ruta de hoy
+        //    (reaparece mañana si sigue debiendo).
+        // 2) Un crédito con una PROMESA de pago vigente (acuerdo con fecha futura) no
+        //    aparece hasta el día de la promesa: se respeta el acuerdo.
+        $gestionadosHoy = DB::table('gestiones_mora')
+            ->whereDate('created_at', now()->toDateString())
+            ->pluck('cliente_id');
+        $conPromesaFutura = DB::table('gestiones_mora')
+            ->where('tipo', 'ACUERDO_PAGO')
+            ->whereNotNull('fecha_acuerdo')
+            ->whereDate('fecha_acuerdo', '>', now()->toDateString())
+            ->pluck('cliente_id');
+        $excluidos = $gestionadosHoy->merge($conPromesaFutura)->unique();
+        if ($excluidos->isNotEmpty()) {
+            $q->whereNotIn('c.id', $excluidos);
+        }
+
         $filas = $q
-            ->groupBy('s.id', 's.numero_credito', 'c.nombres', 'c.apellidos',
+            ->groupBy('s.id', 's.numero_credito', 'c.id', 'c.nombres', 'c.apellidos',
                       'c.telefono_principal', 'c.direccion', 'c.barrio',
                       'c.latitud', 'c.longitud', 'uc.nombre')
             ->orderByRaw("CASE WHEN MAX(CASE WHEN q.estado='VENCIDA' THEN 1 ELSE 0 END)=1 THEN 0 ELSE 1 END")
@@ -45,6 +63,7 @@ class CajaController extends Controller
             ->limit(300)
             ->get([
                 's.id as solicitud_id', 's.numero_credito',
+                'c.id as cliente_id',
                 // ¿el crédito tiene al menos una cuota vencida? define su estado y sección
                 DB::raw("(CASE WHEN MAX(CASE WHEN q.estado='VENCIDA' THEN 1 ELSE 0 END)=1 THEN 'VENCIDA' ELSE 'HOY' END) as estado"),
                 DB::raw('COUNT(*) as cuotas_vencidas'),

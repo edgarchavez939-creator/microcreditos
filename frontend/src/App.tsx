@@ -29,7 +29,7 @@ interface MenuItem { id: string; label: string; icon: IconName; roles: Rol[] }
 
 const MENU: MenuItem[] = [
   { id: 'inicio',         label: 'Inicio',           icon: 'inicio',         roles: ['ADMINISTRADOR', 'SUPERVISOR', 'COBRADOR'] },
-  { id: 'ruta',           label: 'Ruta del día',     icon: 'ruta',           roles: ['ADMINISTRADOR', 'SUPERVISOR', 'COBRADOR'] },
+  { id: 'ruta',           label: 'Ruta y cobranza',  icon: 'ruta',           roles: ['ADMINISTRADOR', 'SUPERVISOR', 'COBRADOR'] },
   { id: 'caja',           label: 'Caja',             icon: 'caja',           roles: ['SUPERVISOR', 'COBRADOR'] },
   { id: 'caja-general',   label: 'Caja General',     icon: 'caja',           roles: ['ADMINISTRADOR'] },
   { id: 'solicitud',      label: 'Nueva solicitud',  icon: 'solicitud',      roles: ['ADMINISTRADOR', 'SUPERVISOR', 'COBRADOR'] },
@@ -37,7 +37,6 @@ const MENU: MenuItem[] = [
   { id: 'pagos',          label: 'Cartera y pagos',  icon: 'cartera',        roles: ['ADMINISTRADOR', 'SUPERVISOR', 'COBRADOR'] },
   { id: 'reamortizacion', label: 'Reamortización',   icon: 'reamortizacion', roles: ['ADMINISTRADOR', 'SUPERVISOR', 'COBRADOR'] },
   { id: 'mapa',           label: 'Mapa territorial', icon: 'mapa',           roles: ['ADMINISTRADOR', 'SUPERVISOR', 'COBRADOR'] },
-  { id: 'mora',           label: 'Gestión de mora',  icon: 'mapa',           roles: ['ADMINISTRADOR', 'SUPERVISOR', 'COBRADOR'] },
   { id: 'aprobaciones',   label: 'Aprobaciones',     icon: 'aprobaciones',   roles: ['ADMINISTRADOR', 'SUPERVISOR'] },
   { id: 'transferencias', label: 'Transferencias',   icon: 'transferencias', roles: ['ADMINISTRADOR', 'SUPERVISOR'] },
   { id: 'reportes',       label: 'Reportes',         icon: 'reportes',       roles: ['ADMINISTRADOR', 'SUPERVISOR'] },
