@@ -142,11 +142,76 @@ class ClienteController extends Controller
     }
 
     /**
+     * HISTORIAL DE CRÉDITOS del cliente: todos sus créditos, de cualquier estado.
+     * Separa cartera activa (lo operable) del historial crediticio (lo consultable).
+     * Marca cuál es el último crédito PAGADO: el único elegible para renovación.
+     */
+    public function historialCreditos(Cliente $cliente, \App\Services\RenovacionService $renovaciones)
+    {
+        $this->authorize('view', $cliente);
+
+        $creditos = \Illuminate\Support\Facades\DB::table('solicitudes as s')
+            ->leftJoin('usuarios as uc', 'uc.id', '=', 's.created_by')
+            ->leftJoin('usuarios as ua', 'ua.id', '=', 's.usuario_aprobador')
+            ->leftJoin('desembolsos as d', 'd.solicitud_id', '=', 's.id')
+            ->where('s.cliente_id', $cliente->id)
+            ->orderByDesc('s.created_at')
+            ->get([
+                's.id', 's.numero_credito', 's.estado',
+                's.created_at as fecha_solicitud',
+                'd.fecha as fecha_desembolso',
+                's.updated_at as fecha_actualizacion',
+                's.capital_solicitado', 's.monto_aprobado', 's.plazo_meses',
+                'uc.nombre as creado_por', 'ua.nombre as aprobado_por',
+            ]);
+
+        // Agregados por crédito: pagado, cuotas y mora acumulada (una sola consulta)
+        $ids = $creditos->pluck('id');
+        $agregados = \Illuminate\Support\Facades\DB::table('cuotas')
+            ->whereIn('solicitud_id', $ids)
+            ->groupBy('solicitud_id')
+            ->selectRaw('solicitud_id,
+                COUNT(*) as numero_cuotas,
+                COALESCE(SUM(valor_pagado),0) as total_pagado,
+                COALESCE(MAX(dias_mora),0) as max_dias_mora,
+                MAX(CASE WHEN estado = \'PAGADA\' THEN updated_at END) as ultima_cuota_pagada')
+            ->get()->keyBy('solicitud_id');
+
+        // El crédito renovable: último PAGADO dentro de la ventana de renovación.
+        // Si la ventana venció, ningún crédito muestra la opción (corresponde solicitud nueva).
+        $renovable = $renovaciones->creditoRenovable($cliente->id);
+        $ultimoPagadoId = $renovable['solicitud_id'] ?? null;
+
+        $filas = $creditos->map(function ($c) use ($agregados, $ultimoPagadoId) {
+            $a = $agregados->get($c->id);
+            return [
+                'id'                => $c->id,
+                'numero_credito'    => $c->numero_credito,
+                'estado'            => $c->estado,
+                'fecha_solicitud'   => $c->fecha_solicitud,
+                'fecha_desembolso'  => $c->fecha_desembolso,
+                'fecha_cancelacion' => $c->estado === 'PAGADO' ? ($a->ultima_cuota_pagada ?? $c->fecha_actualizacion) : null,
+                'monto_aprobado'    => (float) ($c->monto_aprobado ?? 0),
+                'capital_solicitado'=> (float) ($c->capital_solicitado ?? 0),
+                'plazo_meses'       => (int) ($c->plazo_meses ?? 0),
+                'total_pagado'      => (float) ($a->total_pagado ?? 0),
+                'numero_cuotas'     => (int) ($a->numero_cuotas ?? 0),
+                'max_dias_mora'     => (int) ($a->max_dias_mora ?? 0),
+                'creado_por'        => $c->creado_por,
+                'aprobado_por'      => $c->aprobado_por,
+                'es_ultimo_pagado'  => $c->id === $ultimoPagadoId, // único renovable
+            ];
+        });
+
+        return response()->json(['data' => $filas->values()]);
+    }
+
+    /**
      * Búsqueda GLOBAL por número de documento (validación previa a crear solicitud).
      * Evita duplicados: si el cliente ya existe (aunque sea de otro cobrador/área),
      * devuelve su información para continuar con la solicitud sobre él.
      */
-    public function porDocumento(Request $request)
+    public function porDocumento(Request $request, \App\Services\RenovacionService $renovaciones)
     {
         $data = $request->validate(['documento' => ['required', 'string', 'regex:/^[0-9]+$/', 'max:40']]);
 
@@ -157,6 +222,10 @@ class ClienteController extends Controller
         if (! $c) {
             return response()->json(['data' => null, 'existe' => false]);
         }
+
+        // Cliente antiguo: ¿tiene un crédito renovable? (último pagado dentro de la
+        // ventana de renovación). Si la ventana venció, no se ofrece: solicitud nueva.
+        $renovable = $renovaciones->creditoRenovable($c->id);
 
         return response()->json(['existe' => true, 'data' => [
             'id'                 => $c->id,
@@ -170,6 +239,7 @@ class ClienteController extends Controller
             'area'               => $c->area?->nombre,
             'cobrador'           => $c->cobrador?->nombre,
             'activo'             => (bool) $c->activo,
+            'credito_renovable'  => $renovable, // null si no aplica renovación
         ]]);
     }
 }

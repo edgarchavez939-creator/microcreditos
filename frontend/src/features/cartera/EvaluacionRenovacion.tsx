@@ -11,6 +11,8 @@ interface Scoring {
   recomendacion?: string;
   cupo_sugerido?: number;
   monto_credito_actual?: number;
+  fecha_cancelacion?: string | null;
+  dias_desde_cancelacion?: number | null;
   variables?: {
     cuotas_pagadas: number;
     pct_puntualidad: number;
@@ -80,6 +82,9 @@ export function EvaluacionRenovacion({ creditoId }: { creditoId: number }) {
         <span>Mora máxima: <b>{v.max_dias_mora} días</b></span>
         <span>Gestiones de cobro: <b>{v.gestiones_mora}</b></span>
         <span>Créditos completados: <b>{v.creditos_completados}</b></span>
+        {data.dias_desde_cancelacion != null && (
+          <span>Cancelado hace: <b>{data.dias_desde_cancelacion} día{data.dias_desde_cancelacion === 1 ? '' : 's'}</b></span>
+        )}
       </div>
 
       <p className="mt-3 text-xs opacity-70">

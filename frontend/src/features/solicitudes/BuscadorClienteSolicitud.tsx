@@ -1,8 +1,10 @@
 import { useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { api } from '@/lib/api/client';
+import { money, fecha } from '@/lib/format';
 import { SolicitudForm } from '@/features/solicitudes/SolicitudForm';
 import { ClienteForm } from '@/features/clientes/ClienteForm';
+import { EvaluacionRenovacion } from '@/features/cartera/EvaluacionRenovacion';
 
 interface ClienteEncontrado {
   id: number;
@@ -15,6 +17,14 @@ interface ClienteEncontrado {
   area?: string | null;
   cobrador?: string | null;
   activo: boolean;
+  credito_renovable?: {
+    solicitud_id: number;
+    numero_credito?: string | null;
+    monto_aprobado: number;
+    fecha_cancelacion: string;
+    renovable_hasta: string;
+    dias_restantes: number;
+  } | null;
 }
 
 export function BuscadorClienteSolicitud() {
@@ -75,6 +85,26 @@ export function BuscadorClienteSolicitud() {
             <p className="mt-2 rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-800 ring-1 ring-amber-100">
               Este cliente está inactivo. Actívalo antes de otorgarle un nuevo crédito.
             </p>
+          )}
+          {cliente.credito_renovable && (
+            <div className="mt-3 rounded-xl bg-money-50 p-3 ring-1 ring-money-100">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div>
+                  <div className="text-xs font-semibold uppercase tracking-wide text-money-700">
+                    ✓ Crédito disponible para renovar
+                  </div>
+                  <div className="mt-0.5 text-sm text-money-700">
+                    {cliente.credito_renovable.numero_credito ?? `Crédito #${cliente.credito_renovable.solicitud_id}`} · {money(cliente.credito_renovable.monto_aprobado)} · cancelado el {fecha(cliente.credito_renovable.fecha_cancelacion)}
+                  </div>
+                  <div className="text-xs text-money-700/70">
+                    Renovable hasta el {fecha(cliente.credito_renovable.renovable_hasta)} ({cliente.credito_renovable.dias_restantes} día{cliente.credito_renovable.dias_restantes === 1 ? '' : 's'} restantes)
+                  </div>
+                </div>
+              </div>
+              <div className="mt-2">
+                <EvaluacionRenovacion creditoId={cliente.credito_renovable.solicitud_id} />
+              </div>
+            </div>
           )}
         </div>
         <SolicitudForm clienteId={cliente.id} areaId={cliente.area_id} onCreada={() => {

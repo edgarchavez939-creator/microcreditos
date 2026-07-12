@@ -45,6 +45,13 @@ class RenovacionService
         // --- 4) Crédito a renovar (base para el cupo sugerido) ---
         $credito = DB::table('solicitudes')->where('id', $solicitudId)->first();
 
+        // Fecha de cancelación (última cuota pagada) y tiempo transcurrido
+        $fechaCancelacion = DB::table('cuotas')->where('solicitud_id', $solicitudId)
+            ->where('estado', 'PAGADA')->max('updated_at');
+        $diasDesdeCancelacion = $fechaCancelacion
+            ? (int) \Illuminate\Support\Carbon::parse($fechaCancelacion)->diffInDays(now())
+            : null;
+
         // --- Score ponderado (0–100) ---
         // Puntualidad 55% · Severidad de mora 20% · Cobranza 15% · Experiencia 10%
         // (El "avance" ya no puntúa: la renovación solo aplica a créditos PAGADOS,
@@ -87,6 +94,8 @@ class RenovacionService
             'recomendacion' => $recomendacion,
             'cupo_sugerido' => $cupoSugerido,
             'monto_credito_actual' => $montoBase,
+            'fecha_cancelacion' => $fechaCancelacion,
+            'dias_desde_cancelacion' => $diasDesdeCancelacion,
             'variables' => [
                 'cuotas_pagadas'   => $totalPagadas,
                 'pct_puntualidad'  => round($pctPuntualidad * 100, 1),
@@ -97,17 +106,94 @@ class RenovacionService
         ];
     }
 
+    /**
+     * Busca el crédito renovable del cliente: su ÚLTIMO crédito PAGADO, siempre que
+     * la cancelación esté dentro de la ventana de renovación (6 meses por defecto,
+     * configurable). Si pasó la ventana, no hay renovación: corresponde solicitud nueva.
+     * Devuelve null si no hay crédito renovable.
+     */
+    public function creditoRenovable(int $clienteId): ?array
+    {
+        $ultimo = DB::table('solicitudes')
+            ->where('cliente_id', $clienteId)
+            ->where('estado', 'PAGADO')
+            ->orderByDesc('updated_at')
+            ->first(['id', 'numero_credito', 'monto_aprobado', 'updated_at']);
+        if (! $ultimo) return null;
+
+        $fechaCancelacion = DB::table('cuotas')->where('solicitud_id', $ultimo->id)
+            ->where('estado', 'PAGADA')->max('updated_at') ?? $ultimo->updated_at;
+
+        $mesesVentana = (int) \App\Models\Parametro::valor('renovacion.meses_ventana', 6);
+        $limite = \Illuminate\Support\Carbon::parse($fechaCancelacion)->addMonths($mesesVentana)->endOfDay();
+
+        if (now()->gt($limite)) {
+            return null; // ventana vencida: es solicitud nueva, no renovación
+        }
+
+        return [
+            'solicitud_id'      => (int) $ultimo->id,
+            'numero_credito'    => $ultimo->numero_credito,
+            'monto_aprobado'    => (float) ($ultimo->monto_aprobado ?? 0),
+            'fecha_cancelacion' => $fechaCancelacion,
+            'renovable_hasta'   => $limite->toDateString(),
+            'dias_restantes'    => (int) now()->diffInDays($limite),
+        ];
+    }
+
     /** ¿El crédito es elegible para evaluación de renovación? */
     public function esElegible(object $credito): array
     {
         // Política del negocio: la renovación SOLO procede con créditos pagados
         // en su totalidad (estado PAGADO). No se renueva sobre saldo pendiente.
-        if ($credito->estado === 'PAGADO') {
-            return ['elegible' => true, 'motivo' => null];
+        if ($credito->estado !== 'PAGADO') {
+            return [
+                'elegible' => false,
+                'motivo'   => 'La renovación solo está disponible para créditos pagados en su totalidad.',
+            ];
         }
-        return [
-            'elegible' => false,
-            'motivo'   => 'La renovación solo está disponible para créditos pagados en su totalidad.',
-        ];
+
+        // Y debe ser el ÚLTIMO crédito pagado del cliente: no se evalúa renovación
+        // sobre créditos antiguos si existe uno cancelado más reciente.
+        $ultimoPagadoId = DB::table('solicitudes')
+            ->where('cliente_id', $credito->cliente_id)
+            ->where('estado', 'PAGADO')
+            ->orderByDesc('updated_at')
+            ->value('id');
+        if ($ultimoPagadoId !== null && (int) $ultimoPagadoId !== (int) $credito->id) {
+            return [
+                'elegible' => false,
+                'motivo'   => 'Existe un crédito cancelado más reciente. La renovación se evalúa sobre el último crédito pagado del cliente.',
+            ];
+        }
+
+        // Ventana de renovación (6 meses por defecto): si la cancelación fue hace más
+        // tiempo, la renovación expiró y corresponde una solicitud nueva.
+        $fechaCancelacion = DB::table('cuotas')->where('solicitud_id', $credito->id)
+            ->where('estado', 'PAGADA')->max('updated_at');
+        if ($fechaCancelacion) {
+            $mesesVentana = (int) \App\Models\Parametro::valor('renovacion.meses_ventana', 6);
+            $limite = \Illuminate\Support\Carbon::parse($fechaCancelacion)->addMonths($mesesVentana)->endOfDay();
+            if (now()->gt($limite)) {
+                return [
+                    'elegible' => false,
+                    'motivo'   => "La ventana de renovación ({$mesesVentana} meses desde el pago total) ya venció. Corresponde crear una solicitud nueva.",
+                ];
+            }
+        }
+
+        // Sin procesos abiertos: el cliente no debe tener otro crédito vigente
+        $tieneVigente = DB::table('solicitudes')
+            ->where('cliente_id', $credito->cliente_id)
+            ->whereIn('estado', ['ACTIVO', 'DESEMBOLSADO', 'EN_MORA', 'APROBADO', 'PENDIENTE_SUPERVISOR', 'PENDIENTE_ADMINISTRADOR'])
+            ->exists();
+        if ($tieneVigente) {
+            return [
+                'elegible' => false,
+                'motivo'   => 'El cliente tiene un crédito vigente o en trámite. No es posible evaluar la renovación.',
+            ];
+        }
+
+        return ['elegible' => true, 'motivo' => null];
     }
 }

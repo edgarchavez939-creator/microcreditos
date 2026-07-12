@@ -46,6 +46,11 @@ class ParametroController extends Controller
             'descripcion' => 'Porcentaje de aumento del cupo sugerido para clientes con scoring excelente (0.30 = 30%).',
             'default' => 0.30,
         ],
+        'renovacion.meses_ventana' => [
+            'etiqueta' => 'Renovación: ventana máxima (meses)', 'tipo' => 'numero',
+            'descripcion' => 'Meses desde el pago total del crédito durante los cuales puede renovarse. Vencida la ventana, corresponde solicitud nueva.',
+            'default' => 6,
+        ],
         'aprobacion.max_supervisor' => [
             'etiqueta' => 'Monto máximo aprobable por supervisor ($)', 'tipo' => 'dinero',
             'descripcion' => 'Si el crédito supera este monto, el supervisor no puede aprobarlo y debe hacerlo un administrador.',

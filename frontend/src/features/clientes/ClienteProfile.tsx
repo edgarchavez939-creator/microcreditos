@@ -1,5 +1,6 @@
 import { fecha } from '@/lib/format';
 import { GestorDocumentos } from './GestorDocumentos';
+import { HistorialCreditos } from './HistorialCreditos';
 import { useState } from 'react';
 import { useActualizarContacto, useClienteDetalle, useHistorialCliente } from './hooks';
 
@@ -116,6 +117,7 @@ export function ClienteProfile({ clienteId, onVolver, onEditar }:
       </div>
 
       {/* Documentos soporte (#4) */}
+      <HistorialCreditos clienteId={c.id} />
       <GestorDocumentos clienteId={c.id} />
 
       {/* Historial de actualizaciones */}
