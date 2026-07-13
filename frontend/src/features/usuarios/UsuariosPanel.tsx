@@ -141,11 +141,21 @@ function UsuarioForm({ usuario, onCerrar }: { usuario: UsuarioAdmin | null; onCe
   const crear = useCrearUsuario();
   const actualizar = useActualizarUsuario();
 
-  const [nombre, setNombre] = useState(usuario?.nombre ?? '');
+  const [nombres, setNombres] = useState(usuario?.nombres ?? '');
+  const [apellidos, setApellidos] = useState(usuario?.apellidos ?? '');
+  const [tipoDoc, setTipoDoc] = useState(usuario?.tipo_documento ?? 'CC');
+  const [numeroDoc, setNumeroDoc] = useState(usuario?.numero_documento ?? '');
   const [email, setEmail] = useState(usuario?.email ?? '');
   const [password, setPassword] = useState('');
   const [rol, setRol] = useState(usuario?.rol ?? 'COBRADOR');
   const [telefono, setTelefono] = useState(usuario?.telefono ?? '');
+  const [direccion, setDireccion] = useState(usuario?.direccion ?? '');
+  const [fechaNac, setFechaNac] = useState(usuario?.fecha_nacimiento?.slice(0, 10) ?? '');
+  const [emergNombre, setEmergNombre] = useState(usuario?.contacto_emergencia_nombre ?? '');
+  const [emergTel, setEmergTel] = useState(usuario?.contacto_emergencia_telefono ?? '');
+  const [salario, setSalario] = useState(usuario?.salario_base != null ? String(usuario.salario_base) : '');
+  const [banco, setBanco] = useState(usuario?.banco ?? '');
+  const [numeroCuenta, setNumeroCuenta] = useState(usuario?.numero_cuenta ?? '');
   const [activo, setActivo] = useState(usuario?.activo ?? true);
   const [areasSel, setAreasSel] = useState<number[]>(usuario?.areas.map((a) => a.id) ?? []);
   const [error, setError] = useState<string | null>(null);
@@ -163,23 +173,32 @@ function UsuarioForm({ usuario, onCerrar }: { usuario: UsuarioAdmin | null; onCe
 
   const guardar = () => {
     setError(null); setMsg(null);
-    if (!nombre.trim()) { setError('Ingresa el nombre.'); return; }
+    if (!nombres.trim()) { setError('Ingresa los nombres.'); return; }
+    if (!apellidos.trim()) { setError('Ingresa los apellidos.'); return; }
     if (!email.trim()) { setError('Ingresa el correo.'); return; }
     if (!usuario && password.length < 10) { setError('La contraseña debe tener al menos 10 caracteres.'); return; }
     if (usuario && password && password.length < 10) { setError('La nueva contraseña debe tener al menos 10 caracteres.'); return; }
     if (areasSel.length === 0) { setError('Selecciona al menos un área.'); return; }
 
+    const ficha = {
+      nombres, apellidos,
+      tipo_documento: tipoDoc, numero_documento: numeroDoc || undefined,
+      email, rol, telefono: telefono || undefined,
+      direccion: direccion || undefined,
+      fecha_nacimiento: fechaNac || undefined,
+      contacto_emergencia_nombre: emergNombre || undefined,
+      contacto_emergencia_telefono: emergTel || undefined,
+      salario_base: salario ? Number(salario) : undefined,
+      banco: banco || undefined,
+      numero_cuenta: numeroCuenta || undefined,
+      areas: areasSel,
+    };
+
     if (!usuario) {
-      crear.mutate(
-        { nombre, email, password, rol, telefono: telefono || undefined, areas: areasSel },
-        { onSuccess: onCerrar, onError },
-      );
+      crear.mutate({ ...ficha, password }, { onSuccess: onCerrar, onError });
     } else {
       actualizar.mutate(
-        {
-          id: usuario.id, nombre, email, rol, telefono: telefono || undefined,
-          activo, areas: areasSel, ...(password ? { password } : {}),
-        },
+        { id: usuario.id, ...ficha, activo, ...(password ? { password } : {}) },
         { onSuccess: onCerrar, onError },
       );
     }
@@ -189,10 +208,33 @@ function UsuarioForm({ usuario, onCerrar }: { usuario: UsuarioAdmin | null; onCe
     <div className="card card-pad max-w-lg space-y-4">
       <h3 className="font-semibold">{usuario ? `Editar: ${usuario.nombre}` : 'Nuevo usuario'}</h3>
 
-      <div>
-        <label className="label">Nombre completo</label>
-        <input value={nombre} onChange={(e) => setNombre(e.target.value)} className="input" />
+      <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">Identificación</p>
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <label className="label">Nombres</label>
+          <input value={nombres} onChange={(e) => setNombres(e.target.value)} className="input" />
+        </div>
+        <div>
+          <label className="label">Apellidos</label>
+          <input value={apellidos} onChange={(e) => setApellidos(e.target.value)} className="input" />
+        </div>
+        <div>
+          <label className="label">Tipo de identificación</label>
+          <select value={tipoDoc} onChange={(e) => setTipoDoc(e.target.value)} className="input">
+            <option value="CC">Cédula de ciudadanía</option>
+            <option value="CE">Cédula de extranjería</option>
+            <option value="TI">Tarjeta de identidad</option>
+            <option value="PASAPORTE">Pasaporte</option>
+            <option value="NIT">NIT</option>
+          </select>
+        </div>
+        <div>
+          <label className="label">Número de identificación</label>
+          <input value={numeroDoc} onChange={(e) => setNumeroDoc(e.target.value)} className="input" />
+        </div>
       </div>
+
+      <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">Acceso al sistema</p>
       <div>
         <label className="label">Correo</label>
         <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} className="input" />
@@ -215,6 +257,43 @@ function UsuarioForm({ usuario, onCerrar }: { usuario: UsuarioAdmin | null; onCe
         </div>
       </div>
 
+      <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">Contacto</p>
+      <div>
+        <label className="label">Dirección de residencia</label>
+        <input value={direccion} onChange={(e) => setDireccion(e.target.value)} className="input" />
+      </div>
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <label className="label">Fecha de nacimiento</label>
+          <input type="date" value={fechaNac} onChange={(e) => setFechaNac(e.target.value)} className="input" />
+        </div>
+        <div>
+          <label className="label">Tel. contacto de emergencia</label>
+          <input value={emergTel} onChange={(e) => setEmergTel(e.target.value)} className="input" />
+        </div>
+      </div>
+      <div>
+        <label className="label">Nombre del contacto de emergencia</label>
+        <input value={emergNombre} onChange={(e) => setEmergNombre(e.target.value)} className="input" />
+      </div>
+
+      <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">Laboral y financiero</p>
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <label className="label">Salario base (opcional)</label>
+          <input type="number" value={salario} onChange={(e) => setSalario(e.target.value)} className="input" />
+        </div>
+        <div>
+          <label className="label">Banco (opcional)</label>
+          <input value={banco} onChange={(e) => setBanco(e.target.value)} className="input" />
+        </div>
+      </div>
+      <div>
+        <label className="label">Número de cuenta (opcional)</label>
+        <input value={numeroCuenta} onChange={(e) => setNumeroCuenta(e.target.value)} className="input" />
+      </div>
+
+      <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">Asignación</p>
       <div>
         <label className="label">Áreas asignadas</label>
         <div className="flex flex-wrap gap-2">

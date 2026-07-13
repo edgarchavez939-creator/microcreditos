@@ -9,7 +9,10 @@ class Usuario extends Authenticatable implements JWTSubject
 {
     protected $table = 'usuarios';
     protected $fillable = [
-        'nombre','email','password','rol','telefono','activo',
+        'nombre','nombres','apellidos','tipo_documento','numero_documento',
+        'email','password','rol','telefono','activo',
+        'direccion','fecha_nacimiento','contacto_emergencia_nombre','contacto_emergencia_telefono',
+        'salario_base','banco','numero_cuenta',
         'twofa_secret','twofa_enabled','intentos_fallidos','bloqueado_hasta',
         'ultimo_login_at','ultimo_login_ip',
     ];

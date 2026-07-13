@@ -35,11 +35,21 @@ class UsuarioController extends Controller
         $this->soloAdmin($request);
 
         $data = $request->validate([
-            'nombre'   => ['required', 'string', 'max:150'],
+            'nombres'   => ['required', 'string', 'max:90'],
+            'apellidos' => ['required', 'string', 'max:90'],
+            'tipo_documento'   => ['nullable', Rule::in(['CC', 'CE', 'TI', 'NIT', 'PASAPORTE'])],
+            'numero_documento' => ['nullable', 'string', 'max:40'],
             'email'    => ['required', 'email', 'max:180', 'unique:usuarios,email'],
             'password' => ['required', 'string', 'min:10'],
             'rol'      => ['required', Rule::in(['ADMINISTRADOR', 'SUPERVISOR', 'COBRADOR'])],
             'telefono' => ['nullable', 'string', 'regex:/^[0-9]{7,10}$/'],
+            'direccion'        => ['nullable', 'string', 'max:200'],
+            'fecha_nacimiento' => ['nullable', 'date'],
+            'contacto_emergencia_nombre'   => ['nullable', 'string', 'max:120'],
+            'contacto_emergencia_telefono' => ['nullable', 'string', 'regex:/^[0-9]{7,10}$/'],
+            'salario_base'  => ['nullable', 'numeric', 'gte:0'],
+            'banco'         => ['nullable', 'string', 'max:80'],
+            'numero_cuenta' => ['nullable', 'string', 'max:40'],
             'areas'    => ['required', 'array', 'min:1'],
             'areas.*'  => ['integer', 'exists:areas,id'],
         ]);
@@ -48,11 +58,23 @@ class UsuarioController extends Controller
         $this->validarLimiteLicencia($data['rol']);
 
         $usuario = Usuario::create([
-            'nombre'   => $data['nombre'],
+            // 'nombre' se sincroniza por trigger desde nombres/apellidos
+            'nombres'   => $data['nombres'],
+            'apellidos' => $data['apellidos'],
+            'nombre'    => trim($data['nombres'] . ' ' . $data['apellidos']),
+            'tipo_documento'   => $data['tipo_documento'] ?? null,
+            'numero_documento' => $data['numero_documento'] ?? null,
             'email'    => strtolower($data['email']),
             'password' => Hash::make($data['password']),
             'rol'      => $data['rol'],
             'telefono' => $data['telefono'] ?? null,
+            'direccion'        => $data['direccion'] ?? null,
+            'fecha_nacimiento' => $data['fecha_nacimiento'] ?? null,
+            'contacto_emergencia_nombre'   => $data['contacto_emergencia_nombre'] ?? null,
+            'contacto_emergencia_telefono' => $data['contacto_emergencia_telefono'] ?? null,
+            'salario_base'  => $data['salario_base'] ?? null,
+            'banco'         => $data['banco'] ?? null,
+            'numero_cuenta' => $data['numero_cuenta'] ?? null,
             'activo'   => true,
         ]);
         $usuario->areas()->sync($data['areas']);
@@ -65,11 +87,21 @@ class UsuarioController extends Controller
         $this->soloAdmin($request);
 
         $data = $request->validate([
-            'nombre'   => ['sometimes', 'string', 'max:150'],
+            'nombres'   => ['sometimes', 'string', 'max:90'],
+            'apellidos' => ['sometimes', 'string', 'max:90'],
+            'tipo_documento'   => ['sometimes', 'nullable', Rule::in(['CC', 'CE', 'TI', 'NIT', 'PASAPORTE'])],
+            'numero_documento' => ['sometimes', 'nullable', 'string', 'max:40'],
             'email'    => ['sometimes', 'email', 'max:180', Rule::unique('usuarios', 'email')->ignore($usuario->id)],
             'password' => ['sometimes', 'nullable', 'string', 'min:10'],
             'rol'      => ['sometimes', Rule::in(['ADMINISTRADOR', 'SUPERVISOR', 'COBRADOR'])],
             'telefono' => ['sometimes', 'nullable', 'string', 'regex:/^[0-9]{7,10}$/'],
+            'direccion'        => ['sometimes', 'nullable', 'string', 'max:200'],
+            'fecha_nacimiento' => ['sometimes', 'nullable', 'date'],
+            'contacto_emergencia_nombre'   => ['sometimes', 'nullable', 'string', 'max:120'],
+            'contacto_emergencia_telefono' => ['sometimes', 'nullable', 'string', 'regex:/^[0-9]{7,10}$/'],
+            'salario_base'  => ['sometimes', 'nullable', 'numeric', 'gte:0'],
+            'banco'         => ['sometimes', 'nullable', 'string', 'max:80'],
+            'numero_cuenta' => ['sometimes', 'nullable', 'string', 'max:40'],
             'activo'   => ['sometimes', 'boolean'],
             'areas'    => ['sometimes', 'array', 'min:1'],
             'areas.*'  => ['integer', 'exists:areas,id'],
@@ -138,9 +170,20 @@ class UsuarioController extends Controller
         return [
             'id'       => $u->id,
             'nombre'   => $u->nombre,
+            'nombres'  => $u->nombres,
+            'apellidos'=> $u->apellidos,
+            'tipo_documento'   => $u->tipo_documento,
+            'numero_documento' => $u->numero_documento,
             'email'    => $u->email,
             'rol'      => $u->rol,
             'telefono' => $u->telefono,
+            'direccion'        => $u->direccion,
+            'fecha_nacimiento' => $u->fecha_nacimiento,
+            'contacto_emergencia_nombre'   => $u->contacto_emergencia_nombre,
+            'contacto_emergencia_telefono' => $u->contacto_emergencia_telefono,
+            'salario_base'  => $u->salario_base !== null ? (float) $u->salario_base : null,
+            'banco'         => $u->banco,
+            'numero_cuenta' => $u->numero_cuenta,
             'activo'   => (bool) $u->activo,
             'areas'    => $u->areas->map(fn ($a) => ['id' => $a->id, 'nombre' => $a->nombre])->values(),
             'ultimo_login_at' => $u->ultimo_login_at?->toIso8601String(),
