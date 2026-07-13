@@ -3,6 +3,7 @@ import { api } from '@/lib/api/client';
 
 export interface MatrizPermisos {
   modulos: Array<{ id: string; etiqueta: string; defecto: string[] }>;
+  acciones?: Array<{ id: string; etiqueta: string; defecto: string[] }>;
   reglas_rol: Array<{ modulo: string; rol: string; permitido: boolean }>;
   reglas_usuario: Array<{ modulo: string; usuario_id: number; nombre: string; permitido: boolean }>;
 }

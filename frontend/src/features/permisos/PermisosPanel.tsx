@@ -75,6 +75,30 @@ function MatrizRoles({ data, fijar }: { data: NonNullable<ReturnType<typeof useM
               })}
             </tr>
           ))}
+          {(data.acciones ?? []).length > 0 && (
+            <tr className="border-t bg-slate-50">
+              <td colSpan={ROLES.length + 1} className="px-3 py-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                Permisos por acción
+              </td>
+            </tr>
+          )}
+          {(data.acciones ?? []).filter((a) => a.id !== 'permisos.gestionar').map((a) => (
+            <tr key={a.id} className="border-t">
+              <td className="px-3 py-2 font-medium">{a.etiqueta}</td>
+              {ROLES.map((rol) => {
+                const activo = estadoRol(data, a.id, rol, a.defecto);
+                return (
+                  <td key={rol} className="px-3 py-2 text-center">
+                    <Interruptor
+                      activo={activo}
+                      deshabilitado={fijar.isPending}
+                      onChange={(v) => fijar.mutate({ modulo: a.id, rol, permitido: v })}
+                    />
+                  </td>
+                );
+              })}
+            </tr>
+          ))}
         </tbody>
       </table>
     </div>
@@ -120,6 +144,31 @@ function MatrizUsuario({ data, fijar }: { data: NonNullable<ReturnType<typeof us
                           activo={regla ? regla.permitido : heredado}
                           deshabilitado={fijar.isPending}
                           onChange={(v) => fijar.mutate({ modulo: m.id, usuario_id: usuario.id, permitido: v })}
+                        />
+                      </td>
+                    </tr>
+                  );
+                })}
+                {(data.acciones ?? []).length > 0 && (
+                  <tr className="border-t bg-slate-50">
+                    <td colSpan={2} className="px-3 py-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                      Permisos por acción
+                    </td>
+                  </tr>
+                )}
+                {(data.acciones ?? []).filter((a) => a.id !== 'permisos.gestionar').map((a) => {
+                  const regla = data.reglas_usuario.find((r) => r.modulo === a.id && r.usuario_id === usuario.id);
+                  const heredado = a.defecto.includes(usuario.rol);
+                  return (
+                    <tr key={a.id} className="border-t">
+                      <td className="px-3 py-2 font-medium">{a.etiqueta}
+                        {regla === undefined && <span className="ml-2 text-xs text-slate-400">(hereda: {heredado ? 'sí' : 'no'})</span>}
+                      </td>
+                      <td className="px-3 py-2 text-center">
+                        <Interruptor
+                          activo={regla ? regla.permitido : heredado}
+                          deshabilitado={fijar.isPending}
+                          onChange={(v) => fijar.mutate({ modulo: a.id, usuario_id: usuario.id, permitido: v })}
                         />
                       </td>
                     </tr>

@@ -36,6 +36,101 @@ class PermisoService
     /** Módulos que el administrador conserva siempre (no se puede dejar sin llaves de la casa). */
     private const SIEMPRE_ADMIN = ['usuarios', 'parametros', 'permisos'];
 
+    /**
+     * MOTOR DE AUTORIZACIONES POR ACCIÓN.
+     * Catálogo central de acciones del sistema con sus roles por defecto.
+     * Resolución: regla de usuario > regla de rol > defecto (misma tabla `permisos`,
+     * usando la clave "modulo.accion" en la columna modulo — sin cambios de BD).
+     * Los defaults REPLICAN las validaciones vigentes: activar el motor no cambia
+     * el comportamiento actual; solo lo vuelve configurable y auditable.
+     */
+    public const ACCIONES = [
+        // Clientes
+        'clientes.crear'        => ['etiqueta' => 'Crear clientes',                'defecto' => ['ADMINISTRADOR', 'SUPERVISOR', 'COBRADOR']],
+        'clientes.editar'       => ['etiqueta' => 'Editar clientes',               'defecto' => ['ADMINISTRADOR', 'SUPERVISOR', 'COBRADOR']],
+        // Solicitudes / créditos
+        'solicitudes.crear'     => ['etiqueta' => 'Crear solicitudes',             'defecto' => ['ADMINISTRADOR', 'SUPERVISOR', 'COBRADOR']],
+        'solicitudes.aprobar'   => ['etiqueta' => 'Aprobar solicitudes',           'defecto' => ['ADMINISTRADOR', 'SUPERVISOR']],
+        'solicitudes.rechazar'  => ['etiqueta' => 'Rechazar solicitudes',          'defecto' => ['ADMINISTRADOR', 'SUPERVISOR']],
+        'solicitudes.eliminar'  => ['etiqueta' => 'Eliminar solicitudes',          'defecto' => ['ADMINISTRADOR']],
+        'creditos.desembolsar'  => ['etiqueta' => 'Desembolsar créditos',          'defecto' => ['ADMINISTRADOR', 'SUPERVISOR']],
+        'creditos.reamortizar'  => ['etiqueta' => 'Reamortizar créditos',          'defecto' => ['ADMINISTRADOR', 'SUPERVISOR']],
+        // Pagos
+        'pagos.registrar'       => ['etiqueta' => 'Registrar pagos',               'defecto' => ['ADMINISTRADOR', 'SUPERVISOR', 'COBRADOR']],
+        'pagos.anular'          => ['etiqueta' => 'Anular pagos',                  'defecto' => ['ADMINISTRADOR', 'SUPERVISOR']],
+        // Transferencias
+        'transferencias.validar'=> ['etiqueta' => 'Validar transferencias',        'defecto' => ['ADMINISTRADOR', 'SUPERVISOR']],
+        // Caja
+        'caja.cerrar'           => ['etiqueta' => 'Cerrar caja individual',        'defecto' => ['SUPERVISOR', 'COBRADOR']],
+        'caja-general.recibir'  => ['etiqueta' => 'Recibir cajas (tesorería)',     'defecto' => ['ADMINISTRADOR']],
+        'caja-general.cerrar'   => ['etiqueta' => 'Ejecutar cierre general',       'defecto' => ['ADMINISTRADOR']],
+        // Documentación
+        'documentos.subir'      => ['etiqueta' => 'Subir documentos',              'defecto' => ['ADMINISTRADOR', 'SUPERVISOR', 'COBRADOR']],
+        'documentos.eliminar'   => ['etiqueta' => 'Eliminar documentos',           'defecto' => ['ADMINISTRADOR', 'SUPERVISOR']],
+        // Mora / cobranza
+        'mora.gestionar'        => ['etiqueta' => 'Registrar gestiones de mora',   'defecto' => ['ADMINISTRADOR', 'SUPERVISOR', 'COBRADOR']],
+        // Reportes
+        'reportes.exportar'     => ['etiqueta' => 'Exportar reportes',             'defecto' => ['ADMINISTRADOR', 'SUPERVISOR']],
+        // Configuración
+        'usuarios.gestionar'    => ['etiqueta' => 'Gestionar usuarios',            'defecto' => ['ADMINISTRADOR']],
+        'parametros.editar'     => ['etiqueta' => 'Editar parámetros',             'defecto' => ['ADMINISTRADOR']],
+        'permisos.gestionar'    => ['etiqueta' => 'Gestionar permisos',            'defecto' => ['ADMINISTRADOR']],
+    ];
+
+    /** ¿Puede el usuario ejecutar la acción? Resolución: usuario > rol > defecto. */
+    public function autoriza(Usuario $u, string $accion): bool
+    {
+        if (! array_key_exists($accion, self::ACCIONES)) {
+            return true; // acción no catalogada: no bloquear (compatibilidad)
+        }
+        if ($u->esAdminFuncional()) {
+            return true; // acceso técnico total
+        }
+
+        $reglas = Cache::remember("acciones:u{$u->id}", 30, function () use ($u) {
+            return [
+                'usuario' => DB::table('permisos')->where('usuario_id', $u->id)->whereNull('rol')
+                    ->where('modulo', 'like', '%.%')->pluck('permitido', 'modulo'),
+                'rol'     => DB::table('permisos')->where('rol', $u->rol)->whereNull('usuario_id')
+                    ->where('modulo', 'like', '%.%')->pluck('permitido', 'modulo'),
+            ];
+        });
+
+        if ($reglas['usuario']->has($accion)) return (bool) $reglas['usuario'][$accion];
+        if ($reglas['rol']->has($accion))     return (bool) $reglas['rol'][$accion];
+        return in_array($u->rol, self::ACCIONES[$accion]['defecto'], true);
+    }
+
+    /**
+     * PUNTO ÚNICO DE ENFORCEMENT: exige la acción o corta con 403,
+     * auditando el intento denegado (usuario, rol, permiso, ruta, IP, dispositivo).
+     */
+    public function exigir(\Illuminate\Http\Request $request, string $accion): void
+    {
+        $u = $request->user();
+        if ($u && $this->autoriza($u, $accion)) {
+            return;
+        }
+
+        DB::table('auditoria')->insert([
+            'usuario_id'   => $u?->id,
+            'accion'       => 'AUTORIZACION_DENEGADA',
+            'entidad'      => 'permiso',
+            'entidad_id'   => null,
+            'datos_nuevos' => json_encode([
+                'permiso'  => $accion,
+                'rol'      => $u?->rol,
+                'ruta'     => $request->path(),
+                'metodo'   => $request->method(),
+            ], JSON_UNESCAPED_UNICODE),
+            'ip'           => $request->ip(),
+            'user_agent'   => $request->userAgent(),
+            'created_at'   => now(),
+        ]);
+
+        abort(403, 'No tienes permiso para ejecutar esta acción.');
+    }
+
     /** ¿Puede el usuario acceder al módulo? Resolución: regla de usuario > regla de rol > defecto. */
     public function permite(Usuario $u, string $modulo): bool
     {
@@ -103,11 +198,22 @@ class PermisoService
     /** Crea/actualiza una regla (por rol o por usuario) y aplica de inmediato. */
     public function fijar(string $modulo, ?string $rol, ?int $usuarioId, bool $permitido): void
     {
-        abort_unless(array_key_exists($modulo, self::MODULOS), 422, 'Módulo no válido.');
+        // Acepta claves de módulo ('caja') y de acción ('pagos.anular')
+        abort_unless(
+            array_key_exists($modulo, self::MODULOS) || array_key_exists($modulo, self::ACCIONES),
+            422, 'Módulo o acción no válida.'
+        );
         abort_if($rol === null && $usuarioId === null, 422, 'Indica un rol o un usuario.');
         abort_if(
             $rol === 'ADMINISTRADOR' && in_array($modulo, self::SIEMPRE_ADMIN, true) && ! $permitido,
             422, 'El administrador no puede quedar sin acceso a este módulo.'
+        );
+        // Mismo blindaje para las acciones de administración (evita el auto-bloqueo)
+        abort_if(
+            $rol === 'ADMINISTRADOR'
+                && in_array($modulo, ['usuarios.gestionar', 'parametros.editar', 'permisos.gestionar'], true)
+                && ! $permitido,
+            422, 'El administrador no puede quedar sin esta acción de administración.'
         );
 
         $condicion = ['modulo' => $modulo, 'rol' => $rol, 'usuario_id' => $usuarioId];
@@ -119,12 +225,14 @@ class PermisoService
             DB::table('permisos')->insert($condicion + ['permitido' => $permitido, 'updated_at' => now()]);
         }
 
-        // Efecto inmediato: limpiar cachés de permisos
+        // Efecto inmediato: limpiar cachés de permisos (módulos y acciones)
         if ($usuarioId) {
             Cache::forget("permisos:u{$usuarioId}");
+            Cache::forget("acciones:u{$usuarioId}");
         } else {
             foreach (DB::table('usuarios')->where('rol', $rol)->pluck('id') as $id) {
                 Cache::forget("permisos:u{$id}");
+                Cache::forget("acciones:u{$id}");
             }
         }
     }

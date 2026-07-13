@@ -18,6 +18,11 @@ class PermisoController extends Controller
             'id' => $id, 'etiqueta' => $def['etiqueta'], 'defecto' => $def['defecto'],
         ])->values();
 
+        // Motor de acciones: catálogo administrable con la misma mecánica que los módulos
+        $acciones = collect(PermisoService::ACCIONES)->map(fn ($def, $id) => [
+            'id' => $id, 'etiqueta' => $def['etiqueta'], 'defecto' => $def['defecto'],
+        ])->values();
+
         $reglasRol = DB::table('permisos')->whereNull('usuario_id')
             ->get(['modulo', 'rol', 'permitido']);
 
@@ -29,6 +34,7 @@ class PermisoController extends Controller
 
         return response()->json(['data' => [
             'modulos'         => $modulos,
+            'acciones'        => $acciones,
             'reglas_rol'      => $reglasRol,
             'reglas_usuario'  => $reglasUsuario,
         ]]);

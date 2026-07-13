@@ -18,7 +18,7 @@ use App\Http\Controllers\Api\OtpController;
 use App\Http\Controllers\Api\PermisoController;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/health', fn () => response()->json(['status' => 'ok', 'version' => 'v69-trazabilidad-badges', 'ts' => now()]));
+Route::get('/health', fn () => response()->json(['status' => 'ok', 'version' => 'v70-motor-permisos', 'ts' => now()]));
 
 // Marca pública (sin auth): nombre y color para aplicar en login y en toda la app.
 Route::get('/marca-publica', function () {
@@ -52,14 +52,14 @@ Route::middleware(['auth:api', 'mantenimiento'])->group(function () {
         Route::get('cartera', [\App\Http\Controllers\Api\MoraController::class, 'cartera'])->middleware('modulo:mora');
         Route::get('promesas', [\App\Http\Controllers\Api\MoraController::class, 'promesas'])->middleware('modulo:mora');
         Route::get('historial/{cliente}', [\App\Http\Controllers\Api\MoraController::class, 'historial'])->middleware('modulo:mora');
-        Route::post('gestion', [\App\Http\Controllers\Api\MoraController::class, 'registrar'])->middleware('modulo:mora');
+        Route::post('gestion', [\App\Http\Controllers\Api\MoraController::class, 'registrar'])->middleware(['modulo:mora', 'accion:mora.gestionar']);
     });
 
     // ===== Caja General (exclusivo administrador; validado en el controlador) =====
     Route::prefix('caja-general')->group(function () {
         Route::get('estado', [\App\Http\Controllers\Api\CajaGeneralController::class, 'estado']);
-        Route::post('recibir/{cierre}', [\App\Http\Controllers\Api\CajaGeneralController::class, 'recibir']);
-        Route::post('cerrar', [\App\Http\Controllers\Api\CajaGeneralController::class, 'cerrarGeneral']);
+        Route::post('recibir/{cierre}', [\App\Http\Controllers\Api\CajaGeneralController::class, 'recibir'])->middleware('accion:caja-general.recibir');
+        Route::post('cerrar', [\App\Http\Controllers\Api\CajaGeneralController::class, 'cerrarGeneral'])->middleware('accion:caja-general.cerrar');
         Route::get('historial', [\App\Http\Controllers\Api\CajaGeneralController::class, 'historial']);
     });
     Route::get('reportes/pagos', [ReporteController::class, 'pagos'])->middleware('modulo:reportes');
@@ -85,8 +85,8 @@ Route::middleware(['auth:api', 'mantenimiento'])->group(function () {
     Route::get('reportes/mora', [ReporteController::class, 'mora'])->middleware('modulo:reportes');
     Route::get('transferencias', [TransferenciaController::class, 'index'])->middleware('modulo:transferencias');
     Route::get('transferencias/{transferencia}/comprobante', [TransferenciaController::class, 'comprobante']);
-    Route::post('transferencias/{transferencia}/aprobar', [TransferenciaController::class, 'aprobar'])->middleware('modulo:transferencias');
-    Route::post('transferencias/{transferencia}/rechazar', [TransferenciaController::class, 'rechazar'])->middleware('modulo:transferencias');
+    Route::post('transferencias/{transferencia}/aprobar', [TransferenciaController::class, 'aprobar'])->middleware(['modulo:transferencias', 'accion:transferencias.validar']);
+    Route::post('transferencias/{transferencia}/rechazar', [TransferenciaController::class, 'rechazar'])->middleware(['modulo:transferencias', 'accion:transferencias.validar']);
     Route::get('parametros', [ParametroController::class, 'index']);
     Route::patch('parametros', [ParametroController::class, 'update']);
     Route::get('mapa/clientes', [MapaController::class, 'clientes'])->middleware('modulo:mapa');
@@ -95,11 +95,11 @@ Route::middleware(['auth:api', 'mantenimiento'])->group(function () {
     Route::post('caja/base', [CajaController::class, 'registrarBase'])->middleware('modulo:caja');
     Route::post('caja/gasto', [CajaController::class, 'registrarGasto'])->middleware('modulo:caja');
     Route::delete('caja/gasto/{id}', [CajaController::class, 'eliminarGasto'])->middleware('modulo:caja');
-    Route::post('caja/cerrar', [CajaController::class, 'cerrar'])->middleware('modulo:caja');
+    Route::post('caja/cerrar', [CajaController::class, 'cerrar'])->middleware(['modulo:caja', 'accion:caja.cerrar']);
     Route::get('caja/cierres', [CajaController::class, 'cierres'])->middleware('modulo:caja');
     Route::get('reportes/caja', [ReporteController::class, 'caja'])->middleware('modulo:reportes');
     Route::get('reportes/productividad', [ReporteController::class, 'productividad'])->middleware('modulo:reportes');
-    Route::delete('pagos/{pago}', [PagoController::class, 'destroy']);
+    Route::delete('pagos/{pago}', [PagoController::class, 'destroy'])->middleware('accion:pagos.anular');
     Route::post('otp/generar', [OtpController::class, 'generar']);
     Route::get('mis-permisos', [PermisoController::class, 'mios']);
     Route::get('permisos', [PermisoController::class, 'index']);
@@ -107,10 +107,10 @@ Route::middleware(['auth:api', 'mantenimiento'])->group(function () {
     Route::get('clientes-buscar', [ClienteController::class, 'porDocumento']);
     // Administración de documentos del cliente
     Route::get('clientes/{cliente}/documentos', [DocumentoController::class, 'index']);
-    Route::post('clientes/{cliente}/documentos', [DocumentoController::class, 'store']);
+    Route::post('clientes/{cliente}/documentos', [DocumentoController::class, 'store'])->middleware('accion:documentos.subir');
     Route::get('clientes/{cliente}/documentos/{documento}', [DocumentoController::class, 'show']);
     Route::post('clientes/{cliente}/documentos/{documento}/reemplazar', [DocumentoController::class, 'replace']);
-    Route::delete('clientes/{cliente}/documentos/{documento}', [DocumentoController::class, 'destroy']);
+    Route::delete('clientes/{cliente}/documentos/{documento}', [DocumentoController::class, 'destroy'])->middleware('accion:documentos.eliminar');
     Route::get('reamortizacion/buscar', [ReamortizacionController::class, 'porNumero']);
     Route::apiResource('usuarios', UsuarioController::class)->only(['index', 'store', 'update']);
     Route::get('areas', [AreaController::class, 'index']);
@@ -121,15 +121,15 @@ Route::middleware(['auth:api', 'mantenimiento'])->group(function () {
     Route::patch('clientes/{cliente}/contacto', [ClienteController::class, 'actualizarContacto']);
     Route::get('clientes/{cliente}/historial', [ClienteController::class, 'historial']);
     Route::get('clientes/{cliente}/historial-creditos', [ClienteController::class, 'historialCreditos']);
-    Route::delete('solicitudes/{solicitud}', [SolicitudController::class, 'destroy']);
+    Route::delete('solicitudes/{solicitud}', [SolicitudController::class, 'destroy'])->middleware('accion:solicitudes.eliminar');
     Route::post('auth/logout', [AuthController::class, 'logout']);
 
     // Solicitudes de préstamo / ventas financiadas
     Route::apiResource('solicitudes', SolicitudController::class)
         ->only(['index','store','show'])
         ->parameters(['solicitudes' => 'solicitud']); // fija el nombre del parámetro (evita la singularización inglesa 'solicitude')
-    Route::post('solicitudes/{solicitud}/aprobar', [SolicitudController::class, 'aprobar']);
-    Route::post('solicitudes/{solicitud}/rechazar', [SolicitudController::class, 'rechazar']);
+    Route::post('solicitudes/{solicitud}/aprobar', [SolicitudController::class, 'aprobar'])->middleware('accion:solicitudes.aprobar');
+    Route::post('solicitudes/{solicitud}/rechazar', [SolicitudController::class, 'rechazar'])->middleware('accion:solicitudes.rechazar');
     Route::post('solicitudes/{solicitud}/cronograma', [SolicitudController::class, 'generarCronograma']);
     Route::get('solicitudes/{solicitud}/eventos', [SolicitudController::class, 'eventos']);
     Route::get('solicitudes/{solicitud}/evaluar-renovacion', [SolicitudController::class, 'evaluarRenovacion']);
@@ -142,12 +142,12 @@ Route::middleware(['auth:api', 'mantenimiento'])->group(function () {
     Route::get('solicitudes/{solicitud}/extracto-enlace', [SolicitudController::class, 'extractoEnlace']);
 
     // Desembolso y pagos (ciclo del dinero)
-    Route::post('solicitudes/{solicitud}/desembolsar', [SolicitudController::class, 'desembolsar']);
-    Route::post('pagos', [PagoController::class, 'store']);
+    Route::post('solicitudes/{solicitud}/desembolsar', [SolicitudController::class, 'desembolsar'])->middleware('accion:creditos.desembolsar');
+    Route::post('pagos', [PagoController::class, 'store'])->middleware('accion:pagos.registrar');
 
     // --- Amortización / Reamortización / Refinanciación ---
     Route::get('solicitudes/{solicitud}/saldo', [ReamortizacionController::class, 'saldo']);
-    Route::post('solicitudes/{solicitud}/reamortizar', [ReamortizacionController::class, 'reamortizar']);
+    Route::post('solicitudes/{solicitud}/reamortizar', [ReamortizacionController::class, 'reamortizar'])->middleware('accion:creditos.reamortizar');
     Route::get('solicitudes/{solicitud}/historial', [ReamortizacionController::class, 'historial']);
     Route::get('clientes/{cliente}/cupo', [ReamortizacionController::class, 'verCupo']);
     Route::put('clientes/{cliente}/cupo', [ReamortizacionController::class, 'setCupo']);
