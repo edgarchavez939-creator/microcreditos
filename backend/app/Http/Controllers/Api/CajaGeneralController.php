@@ -232,7 +232,24 @@ class CajaGeneralController extends Controller
             'diferencia_general' => $difGeneral,
         ]);
 
-        return response()->json(['message' => 'Cierre General realizado.', 'id' => $cierreId], 201);
+        // Al cierre general del SÁBADO, consolidar los descuadres de la semana de cada
+        // empleado en su Estado de Cuenta (integración con tesorería / talento humano).
+        $obligacionesGeneradas = 0;
+        if (now()->isSaturday()) {
+            $svc = app(\App\Services\EstadoCuentaService::class);
+            $empleadosConCaja = $recibidas->pluck('cerrado_por')->unique()->filter();
+            foreach ($empleadosConCaja as $empleadoId) {
+                if ($svc->consolidarDescuadresSemana((int) $empleadoId, $request) !== null) {
+                    $obligacionesGeneradas++;
+                }
+            }
+        }
+
+        return response()->json([
+            'message' => 'Cierre General realizado.',
+            'id' => $cierreId,
+            'descuadres_consolidados' => $obligacionesGeneradas,
+        ], 201);
     }
 
     /** Historial de cierres generales (inmutable). */

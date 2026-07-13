@@ -49,6 +49,12 @@ class TareaService
                 ->whereDate('fecha', now()->toDateString())
                 ->where('estado', 'PENDIENTE_ENTREGA')
                 ->count();
+
+            // --- Estado de cuenta: empleados con obligaciones pendientes ---
+            $badges['estado-cuenta'] = (int) DB::table('obligaciones_empleado')
+                ->where('estado', 'PENDIENTE')
+                ->distinct('empleado_id')
+                ->count('empleado_id');
         }
 
         // Solo módulos con tareas (badge 0 no se envía: menos ruido)

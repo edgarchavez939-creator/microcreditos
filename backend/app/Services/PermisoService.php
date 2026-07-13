@@ -19,6 +19,7 @@ class PermisoService
         'caja'           => ['etiqueta' => 'Caja individual',            'defecto' => ['SUPERVISOR', 'COBRADOR']],
         'mora'           => ['etiqueta' => 'Gestión de mora',            'defecto' => ['ADMINISTRADOR', 'SUPERVISOR', 'COBRADOR']],
         'caja-general'   => ['etiqueta' => 'Caja general',               'defecto' => ['ADMINISTRADOR']],
+        'estado-cuenta'  => ['etiqueta' => 'Estado de cuenta empleados',  'defecto' => ['ADMINISTRADOR']],
         'solicitud'      => ['etiqueta' => 'Nueva solicitud',            'defecto' => ['ADMINISTRADOR', 'SUPERVISOR', 'COBRADOR']],
         'aprobaciones'   => ['etiqueta' => 'Aprobaciones',               'defecto' => ['ADMINISTRADOR', 'SUPERVISOR']],
         'pagos'          => ['etiqueta' => 'Cartera y pagos',            'defecto' => ['ADMINISTRADOR', 'SUPERVISOR', 'COBRADOR']],

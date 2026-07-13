@@ -18,6 +18,7 @@ import { MoraPanel } from '@/features/mora/MoraPanel';
 import { RutaPanel } from '@/features/ruta/RutaPanel';
 import { CajaPanel } from '@/features/caja/CajaPanel';
 import { CajaGeneralPanel } from '@/features/cajageneral/CajaGeneralPanel';
+import { EstadoCuentaPanel } from '@/features/estadocuenta/EstadoCuentaPanel';
 import { PermisosPanel } from '@/features/permisos/PermisosPanel';
 import { AdminFuncionalPanel } from '@/features/adminfuncional/AdminFuncionalPanel';
 import { useMisPermisos } from '@/features/permisos/hooks';
@@ -34,6 +35,7 @@ const MENU: MenuItem[] = [
   { id: 'ruta',           label: 'Ruta y cobranza',  icon: 'ruta',           roles: ['ADMINISTRADOR', 'SUPERVISOR', 'COBRADOR'] },
   { id: 'caja',           label: 'Caja',             icon: 'caja',           roles: ['SUPERVISOR', 'COBRADOR'] },
   { id: 'caja-general',   label: 'Caja General',     icon: 'caja',           roles: ['ADMINISTRADOR'] },
+  { id: 'estado-cuenta',  label: 'Estado de cuenta', icon: 'caja',           roles: ['ADMINISTRADOR'] },
   { id: 'solicitud',      label: 'Nueva solicitud',  icon: 'solicitud',      roles: ['ADMINISTRADOR', 'SUPERVISOR', 'COBRADOR'] },
   { id: 'clientes',       label: 'Clientes',         icon: 'clientes',       roles: ['ADMINISTRADOR', 'SUPERVISOR', 'COBRADOR'] },
   { id: 'pagos',          label: 'Cartera y pagos',  icon: 'cartera',        roles: ['ADMINISTRADOR', 'SUPERVISOR', 'COBRADOR'] },
@@ -172,6 +174,7 @@ function Pantalla({ id }: { id: string }) {
     case 'ruta':           return <RutaPanel />;
     case 'caja':           return <CajaPanel />;
     case 'caja-general':   return <CajaGeneralPanel />;
+    case 'estado-cuenta':  return <EstadoCuentaPanel />;
     case 'solicitud':      return <PantallaSolicitud />;
     case 'reamortizacion': return <PantallaReamortizacion />;
     case 'clientes':       return <ClientesPanel />;

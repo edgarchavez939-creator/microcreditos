@@ -18,7 +18,7 @@ use App\Http\Controllers\Api\OtpController;
 use App\Http\Controllers\Api\PermisoController;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/health', fn () => response()->json(['status' => 'ok', 'version' => 'v70-motor-permisos', 'ts' => now()]));
+Route::get('/health', fn () => response()->json(['status' => 'ok', 'version' => 'v71-estado-cuenta-empleado', 'ts' => now()]));
 
 // Marca pública (sin auth): nombre y color para aplicar en login y en toda la app.
 Route::get('/marca-publica', function () {
@@ -131,6 +131,15 @@ Route::middleware(['auth:api', 'mantenimiento'])->group(function () {
     Route::post('solicitudes/{solicitud}/aprobar', [SolicitudController::class, 'aprobar'])->middleware('accion:solicitudes.aprobar');
     Route::post('solicitudes/{solicitud}/rechazar', [SolicitudController::class, 'rechazar'])->middleware('accion:solicitudes.rechazar');
     Route::post('solicitudes/{solicitud}/cronograma', [SolicitudController::class, 'generarCronograma']);
+    // ===== Estado de Cuenta del Empleado =====
+    Route::prefix('empleados')->group(function () {
+        Route::get('estado-cuenta', [\App\Http\Controllers\Api\EstadoCuentaEmpleadoController::class, 'consolidado']);
+        Route::get('{empleado}/estado-cuenta', [\App\Http\Controllers\Api\EstadoCuentaEmpleadoController::class, 'show']);
+        Route::post('{empleado}/prestamos', [\App\Http\Controllers\Api\EstadoCuentaEmpleadoController::class, 'crearPrestamo']);
+        Route::post('{empleado}/consolidar-descuadres', [\App\Http\Controllers\Api\EstadoCuentaEmpleadoController::class, 'consolidarDescuadres']);
+        Route::post('{empleado}/obligaciones/{obligacion}/abonar', [\App\Http\Controllers\Api\EstadoCuentaEmpleadoController::class, 'abonar']);
+    });
+
     Route::get('solicitudes/{solicitud}/eventos', [SolicitudController::class, 'eventos']);
     Route::get('solicitudes/{solicitud}/evaluar-renovacion', [SolicitudController::class, 'evaluarRenovacion']);
 
