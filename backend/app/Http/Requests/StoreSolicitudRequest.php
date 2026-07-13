@@ -14,6 +14,7 @@ class StoreSolicitudRequest extends FormRequest
             'cliente_id'          => ['required','integer','exists:clientes,id'],
             'area_id'             => ['nullable','integer','exists:areas,id'],
             'producto_id'         => ['nullable','integer','exists:productos,id'],
+            'credito_origen_id'   => ['nullable','integer','exists:solicitudes,id'],
             'es_venta_financiada' => ['boolean'],
             'capital_solicitado'  => ['required','numeric','gt:0'],
             'tasa_interes'        => ['required','numeric','gte:0'],

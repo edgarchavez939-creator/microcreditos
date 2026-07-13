@@ -94,6 +94,21 @@ class SolicitudController extends Controller
             ),
             'created_by'          => $request->user()->id,
         ]);
+
+        // MARCA DE RENOVACIÓN (trazabilidad padre-hijo): si la solicitud proviene de
+        // una renovación, se valida contra el servicio central que el origen sea
+        // exactamente el crédito renovable vigente del cliente (último pagado,
+        // dentro de la ventana) y se deja la relación permanente.
+        if (! empty($data['credito_origen_id'])) {
+            $renovable = app(\App\Services\RenovacionService::class)->creditoRenovable($cliente->id);
+            if ($renovable && (int) $renovable['solicitud_id'] === (int) $data['credito_origen_id']) {
+                $solicitud->credito_origen_id = (int) $data['credito_origen_id'];
+                $solicitud->tipo_origen       = 'RENOVACION';
+                $solicitud->renovado_por      = $request->user()->id;
+            }
+            // Si no coincide (origen inválido o ventana vencida), la solicitud se crea
+            // igual pero SIN marca: no se falsifica una renovación que no procede.
+        }
         if ($exonerado) {
             $solicitud->exoneracion_solicitada_por = $request->user()->id;
         }

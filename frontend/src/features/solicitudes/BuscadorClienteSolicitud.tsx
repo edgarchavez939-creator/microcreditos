@@ -104,10 +104,13 @@ export function BuscadorClienteSolicitud() {
               <div className="mt-2">
                 <EvaluacionRenovacion creditoId={cliente.credito_renovable.solicitud_id} />
               </div>
+              <p className="mt-2 text-xs text-money-700/70">
+                La solicitud que crees quedará marcada como <b>renovación</b> del crédito {cliente.credito_renovable.numero_credito ?? `#${cliente.credito_renovable.solicitud_id}`}, con trazabilidad completa.
+              </p>
             </div>
           )}
         </div>
-        <SolicitudForm clienteId={cliente.id} areaId={cliente.area_id} onCreada={() => {
+        <SolicitudForm clienteId={cliente.id} areaId={cliente.area_id} creditoOrigenId={cliente.credito_renovable?.solicitud_id} onCreada={() => {
           setCliente(null); setNoExiste(false); setCrear(false);
           setDocumento(''); setCreada(true);
         }} />

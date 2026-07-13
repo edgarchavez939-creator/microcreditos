@@ -162,6 +162,7 @@ class ClienteController extends Controller
                 'd.fecha as fecha_desembolso',
                 's.updated_at as fecha_actualizacion',
                 's.capital_solicitado', 's.monto_aprobado', 's.plazo_meses',
+                's.credito_origen_id', 's.tipo_origen',
                 'uc.nombre as creado_por', 'ua.nombre as aprobado_por',
             ]);
 
@@ -182,7 +183,13 @@ class ClienteController extends Controller
         $renovable = $renovaciones->creditoRenovable($cliente->id);
         $ultimoPagadoId = $renovable['solicitud_id'] ?? null;
 
-        $filas = $creditos->map(function ($c) use ($agregados, $ultimoPagadoId) {
+        // Mapa id → numero_credito para navegar la cadena de renovaciones
+        $numeroPorId = $creditos->pluck('numero_credito', 'id');
+        // Hijos: qué crédito renovó a cada uno (relación inversa)
+        $renovadoPor = $creditos->whereNotNull('credito_origen_id')
+            ->pluck('numero_credito', 'credito_origen_id');
+
+        $filas = $creditos->map(function ($c) use ($agregados, $ultimoPagadoId, $numeroPorId, $renovadoPor) {
             $a = $agregados->get($c->id);
             return [
                 'id'                => $c->id,
@@ -200,6 +207,11 @@ class ClienteController extends Controller
                 'creado_por'        => $c->creado_por,
                 'aprobado_por'      => $c->aprobado_por,
                 'es_ultimo_pagado'  => $c->id === $ultimoPagadoId, // único renovable
+                // Trazabilidad de renovación (cadena padre-hijo)
+                'tipo_origen'          => $c->tipo_origen,
+                'credito_origen_id'    => $c->credito_origen_id,
+                'credito_origen_numero'=> $c->credito_origen_id ? ($numeroPorId[$c->credito_origen_id] ?? null) : null,
+                'renovado_por_numero'  => $renovadoPor[$c->id] ?? null, // crédito hijo que lo renovó
             ];
         });
 

@@ -18,7 +18,7 @@ use App\Http\Controllers\Api\OtpController;
 use App\Http\Controllers\Api\PermisoController;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/health', fn () => response()->json(['status' => 'ok', 'version' => 'v68-ventana-renovacion', 'ts' => now()]));
+Route::get('/health', fn () => response()->json(['status' => 'ok', 'version' => 'v69-trazabilidad-badges', 'ts' => now()]));
 
 // Marca pública (sin auth): nombre y color para aplicar en login y en toda la app.
 Route::get('/marca-publica', function () {
@@ -133,6 +133,11 @@ Route::middleware(['auth:api', 'mantenimiento'])->group(function () {
     Route::post('solicitudes/{solicitud}/cronograma', [SolicitudController::class, 'generarCronograma']);
     Route::get('solicitudes/{solicitud}/eventos', [SolicitudController::class, 'eventos']);
     Route::get('solicitudes/{solicitud}/evaluar-renovacion', [SolicitudController::class, 'evaluarRenovacion']);
+
+    // Tareas pendientes por módulo (badges del menú); calculado del estado real
+    Route::get('tareas/badges', function (\Illuminate\Http\Request $request, \App\Services\TareaService $tareas) {
+        return response()->json(['data' => $tareas->badges($request->user())]);
+    });
     Route::get('solicitudes/{solicitud}/cuotas', [SolicitudController::class, 'cuotas']);
     Route::get('solicitudes/{solicitud}/extracto-enlace', [SolicitudController::class, 'extractoEnlace']);
 

@@ -20,6 +20,10 @@ interface CreditoHistorial {
   creado_por?: string | null;
   aprobado_por?: string | null;
   es_ultimo_pagado: boolean;
+  tipo_origen?: string | null;
+  credito_origen_id?: number | null;
+  credito_origen_numero?: string | null;
+  renovado_por_numero?: string | null;
 }
 
 const VIGENTES = ['ACTIVO', 'DESEMBOLSADO', 'EN_MORA', 'APROBADO'];
@@ -72,6 +76,20 @@ export function HistorialCreditos({ clienteId }: { clienteId: number }) {
                     Solicitado {fecha(c.fecha_solicitud)}
                     {c.fecha_cancelacion && ` · Cancelado ${fecha(c.fecha_cancelacion)}`}
                   </div>
+                  {(c.tipo_origen === 'RENOVACION' || c.renovado_por_numero) && (
+                    <div className="mt-1 flex flex-wrap gap-1.5">
+                      {c.tipo_origen === 'RENOVACION' && (
+                        <span className="rounded-full bg-brand-50 px-2 py-0.5 text-xs text-brand-700 ring-1 ring-brand-100">
+                          ↻ Renovación del crédito {c.credito_origen_numero ?? `#${c.credito_origen_id}`}
+                        </span>
+                      )}
+                      {c.renovado_por_numero && (
+                        <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-500 ring-1 ring-slate-200">
+                          Renovado por el crédito {c.renovado_por_numero}
+                        </span>
+                      )}
+                    </div>
+                  )}
                 </div>
                 <div className="flex items-center gap-3">
                   <div className="text-right">

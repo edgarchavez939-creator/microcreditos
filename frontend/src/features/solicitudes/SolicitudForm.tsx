@@ -13,7 +13,8 @@ const MODALIDADES = [
 ];
 const MODAL_LABEL: Record<string, string> = { MENSUAL: 'mensuales', QUINCENAL: 'quincenales', SEMANAL: 'semanales', DIARIO: 'diarias' };
 
-export function SolicitudForm({ clienteId, areaId, onCreada }: { clienteId: number; areaId: number; onCreada?: () => void }) {
+export function SolicitudForm({ clienteId, areaId, creditoOrigenId, onCreada }:
+  { clienteId: number; areaId: number; creditoOrigenId?: number; onCreada?: () => void }) {
   const crear = useCrearSolicitud();
   const [exito, setExito] = useState(false);
   const { register, handleSubmit, watch, reset, formState: { errors } } = useForm<TForm>({
@@ -31,7 +32,9 @@ export function SolicitudForm({ clienteId, areaId, onCreada }: { clienteId: numb
 
   const onSubmit = (data: TForm) => {
     setExito(false);
-    crear.mutate(aPayloadSolicitud(data), {
+    // La marca de renovación viaja con la solicitud (el backend valida el origen)
+    const payload = { ...aPayloadSolicitud(data), credito_origen_id: creditoOrigenId };
+    crear.mutate(payload, {
       onSuccess: () => {
         setExito(true);
         reset({

@@ -1,2 +1,2 @@
 /** Versión visible del frontend: debe coincidir con el marcador del backend. */
-export const APP_VERSION = 'v68';
+export const APP_VERSION = 'v69';

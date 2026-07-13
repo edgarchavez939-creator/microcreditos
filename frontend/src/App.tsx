@@ -1,3 +1,5 @@
+import { useQuery } from '@tanstack/react-query';
+import { api } from '@/lib/api/client';
 import { useEffect, useState } from 'react';
 import { Logo } from '@/components/ui/Logo';
 import { useAuthStore } from '@/stores/auth';
@@ -87,17 +89,29 @@ function AppShell() {
     </div>
   );
 
+  const { data: badges } = useQuery({
+    queryKey: ['tareas-badges'],
+    queryFn: async () => (await api.get<{ data: Record<string, number> }>('/tareas/badges')).data.data,
+    refetchInterval: 30_000, // el badge se actualiza solo cada 30s
+  });
+
   const nav = (
     <nav className="flex flex-col gap-1">
       {visibles.map((m) => {
         const I = Icon[m.icon];
         const on = activo === m.id;
+        const pendientes = badges?.[m.id] ?? 0;
         return (
           <button key={m.id} onClick={() => { setActivo(m.id); setDrawer(false); }}
             className={`group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition ${
               on ? 'bg-white/10 text-white' : 'text-slate-300 hover:bg-white/5 hover:text-white'}`}>
             <span className={on ? 'text-brand-300' : 'text-slate-400 group-hover:text-slate-200'}><I /></span>
             {m.label}
+            {pendientes > 0 && (
+              <span className="ml-auto grid min-w-[1.25rem] place-items-center rounded-full bg-rose-500 px-1.5 py-0.5 text-[11px] font-bold leading-none text-white">
+                {pendientes > 99 ? '99+' : pendientes}
+              </span>
+            )}
           </button>
         );
       })}
