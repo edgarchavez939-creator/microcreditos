@@ -33,11 +33,11 @@ class DashboardController extends Controller
             }
         }
 
-        if ($u->esCobrador()) {
-            $solicitudes->where(fn ($q) => $q->where('cobrador_id', $u->id)->orWhere('created_by', $u->id));
-        } elseif ($u->esSupervisor()) {
-            $areas = $u->areas()->pluck('areas.id');
-            $solicitudes->whereIn('area_id', $areas);
+        // Modelo territorial: filtrar por el área del CLIENTE (en vivo).
+        $areasVis = $u->areasVisibles();
+        if ($areasVis !== null) {
+            $solicitudes->whereIn('cliente_id',
+                \Illuminate\Support\Facades\DB::table('clientes')->whereIn('area_id', $areasVis)->select('id'));
         }
         $ids = $solicitudes->pluck('id');
 
@@ -148,11 +148,11 @@ class DashboardController extends Controller
             }
         }
 
-        if ($u->esCobrador()) {
-            $solicitudes->where(fn ($q) => $q->where('cobrador_id', $u->id)->orWhere('created_by', $u->id));
-        } elseif ($u->esSupervisor()) {
-            $areas = DB::table('usuario_area')->where('usuario_id', $u->id)->pluck('area_id');
-            $solicitudes->whereIn('area_id', $areas);
+        // Modelo territorial: filtrar por el área del CLIENTE (en vivo).
+        $areasVis = $u->areasVisibles();
+        if ($areasVis !== null) {
+            $solicitudes->whereIn('cliente_id',
+                \Illuminate\Support\Facades\DB::table('clientes')->whereIn('area_id', $areasVis)->select('id'));
         }
 
         return $solicitudes->pluck('id');

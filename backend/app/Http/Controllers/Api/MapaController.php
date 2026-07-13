@@ -20,10 +20,9 @@ class MapaController extends Controller
             ->whereNotNull('c.longitud')
             ->where('c.activo', true);
 
-        if ($u->esCobrador()) {
-            $q->where(fn ($x) => $x->where('c.cobrador_id', $u->id)->orWhere('c.created_by', $u->id));
-        } elseif ($u->esSupervisor()) {
-            $areas = $u->areas()->pluck('areas.id');
+        // Modelo territorial: el mapa operativo muestra la cartera del área del usuario.
+        $areas = $u->areasVisibles();
+        if ($areas !== null) {
             $q->whereIn('c.area_id', $areas);
         }
 

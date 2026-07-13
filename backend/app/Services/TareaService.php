@@ -32,7 +32,8 @@ class TareaService
             $areas = DB::table('usuario_area')->where('usuario_id', $u->id)->pluck('area_id');
             $badges['aprobaciones'] = (int) DB::table('solicitudes')
                 ->where('estado', 'PENDIENTE_SUPERVISOR')
-                ->whereIn('area_id', $areas)
+                ->whereIn('cliente_id',
+                    DB::table('clientes')->whereIn('area_id', $areas)->select('id'))
                 ->count();
         }
 

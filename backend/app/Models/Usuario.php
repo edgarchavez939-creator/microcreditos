@@ -30,6 +30,21 @@ class Usuario extends Authenticatable implements JWTSubject
         return $this->belongsToMany(Area::class, 'usuario_area', 'usuario_id', 'area_id');
     }
 
+    /**
+     * MODELO DE SEGURIDAD TERRITORIAL.
+     * IDs de las áreas cuya información financiera puede ver el usuario.
+     * - Administrador y Admin Funcional: todas las áreas (retorna null = sin filtro).
+     * - Supervisor y Cobrador: solo sus áreas asignadas.
+     * El cobrador_id del cliente NO controla el acceso (solo es dato operativo).
+     */
+    public function areasVisibles(): ?array
+    {
+        if ($this->esAdministrador()) {
+            return null; // null = acceso global (sin filtrar por área)
+        }
+        return $this->areas()->pluck('areas.id')->map(fn ($id) => (int) $id)->all();
+    }
+
     public function esAdminFuncional(): bool { return $this->rol === 'ADMIN_FUNCIONAL'; }
     public function esAdministrador(): bool { return $this->rol === 'ADMINISTRADOR' || $this->rol === 'ADMIN_FUNCIONAL'; }
     public function esSupervisor(): bool   { return $this->rol === 'SUPERVISOR'; }

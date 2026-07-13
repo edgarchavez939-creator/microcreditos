@@ -29,11 +29,11 @@ class CajaController extends Controller
                   ->orWhere('q.estado', 'VENCIDA');
             });
 
-        if ($u->esCobrador()) {
-            $q->where(fn ($w) => $w->where('s.cobrador_id', $u->id)->orWhere('s.created_by', $u->id));
-        } elseif ($u->esSupervisor()) {
-            $areas = DB::table('usuario_area')->where('usuario_id', $u->id)->pluck('area_id');
-            $q->whereIn('s.area_id', $areas);
+        // Modelo territorial: cobrador y supervisor ven la cartera del área del CLIENTE
+        // (en vivo, vía el join con clientes); admin ve todo.
+        $areas = $u->areasVisibles();
+        if ($areas !== null) {
+            $q->whereIn('c.area_id', $areas);
         }
 
         // --- Regla de gestión de ruta ---

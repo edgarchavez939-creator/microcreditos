@@ -13,39 +13,26 @@ class SolicitudPolicy
     }
 
     /**
-     * ¿El supervisor cubre el área del crédito (o la del cliente)?
-     * Consulta directa al pivot: inmune a fallos de carga de relaciones.
+     * MODELO TERRITORIAL: ¿el usuario cubre el área ACTUAL del cliente?
+     * El área se obtiene en vivo del cliente (no del crédito), así que un cambio de
+     * área del cliente reasigna la visibilidad automáticamente. Aplica igual a
+     * cobradores y supervisores. El cobrador_id ya no controla el acceso.
      */
-    private function supervisorCubre(Usuario $u, Solicitud $s): bool
+    private function cubreArea(Usuario $u, Solicitud $s): bool
     {
         $areaCliente = DB::table('clientes')->where('id', $s->cliente_id)->value('area_id');
-        $areas = array_values(array_filter([(int) $s->area_id, (int) $areaCliente]));
-        if (empty($areas)) return false;
+        if ($areaCliente === null) return false;
 
         return DB::table('usuario_area')
             ->where('usuario_id', (int) $u->id)
-            ->whereIn('area_id', $areas)
+            ->where('area_id', (int) $areaCliente)
             ->exists();
-    }
-
-    /**
-     * ¿El cobrador es dueño del crédito? Vale el cobrador del crédito, el creador,
-     * o el cobrador asignado al CLIENTE (cubre créditos antiguos con datos viejos).
-     */
-    private function cobradorCubre(Usuario $u, Solicitud $s): bool
-    {
-        if ((int) $s->cobrador_id === (int) $u->id) return true;
-        if ((int) $s->created_by === (int) $u->id) return true;
-
-        $cobradorCliente = DB::table('clientes')->where('id', $s->cliente_id)->value('cobrador_id');
-        return $cobradorCliente !== null && (int) $cobradorCliente === (int) $u->id;
     }
 
     public function view(Usuario $u, Solicitud $s): bool
     {
         if ($u->esAdministrador()) return true;
-        if ($u->esSupervisor())    return $this->supervisorCubre($u, $s);
-        return $this->cobradorCubre($u, $s);
+        return $this->cubreArea($u, $s);
     }
 
     public function create(Usuario $u): bool
@@ -56,7 +43,7 @@ class SolicitudPolicy
     public function update(Usuario $u, Solicitud $s): bool
     {
         if ($u->esAdministrador()) return true;
-        return $this->cobradorCubre($u, $s) && $s->estado === 'BORRADOR';
+        return $this->cubreArea($u, $s) && $s->estado === 'BORRADOR';
     }
 
     /** Aprobar/rechazar: nunca cobrador. Exoneración: solo admin. */
@@ -65,29 +52,27 @@ class SolicitudPolicy
         if ($u->esCobrador()) return false;
         if ($s->seguro_exonerado) return $u->esAdministrador();
         if ($u->esAdministrador()) return true;
-        return $u->esSupervisor() && $this->supervisorCubre($u, $s);
+        return $u->esSupervisor() && $this->cubreArea($u, $s);
     }
 
     /** Reamortizar: cobrador dueño, supervisor del área o administrador. */
     public function reamortizar(Usuario $u, Solicitud $s): bool
     {
         if ($u->esAdministrador()) return true;
-        if ($u->esSupervisor())    return $this->supervisorCubre($u, $s);
-        return $this->cobradorCubre($u, $s);
+        return $this->cubreArea($u, $s);
     }
 
     /** Desembolsar: supervisor del área o administrador. */
     public function disburse(Usuario $u, Solicitud $s): bool
     {
         if ($u->esAdministrador()) return true;
-        return $u->esSupervisor() && $this->supervisorCubre($u, $s);
+        return $u->esSupervisor() && $this->cubreArea($u, $s);
     }
 
     /** Registrar pago: cobrador dueño, supervisor del área o administrador. */
     public function pay(Usuario $u, Solicitud $s): bool
     {
         if ($u->esAdministrador()) return true;
-        if ($u->esSupervisor())    return $this->supervisorCubre($u, $s);
-        return $this->cobradorCubre($u, $s);
+        return $this->cubreArea($u, $s);
     }
 }

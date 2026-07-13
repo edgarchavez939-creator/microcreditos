@@ -14,10 +14,11 @@ class ReporteController extends Controller
     {
         $u = $request->user();
         $q = Solicitud::query();
-        if ($u->esCobrador()) {
-            $q->where(fn ($x) => $x->where('cobrador_id', $u->id)->orWhere('created_by', $u->id));
-        } elseif ($u->esSupervisor()) {
-            $q->whereIn('area_id', $u->areas()->pluck('areas.id'));
+        // Modelo territorial: filtrar por el área del CLIENTE (en vivo), no la del crédito.
+        $areas = $u->areasVisibles();
+        if ($areas !== null) {
+            $q->whereIn('cliente_id',
+                \Illuminate\Support\Facades\DB::table('clientes')->whereIn('area_id', $areas)->select('id'));
         }
         return $q->pluck('id');
     }

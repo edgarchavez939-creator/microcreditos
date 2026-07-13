@@ -18,12 +18,9 @@ class ClienteController extends Controller
 
         $query = Cliente::query()->with(['area', 'cobrador'])->latest();
 
-        if ($u->esCobrador()) {
-            $query->where(fn ($q) => $q->where('cobrador_id', $u->id)->orWhere('created_by', $u->id));
-        } elseif ($u->esSupervisor()) {
-            $areas = \Illuminate\Support\Facades\DB::table('usuario_area')->where('usuario_id', $u->id)->pluck('area_id');
-            $query->where(fn ($q) => $q->whereIn('area_id', $areas)->orWhere('created_by', $u->id));
-        }
+        // Modelo territorial: los CLIENTES pueden ser consultados por cualquier usuario
+        // autorizado (para localizarlos). La restricción por área aplica solo a la
+        // información FINANCIERA (créditos, pagos, cartera), no al directorio de clientes.
 
         if ($buscar = $request->query('buscar')) {
             $query->where(function ($q) use ($buscar) {
@@ -87,17 +84,28 @@ class ClienteController extends Controller
     {
         $this->authorize('update', $cliente);
         $data = $request->validated();
+
+        $areaAnterior = $cliente->area_id;
+
         // El número (y tipo) de documento no son editables una vez creado el cliente.
         $cliente->update(collect($data)->except(['referencias', 'documentos', 'numero_documento', 'tipo_documento'])->toArray());
 
-        // Si cambió el cobrador o el área, propagar a los créditos no finalizados del cliente
-        // (así el nuevo cobrador puede ver y gestionar la cartera de inmediato).
-        \App\Models\Solicitud::where('cliente_id', $cliente->id)
-            ->whereNotIn('estado', ['FINALIZADO', 'RECHAZADO'])
-            ->update([
-                'cobrador_id' => $cliente->cobrador_id,
-                'area_id'     => $cliente->area_id,
+        // MODELO TERRITORIAL: el área es atributo EXCLUSIVO del cliente. Los créditos
+        // NO almacenan el área para control de acceso; toda la información financiera la
+        // obtiene en vivo del cliente (policies y filtros). Por eso, al cambiar de área,
+        // NO se propaga nada a los créditos: la visibilidad se reasigna automáticamente.
+        if ((int) $areaAnterior !== (int) $cliente->area_id) {
+            \Illuminate\Support\Facades\DB::table('historial_area_cliente')->insert([
+                'cliente_id'       => $cliente->id,
+                'area_anterior_id' => $areaAnterior,
+                'area_nueva_id'    => $cliente->area_id,
+                'cambiado_por'     => $request->user()->id,
+                'observaciones'    => $request->input('observacion_cambio_area'),
+                'ip'               => $request->ip(),
+                'user_agent'       => $request->userAgent(),
+                'created_at'       => now(),
             ]);
+        }
 
         return new ClienteResource($cliente->load(['area', 'cobrador', 'referencias']));
     }

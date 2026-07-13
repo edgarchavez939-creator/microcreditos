@@ -42,12 +42,17 @@ class SolicitudController extends Controller
             });
         }
 
-        // Cobrador: solo sus solicitudes. Supervisor: sus áreas.
+        // Modelo territorial: cobrador y supervisor ven las solicitudes cuyo CLIENTE
+        // pertenece a sus áreas. Se filtra por el área del cliente (join en vivo), no
+        // por un área almacenada en el crédito: así un cambio de área del cliente
+        // reasigna la visibilidad automáticamente, sin tocar los créditos.
         $u = $request->user();
-        if ($u->esCobrador()) {
-            $query->where('cobrador_id', $u->id);
-        } elseif ($u->esSupervisor()) {
-            $query->whereIn('area_id', $u->areas()->pluck('areas.id'));
+        $areas = $u->areasVisibles();
+        if ($areas !== null) {
+            $query->whereIn(
+                'cliente_id',
+                \Illuminate\Support\Facades\DB::table('clientes')->whereIn('area_id', $areas)->select('id')
+            );
         }
 
         return SolicitudResource::collection($query->paginate(20));
