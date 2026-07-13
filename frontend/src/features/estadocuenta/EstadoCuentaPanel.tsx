@@ -4,6 +4,7 @@ import * as XLSX from 'xlsx';
 import { api } from '@/lib/api/client';
 import { money, fecha, fechaHora } from '@/lib/format';
 import { useToast } from '@/components/ui/Toast';
+import { useUsuarios } from '@/features/usuarios/hooks';
 
 interface Consolidado {
   empleado_id: number; nombre: string; rol: string;
@@ -16,11 +17,25 @@ export function EstadoCuentaPanel() {
     queryKey: ['estado-cuenta-consolidado'],
     queryFn: async () => (await api.get('/empleados/estado-cuenta')).data,
   });
+  const { data: usuarios } = useUsuarios();
   const [empleado, setEmpleado] = useState<Consolidado | null>(null);
+  const [seleccion, setSeleccion] = useState('');
 
   if (empleado) {
     return <DetalleEmpleado empleado={empleado} onVolver={() => setEmpleado(null)} />;
   }
+
+  // Solo empleados operativos tienen estado de cuenta (cobradores y supervisores)
+  const empleados = (usuarios ?? []).filter((u) => u.rol === 'COBRADOR' || u.rol === 'SUPERVISOR');
+
+  const abrirEmpleado = (id: number) => {
+    const u = empleados.find((e) => e.id === id);
+    if (!u) return;
+    setEmpleado({
+      empleado_id: u.id, nombre: u.nombre, rol: u.rol,
+      saldo_pendiente: 0, saldo_descuadres: 0, saldo_prestamos: 0, obligaciones_activas: 0,
+    });
+  };
 
   return (
     <div>
@@ -29,12 +44,29 @@ export function EstadoCuentaPanel() {
         <p className="page-subtitle">Obligaciones financieras de los colaboradores: descuadres y préstamos internos.</p>
       </div>
 
+      {/* Selector: abrir el estado de cuenta de cualquier empleado (tenga o no obligaciones) */}
+      <div className="card card-pad mb-4 flex flex-wrap items-end gap-3">
+        <div className="flex-1 min-w-[220px]">
+          <label className="label">Abrir estado de cuenta de un empleado</label>
+          <select value={seleccion} onChange={(e) => setSeleccion(e.target.value)} className="input">
+            <option value="">Selecciona un empleado…</option>
+            {empleados.map((u) => (
+              <option key={u.id} value={u.id}>{u.nombre} · {u.rol.toLowerCase()}</option>
+            ))}
+          </select>
+        </div>
+        <button onClick={() => seleccion && abrirEmpleado(Number(seleccion))}
+          disabled={!seleccion} className="btn-primary btn-sm">
+          Abrir / registrar préstamo
+        </button>
+      </div>
+
       {isLoading ? (
         <p className="text-sm text-slate-400">Cargando…</p>
       ) : !data?.data || data.data.length === 0 ? (
         <div className="rounded-2xl border-2 border-dashed border-slate-200 bg-gradient-to-b from-slate-50/80 to-white py-14 text-center">
           <p className="text-base font-semibold text-slate-700">Sin obligaciones pendientes</p>
-          <p className="mt-1 text-sm text-slate-500">Ningún empleado tiene saldos pendientes en este momento.</p>
+          <p className="mt-1 text-sm text-slate-500">Ningún empleado tiene saldos pendientes. Usa el selector de arriba para abrir el estado de cuenta de un empleado y registrarle un préstamo.</p>
         </div>
       ) : (
         <>
