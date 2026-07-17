@@ -25,6 +25,12 @@ class DesembolsoService
             throw new DomainException('Solo se puede desembolsar un crédito en estado APROBADO.');
         }
 
+        // Guardia de tesorería: un desembolso en EFECTIVO reduce el efectivo de la caja,
+        // así que exige la caja ABIERTA. Por transferencia no toca el efectivo en caja.
+        if (($d['metodo'] ?? null) === 'EFECTIVO') {
+            app(\App\Services\AperturaCajaService::class)->exigirAbierta($usuario->id);
+        }
+
         return DB::transaction(function () use ($credito, $d, $usuario) {
             // Valor neto a entregar (aprobado − seguro) salvo que se indique otro
             $valor = isset($d['valor']) ? round((float) $d['valor'], 2) : (float) $credito->monto_desembolsado;

@@ -35,6 +35,14 @@ class PaymentService
         // Las transferencias se aplican SOLO cuando el supervisor las aprueba.
         $esTransferencia = $d['metodo'] === 'TRANSFERENCIA';
 
+        // Guardia de tesorería: un cobro en EFECTIVO impacta la caja al instante, así que
+        // exige la caja ABIERTA. Las transferencias van a validación (no tocan caja aún),
+        // por lo que no requieren apertura. Los pagos offline ya sincronizados conservan su
+        // fecha original; el guardia aplica al momento de registrarse en línea.
+        if (! $esTransferencia) {
+            app(\App\Services\AperturaCajaService::class)->exigirAbierta($usuario->id);
+        }
+
         return DB::transaction(function () use ($credito, $d, $usuario, $valor, $esTransferencia) {
             $pago = Pago::create([
                 'cliente_id'     => $credito->cliente_id,

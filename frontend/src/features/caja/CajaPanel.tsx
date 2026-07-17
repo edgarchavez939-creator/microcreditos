@@ -24,6 +24,8 @@ interface EstadoCaja {
   movimiento_total: number;
   hora_apertura: string | null;
   tiene_base: boolean;
+  esta_abierta: boolean;
+  apertura: { estado: string; base_inicial: number; observacion_apertura: string | null; abierta_at: string } | null;
   ya_cerrada: boolean;
   cierre: Record<string, unknown> | null;
   movimientos: MovimientoCaja[];
@@ -75,7 +77,9 @@ export function CajaPanel() {
         <p className="text-sm text-slate-500">
           {e.ya_cerrada
             ? 'La caja de hoy ya está cerrada.'
-            : 'Registra tus movimientos durante la jornada. El resumen se actualiza en tiempo real.'}
+            : e.esta_abierta
+              ? 'Registra tus movimientos durante la jornada. El resumen se actualiza en tiempo real.'
+              : 'Tu caja está cerrada. Ábrela para comenzar a operar.'}
         </p>
         {e.hora_apertura && (
           <p className="mt-0.5 text-xs text-slate-400">Apertura: {fechaHora(e.hora_apertura)}</p>
@@ -85,18 +89,25 @@ export function CajaPanel() {
       {/* RESUMEN EN TIEMPO REAL */}
       <ResumenCaja e={e} />
 
-      {!e.ya_cerrada && (
-        <div className="grid gap-4 lg:grid-cols-2">
-          {!e.tiene_base && <BaseInicial onOk={invalidar} toast={toast} />}
-          <RegistrarGasto tipos={e.tipos_gasto} onOk={invalidar} toast={toast} />
-        </div>
+      {/* CAJA CERRADA (aún no abierta hoy): exigir apertura formal */}
+      {!e.ya_cerrada && !e.esta_abierta && (
+        <AbrirCaja onOk={invalidar} toast={toast} />
+      )}
+
+      {/* OPERACIÓN: solo con caja ABIERTA */}
+      {!e.ya_cerrada && e.esta_abierta && (
+        <>
+          <div className="grid gap-4 lg:grid-cols-2">
+            <RegistrarGasto tipos={e.tipos_gasto} onOk={invalidar} toast={toast} />
+          </div>
+        </>
       )}
 
       {/* LÍNEA DE TIEMPO DE MOVIMIENTOS */}
       <Movimientos movimientos={e.movimientos} cerrada={e.ya_cerrada} onOk={invalidar} toast={toast} />
 
-      {/* CIERRE CON ARQUEO */}
-      {!e.ya_cerrada && e.tiene_base && <CierreArqueo e={e} onOk={invalidar} toast={toast} />}
+      {/* CIERRE CON ARQUEO: solo con caja ABIERTA */}
+      {!e.ya_cerrada && e.esta_abierta && <CierreArqueo e={e} onOk={invalidar} toast={toast} />}
 
       {/* HISTORIAL DE CIERRES */}
       <HistorialCierres />
@@ -334,29 +345,34 @@ function ResumenCaja({ e }: { e: EstadoCaja }) {
 
 type ToastApi = ReturnType<typeof useToast>;
 
-function BaseInicial({ onOk, toast }: { onOk: () => void; toast: ToastApi }) {
+function AbrirCaja({ onOk, toast }: { onOk: () => void; toast: ToastApi }) {
   const [valor, setValor] = useState('');
   const [obs, setObs] = useState('');
   const m = useMutation({
-    mutationFn: async () => (await api.post('/caja/base', { valor: Number(valor), observacion: obs || undefined })).data,
-    onSuccess: () => { toast.exito('Base inicial registrada ✓'); setValor(''); setObs(''); onOk(); },
-    onError: (err) => toast.error((err as { response?: { data?: { message?: string } } })?.response?.data?.message ?? 'No se pudo registrar la base.'),
+    mutationFn: async () => (await api.post('/caja/abrir', { base_inicial: Number(valor), observacion: obs || undefined })).data,
+    onSuccess: () => { toast.exito('Caja abierta ✓ Ya puedes operar'); setValor(''); setObs(''); onOk(); },
+    onError: (err) => toast.error((err as { response?: { data?: { message?: string } } })?.response?.data?.message ?? 'No se pudo abrir la caja.'),
   });
   return (
-    <div className="card card-pad">
-      <h3 className="mb-2 text-sm font-semibold text-slate-700">Base inicial</h3>
-      <p className="mb-3 text-xs text-slate-400">El efectivo con el que inicias la jornada. Se registra una vez al día.</p>
+    <div className="card card-pad border-2 border-brand-200 bg-brand-50/40">
+      <div className="mb-1 flex items-center gap-2">
+        <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-brand-500 text-sm font-bold text-white">1</span>
+        <h3 className="text-base font-semibold text-slate-800">Abrir caja</h3>
+      </div>
+      <p className="mb-3 text-sm text-slate-500">
+        Antes de cobrar, desembolsar o registrar gastos debes abrir tu caja. Ingresa el efectivo con el que inicias la jornada.
+      </p>
       <div className="flex flex-wrap items-end gap-2">
         <div className="flex-1 min-w-[140px]">
-          <label className="label">Valor</label>
+          <label className="label">Base inicial en efectivo</label>
           <input type="number" step="any" value={valor} onChange={(ev) => setValor(ev.target.value)} className="input" placeholder="0" />
         </div>
         <div className="flex-1 min-w-[160px]">
           <label className="label">Observación (opcional)</label>
           <input value={obs} onChange={(ev) => setObs(ev.target.value)} className="input" />
         </div>
-        <button onClick={() => m.mutate()} disabled={m.isPending || !valor} className="btn-primary btn-sm">
-          {m.isPending ? 'Guardando…' : 'Registrar base'}
+        <button onClick={() => m.mutate()} disabled={m.isPending || valor === ''} className="btn-primary btn-sm">
+          {m.isPending ? 'Abriendo…' : 'ABRIR CAJA'}
         </button>
       </div>
     </div>

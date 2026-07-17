@@ -18,7 +18,7 @@ use App\Http\Controllers\Api\OtpController;
 use App\Http\Controllers\Api\PermisoController;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/health', fn () => response()->json(['status' => 'ok', 'version' => 'v74-seguridad-territorial', 'ts' => now()]));
+Route::get('/health', fn () => response()->json(['status' => 'ok', 'version' => 'v75-caja-apertura-formal', 'ts' => now()]));
 
 // Marca pública (sin auth): nombre y color para aplicar en login y en toda la app.
 Route::get('/marca-publica', function () {
@@ -92,7 +92,7 @@ Route::middleware(['auth:api', 'mantenimiento'])->group(function () {
     Route::get('mapa/clientes', [MapaController::class, 'clientes'])->middleware('modulo:mapa');
     Route::get('ruta-dia', [CajaController::class, 'rutaDia'])->middleware('modulo:ruta');
     Route::get('caja/resumen-dia', [CajaController::class, 'resumenDia'])->middleware('modulo:caja');
-    Route::post('caja/base', [CajaController::class, 'registrarBase'])->middleware('modulo:caja');
+    Route::post('caja/abrir', [CajaController::class, 'abrirCaja'])->middleware('modulo:caja');
     Route::post('caja/gasto', [CajaController::class, 'registrarGasto'])->middleware('modulo:caja');
     Route::delete('caja/gasto/{id}', [CajaController::class, 'eliminarGasto'])->middleware('modulo:caja');
     Route::post('caja/cerrar', [CajaController::class, 'cerrar'])->middleware(['modulo:caja', 'accion:caja.cerrar']);

@@ -100,47 +100,31 @@ class CajaController extends Controller
         $estado = $caja->estadoDia($u->id);
 
         $cierre = CierreCaja::whereDate('fecha', $estado['fecha'])->where('cerrado_por', $u->id)->first();
+        $apertura = app(\App\Services\AperturaCajaService::class)->aperturaDe($u->id);
 
         return response()->json(['data' => array_merge($estado, [
             'ya_cerrada'   => (bool) $cierre,
             'cierre'       => $cierre,
+            // Estado de apertura de la caja (control de tesorería)
+            'apertura'     => $apertura,
+            'esta_abierta' => $apertura !== null && $apertura->estado === 'ABIERTA',
             'movimientos'  => $caja->movimientosDia($u->id),
             'tipos_gasto'  => \App\Services\CajaService::TIPOS_GASTO,
         ])]);
     }
 
-    /** Registrar la BASE INICIAL del día (una sola vez). */
-    public function registrarBase(Request $request)
+    /** ABRIR CAJA: acto manual y explícito que habilita la operación del día. */
+    public function abrirCaja(Request $request)
     {
-        $u = $request->user();
-        $hoy = now()->toDateString();
-
         $data = $request->validate([
-            'valor'       => ['required', 'numeric', 'gt:0'],
-            'observacion' => ['nullable', 'string', 'max:255'],
+            'base_inicial' => ['required', 'numeric', 'gte:0'],
+            'observacion'  => ['nullable', 'string', 'max:255'],
         ]);
 
-        abort_if(
-            CierreCaja::whereDate('fecha', $hoy)->where('cerrado_por', $u->id)->exists(),
-            422, 'La caja de hoy ya está cerrada.'
-        );
-        abort_if(
-            DB::table('movimientos_caja')->whereDate('fecha', $hoy)
-                ->where('registrado_por', $u->id)->where('referencia_tipo', 'BASE_INICIAL')->exists(),
-            422, 'Ya registraste la base inicial de hoy.'
-        );
+        $apertura = app(\App\Services\AperturaCajaService::class)
+            ->abrir($request, (float) $data['base_inicial'], $data['observacion'] ?? null);
 
-        $areaId = DB::table('usuario_area')->where('usuario_id', $u->id)->value('area_id');
-        $id = DB::table('movimientos_caja')->insertGetId([
-            'fecha' => $hoy, 'tipo' => 'INGRESO', 'concepto' => 'Base inicial',
-            'valor' => $data['valor'], 'medio_pago' => 'EFECTIVO',
-            'referencia_tipo' => 'BASE_INICIAL', 'area_id' => $areaId,
-            'observacion' => $data['observacion'] ?? null,
-            'registrado_por' => $u->id, 'created_at' => now(),
-        ]);
-        $this->auditarCaja($request, 'CREATE', 'BASE_INICIAL', $id, $data['valor']);
-
-        return response()->json(['message' => 'Base inicial registrada.'], 201);
+        return response()->json(['message' => 'Caja abierta. Ya puedes operar.', 'data' => $apertura], 201);
     }
 
     /** Registrar un GASTO en cualquier momento del día. */
@@ -162,6 +146,8 @@ class CajaController extends Controller
         );
 
         $areaId = DB::table('usuario_area')->where('usuario_id', $u->id)->value('area_id');
+        // Guardia de tesorería: no se registran gastos sin caja ABIERTA.
+        app(\App\Services\AperturaCajaService::class)->exigirAbierta($u->id);
         $labels = [
             'ALIMENTACION' => 'Alimentación', 'COMBUSTIBLE' => 'Combustible', 'PARQUEADERO' => 'Parqueadero',
             'PEAJES' => 'Peajes', 'VEHICULO' => 'Gastos del vehículo', 'PAPELERIA' => 'Papelería', 'OTROS' => 'Otros',
@@ -266,7 +252,33 @@ class CajaController extends Controller
         $accion = abs($diferencia) >= 0.01 ? 'CLOSE_DIFF' : 'CLOSE';
         $this->auditarCaja($request, $accion, 'CIERRE', $cierre->id, $diferencia);
 
-        return response()->json(['message' => 'Caja cerrada.', 'data' => $cierre], 201);
+        // Marcar la apertura del día como CERRADA (fin de la operación).
+        app(\App\Services\AperturaCajaService::class)->marcarCerrada($u->id, $hoy, $cierre->id);
+
+        // FALTANTE al instante: si el arqueo arroja menos efectivo del esperado, se crea
+        // de inmediato la obligación en el Estado de Cuenta del empleado (no se espera al
+        // cierre general). El cierre se marca como liquidado para que la consolidación
+        // semanal no lo vuelva a acumular (evita el doble cargo).
+        $obligacionId = null;
+        if ($diferencia < -0.009) {
+            $faltante = abs($diferencia);
+            $obligacionId = app(\App\Services\EstadoCuentaService::class)->crearObligacion(
+                $u->id, 'DESCUADRE_CAJA',
+                'Faltante de caja del ' . now()->format('d/m/Y'),
+                $faltante, $request,
+                $data['observacion'] ?? null,
+                $hoy, $hoy
+            );
+            DB::table('cierres_caja')->where('id', $cierre->id)->update(['descuadre_liquidado' => true]);
+        }
+
+        return response()->json([
+            'message' => $obligacionId
+                ? 'Caja cerrada. El faltante se registró en tu estado de cuenta.'
+                : 'Caja cerrada.',
+            'data' => $cierre->fresh(),
+            'obligacion_id' => $obligacionId,
+        ], 201);
     }
 
     /** Registro de auditoría para movimientos de caja. */
