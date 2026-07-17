@@ -2,9 +2,10 @@ import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import * as XLSX from 'xlsx';
 import { api } from '@/lib/api/client';
-import { money, fecha } from '@/lib/format';
+import { money, fecha, aMiles } from '@/lib/format';
 import { SkeletonTabla } from '@/components/ui/Skeleton';
 import { EstadoVacio, IconosVacio } from '@/components/ui/EstadoVacio';
+import { EscalaMoneda } from '@/components/ui/EscalaMoneda';
 
 type Fila = Record<string, unknown>;
 
@@ -98,7 +99,16 @@ export function ReportesPanel() {
   const exportar = () => {
     const hoja = filas.map((f) => {
       const fila: Record<string, unknown> = {};
-      for (const c of cols) fila[c.t] = c.fecha ? fecha(f[c.k] as string) : (f[c.k] ?? '');
+      for (const c of cols) {
+        if (c.fecha) {
+          fila[c.t] = fecha(f[c.k] as string);
+        } else if (c.dinero) {
+          // Coherencia con la pantalla: los valores monetarios se exportan en miles.
+          fila[c.t] = aMiles(f[c.k] as number);
+        } else {
+          fila[c.t] = f[c.k] ?? '';
+        }
+      }
       return fila;
     });
     const ws = XLSX.utils.json_to_sheet(hoja);
@@ -111,7 +121,7 @@ export function ReportesPanel() {
 
   return (
     <div>
-      <h2 className="page-title">Reportes</h2>
+      <div className="flex items-center gap-3"><h2 className="page-title">Reportes</h2><EscalaMoneda /></div>
       <p className="mb-5 text-sm text-slate-500">Consulta la cartera, los pagos y la mora, y expórtalos a Excel.</p>
 
       <div className="mb-4 flex flex-wrap items-end gap-3">

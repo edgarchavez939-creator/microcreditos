@@ -3,6 +3,7 @@ import { Fragment, useState } from 'react';
 import { api } from '@/lib/api/client';
 import { money, fecha, fechaHora } from '@/lib/format';
 import { useToast } from '@/components/ui/Toast';
+import { EscalaMoneda } from '@/components/ui/EscalaMoneda';
 import { SkeletonIndicadores } from '@/components/ui/Skeleton';
 import { useAuthStore } from '@/stores/auth';
 
@@ -73,7 +74,7 @@ export function CajaPanel() {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="page-title">Caja del día</h2>
+        <div className="flex items-center gap-3"><h2 className="page-title">Caja del día</h2><EscalaMoneda /></div>
         <p className="text-sm text-slate-500">
           {e.ya_cerrada
             ? 'La caja de hoy ya está cerrada.'

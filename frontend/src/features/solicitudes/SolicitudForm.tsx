@@ -55,9 +55,9 @@ export function SolicitudForm({ clienteId, areaId, creditoOrigenId, onCreada }:
         </div>
       )}
       <div>
-        <label className="label">Capital solicitado</label>
-        <input type="number" step="any" {...register('capital_solicitado', { valueAsNumber: true })} className="input" />
-        <p className="mt-1 text-xs text-slate-400">El capital aprobado lo definirá quien apruebe la solicitud.</p>
+        <label className="label">Capital solicitado <span className="font-normal text-slate-400">(en pesos)</span></label>
+        <input type="number" step="any" {...register('capital_solicitado', { valueAsNumber: true })} className="input" placeholder="Ej: 1000000" />
+        <p className="mt-1 text-xs text-slate-400">Escribe el valor en pesos completos (ej: 1.000.000). El capital aprobado lo definirá quien apruebe la solicitud.</p>
       </div>
 
       <div className="grid grid-cols-2 gap-3">

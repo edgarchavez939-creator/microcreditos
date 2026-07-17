@@ -2,9 +2,10 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import * as XLSX from 'xlsx';
 import { api } from '@/lib/api/client';
-import { money, fecha, fechaHora } from '@/lib/format';
+import { money, fecha, fechaHora, aMiles } from '@/lib/format';
 import { useToast } from '@/components/ui/Toast';
 import { useUsuarios } from '@/features/usuarios/hooks';
+import { EscalaMoneda } from '@/components/ui/EscalaMoneda';
 
 interface Consolidado {
   empleado_id: number; nombre: string; rol: string;
@@ -40,7 +41,7 @@ export function EstadoCuentaPanel() {
   return (
     <div>
       <div className="page-header">
-        <h2 className="page-title">Estado de cuenta de empleados</h2>
+        <div className="flex items-center gap-3"><h2 className="page-title">Estado de cuenta de empleados</h2><EscalaMoneda /></div>
         <p className="page-subtitle">Obligaciones financieras de los colaboradores: descuadres y préstamos internos.</p>
       </div>
 
@@ -313,13 +314,14 @@ function ModalAbono({ empleadoId, obligacion, onClose }: { empleadoId: number; o
 
 function exportarExcel(empleado: Consolidado, data: { obligaciones: Obligacion[]; movimientos: Movimiento[] }) {
   const wb = XLSX.utils.book_new();
+  // Coherencia con la pantalla: los valores monetarios se exportan en miles.
   const obligaciones = data.obligaciones.map((o) => ({
     Concepto: o.concepto, Tipo: o.tipo, Estado: o.estado,
-    'Monto original': o.monto_original, Saldo: o.saldo, Fecha: o.created_at?.slice(0, 10),
+    'Monto original (miles)': aMiles(o.monto_original), 'Saldo (miles)': aMiles(o.saldo), Fecha: o.created_at?.slice(0, 10),
   }));
   const movimientos = data.movimientos.map((m) => ({
     Fecha: m.created_at?.slice(0, 19).replace('T', ' '), Concepto: m.concepto,
-    Débito: m.debito, Crédito: m.credito, Saldo: m.saldo_obligacion, Usuario: m.registrado_por,
+    'Débito (miles)': aMiles(m.debito), 'Crédito (miles)': aMiles(m.credito), 'Saldo (miles)': aMiles(m.saldo_obligacion), Usuario: m.registrado_por,
   }));
   XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(obligaciones), 'Obligaciones');
   XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(movimientos), 'Movimientos');

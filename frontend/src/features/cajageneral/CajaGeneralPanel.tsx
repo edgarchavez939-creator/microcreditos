@@ -2,8 +2,9 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import * as XLSX from 'xlsx';
 import { api } from '@/lib/api/client';
-import { money, fecha, fechaHora } from '@/lib/format';
+import { money, fecha, fechaHora, aMiles } from '@/lib/format';
 import { useToast } from '@/components/ui/Toast';
+import { EscalaMoneda } from '@/components/ui/EscalaMoneda';
 
 interface CajaDia {
   id: number; estado: string; rol_usuario?: string; usuario?: string;
@@ -48,7 +49,7 @@ export function CajaGeneralPanel() {
   if (isLoading || !data) {
     return (
       <div>
-        <div className="page-header"><h2 className="page-title">Caja General</h2><p className="page-subtitle">Consolidación del cierre del negocio.</p></div>
+        <div className="page-header"><div className="flex items-center gap-3"><h2 className="page-title">Caja General</h2><EscalaMoneda /></div><p className="page-subtitle">Consolidación del cierre del negocio.</p></div>
         <p className="text-sm text-slate-400">Cargando…</p>
       </div>
     );
@@ -281,24 +282,25 @@ function exportarExcel(data: EstadoGeneral) {
     { Concepto: 'Fecha', Valor: data.fecha },
     { Concepto: 'Cajas recibidas', Valor: data.conteo.recibidas },
     { Concepto: 'Cajas consolidadas', Valor: data.conteo.consolidadas },
-    { Concepto: 'Base inicial', Valor: t.base_inicial },
-    { Concepto: 'Cobros efectivo', Valor: t.cobros_efectivo },
-    { Concepto: 'Cobros transferencia', Valor: t.cobros_transferencia },
-    { Concepto: 'Recaudo seguros', Valor: t.recaudo_seguros },
-    { Concepto: 'Desembolsos', Valor: t.desembolsos },
-    { Concepto: 'Gastos', Valor: t.gastos },
-    { Concepto: 'Movimiento total', Valor: t.movimiento_total },
-    { Concepto: 'Efectivo esperado', Valor: t.efectivo_esperado },
-    { Concepto: 'Efectivo recibido', Valor: t.efectivo_recibido },
-    { Concepto: 'Diferencia general', Valor: t.diferencia },
+    { Concepto: 'Base inicial (miles)', Valor: aMiles(t.base_inicial) },
+    { Concepto: 'Base inicial (miles)', Valor: aMiles(t.base_inicial) },
+    { Concepto: 'Cobros efectivo (miles)', Valor: aMiles(t.cobros_efectivo) },
+    { Concepto: 'Cobros transferencia (miles)', Valor: aMiles(t.cobros_transferencia) },
+    { Concepto: 'Recaudo seguros (miles)', Valor: aMiles(t.recaudo_seguros) },
+    { Concepto: 'Desembolsos (miles)', Valor: aMiles(t.desembolsos) },
+    { Concepto: 'Gastos (miles)', Valor: aMiles(t.gastos) },
+    { Concepto: 'Movimiento total (miles)', Valor: aMiles(t.movimiento_total) },
+    { Concepto: 'Efectivo esperado (miles)', Valor: aMiles(t.efectivo_esperado) },
+    { Concepto: 'Efectivo recibido (miles)', Valor: aMiles(t.efectivo_recibido) },
+    { Concepto: 'Diferencia general (miles)', Valor: aMiles(t.diferencia) },
   ];
   const detalle = data.cajas.map((k) => ({
     Usuario: k.usuario, Rol: k.rol_usuario, Estado: k.estado,
-    'Base inicial': k.base_inicial, 'Cobros efectivo': k.cobros_efectivo,
-    'Cobros transferencia': k.cobros_transferencia, 'Recaudo seguros': k.recaudo_seguros,
-    Desembolsos: k.total_desembolsos, Gastos: k.total_gastos,
-    'Efectivo esperado': k.efectivo_esperado, 'Efectivo entregado': k.efectivo_entregado ?? '',
-    Diferencia: k.diferencia_entrega ?? k.diferencia ?? '',
+    'Base inicial (miles)': aMiles(k.base_inicial), 'Cobros efectivo (miles)': aMiles(k.cobros_efectivo),
+    'Cobros transferencia (miles)': aMiles(k.cobros_transferencia), 'Recaudo seguros (miles)': aMiles(k.recaudo_seguros),
+    'Desembolsos (miles)': aMiles(k.total_desembolsos), 'Gastos (miles)': aMiles(k.total_gastos),
+    'Efectivo esperado (miles)': aMiles(k.efectivo_esperado), 'Efectivo entregado (miles)': k.efectivo_entregado != null ? aMiles(k.efectivo_entregado) : '',
+    'Diferencia (miles)': (k.diferencia_entrega ?? k.diferencia) != null ? aMiles(k.diferencia_entrega ?? k.diferencia) : '',
   }));
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(resumen), 'Resumen');

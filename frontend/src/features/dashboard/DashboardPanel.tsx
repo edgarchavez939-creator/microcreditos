@@ -5,6 +5,7 @@ import { money } from '@/lib/format';
 import { useAuthStore } from '@/stores/auth';
 import { useAreas } from '@/features/clientes/hooks';
 import { SkeletonIndicadores } from '@/components/ui/Skeleton';
+import { EscalaMoneda } from '@/components/ui/EscalaMoneda';
 const DashboardGraficas = lazy(() => import('./DashboardGraficas').then((m) => ({ default: m.DashboardGraficas })));
 
 interface Indicadores {
@@ -46,7 +47,7 @@ export function DashboardPanel() {
 
   return (
     <div>
-      <h2 className="page-title">Inicio</h2>
+      <div className="flex items-center gap-3"><h2 className="page-title">Inicio</h2><EscalaMoneda /></div>
       <p className="mb-4 text-sm text-slate-500">Resumen {alcance} al día de hoy.</p>
 
       {puedeFiltrar && <FiltroAreas seleccion={areas} onCambio={setAreas} />}

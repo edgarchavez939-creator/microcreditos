@@ -11,6 +11,7 @@ import { EvaluacionRenovacion } from './EvaluacionRenovacion';
 import { SkeletonTarjetas } from '@/components/ui/Skeleton';
 import { api } from '@/lib/api/client';
 import { EstadoVacio, IconosVacio } from '@/components/ui/EstadoVacio';
+import { EscalaMoneda } from '@/components/ui/EscalaMoneda';
 
 const MODALIDAD_LABEL: Record<string, string> = { DIARIO: 'Diario', SEMANAL: 'Semanal', QUINCENAL: 'Quincenal', MENSUAL: 'Mensual' };
 
@@ -50,7 +51,7 @@ export function CarteraPanel() {
 
   return (
     <div>
-      <h2 className="page-title">Cartera y pagos</h2>
+      <div className="flex items-center gap-3"><h2 className="page-title">Cartera y pagos</h2><EscalaMoneda /></div>
       <p className="mb-5 text-sm text-slate-500">Desembolsa créditos aprobados y registra los pagos de cada cuota.</p>
 
       <div className="mb-4">
