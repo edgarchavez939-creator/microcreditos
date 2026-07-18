@@ -13,7 +13,7 @@ export function ClientesPanel() {
     return (
       <div>
         <h2 className="page-title">Editar cliente</h2>
-        <p className="mb-5 text-sm text-slate-500">
+        <p className="mb-5 text-sm text-content-muted">
           Todos los campos se pueden modificar, excepto el número de documento.
         </p>
         <ClienteForm
@@ -28,7 +28,7 @@ export function ClientesPanel() {
   return (
     <div>
       <h2 className="page-title">Clientes</h2>
-      <p className="mb-5 text-sm text-slate-500">Registra, consulta y actualiza los clientes de tu territorio.</p>
+      <p className="mb-5 text-sm text-content-muted">Registra, consulta y actualiza los clientes de tu territorio.</p>
 
       {perfilId ? (
         <ClienteProfile clienteId={perfilId} onVolver={() => setPerfilId(null)} onEditar={(c) => setEditando(c)} />

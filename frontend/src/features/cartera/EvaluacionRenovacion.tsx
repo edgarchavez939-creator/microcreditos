@@ -45,11 +45,11 @@ export function EvaluacionRenovacion({ creditoId }: { creditoId: number }) {
       </button>
     );
   }
-  if (isLoading) return <p className="text-sm text-slate-400">Calculando scoring…</p>;
+  if (isLoading) return <p className="text-sm text-content-muted">Calculando scoring…</p>;
   if (!data) return null;
 
   if (!data.elegible) {
-    return <p className="rounded-xl bg-slate-50 px-3.5 py-2.5 text-sm text-slate-500">{data.motivo}</p>;
+    return <p className="rounded-xl bg-surface-2 px-3.5 py-2.5 text-sm text-content-muted">{data.motivo}</p>;
   }
 
   const info = NIVEL_INFO[data.nivel ?? 'REGULAR'];
@@ -71,7 +71,7 @@ export function EvaluacionRenovacion({ creditoId }: { creditoId: number }) {
       </div>
 
       {/* Barra de score */}
-      <div className="mt-2 h-2 overflow-hidden rounded-full bg-white/60">
+      <div className="mt-2 h-2 overflow-hidden rounded-full bg-surface/60">
         <div className={`h-full rounded-full ${info.barra}`} style={{ width: `${data.score}%` }} />
       </div>
 

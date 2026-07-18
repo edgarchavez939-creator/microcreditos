@@ -21,7 +21,7 @@ export function Placeholder({ titulo, descripcion, permisos }: Props) {
             ))}
           </ul>
         )}
-        <p className="mt-5 rounded-xl bg-slate-50 px-3.5 py-2.5 text-xs text-slate-500 ring-1 ring-slate-100">
+        <p className="mt-5 rounded-xl bg-surface-2 px-3.5 py-2.5 text-xs text-content-muted ring-1 ring-border-token">
           El backend, los permisos y la lógica de este módulo ya existen; falta conectar esta interfaz a los endpoints correspondientes.
         </p>
       </div>

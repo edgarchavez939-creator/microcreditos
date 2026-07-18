@@ -61,15 +61,15 @@ export function ModalGestion({ clienteId, solicitudId, nombre, saldo, onClose, i
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={onClose}>
-      <div className="animate-fade-in-scale w-full max-w-md rounded-2xl bg-white p-5 shadow-xl" onClick={(e) => e.stopPropagation()}>
-        <h3 className="text-base font-bold text-slate-800">Gestión de cobranza</h3>
-        <p className="mb-4 text-sm text-slate-500">{nombre}{saldo != null ? ` · ${money(saldo)} vencido` : ''}</p>
+      <div className="animate-fade-in-scale w-full max-w-md rounded-2xl bg-surface p-5 shadow-xl" onClick={(e) => e.stopPropagation()}>
+        <h3 className="text-base font-bold text-content-strong">Gestión de cobranza</h3>
+        <p className="mb-4 text-sm text-content-muted">{nombre}{saldo != null ? ` · ${money(saldo)} vencido` : ''}</p>
 
         <label className="label">Tipo de gestión</label>
         <div className="mb-3 grid grid-cols-2 gap-1.5">
           {TIPO_GESTION.map((t) => (
             <button key={t.v} onClick={() => setTipo(t.v)}
-              className={`rounded-lg px-3 py-2 text-sm font-medium ring-1 transition ${tipo === t.v ? 'bg-brand-500 text-white ring-brand-500' : 'bg-white text-slate-600 ring-slate-200 hover:ring-brand-300'}`}>
+              className={`rounded-lg px-3 py-2 text-sm font-medium ring-1 transition ${tipo === t.v ? 'bg-brand-500 text-white ring-brand-500' : 'bg-surface text-slate-600 ring-border-token hover:ring-brand-300'}`}>
               {t.t}
             </button>
           ))}
@@ -93,7 +93,7 @@ export function ModalGestion({ clienteId, solicitudId, nombre, saldo, onClose, i
         )}
 
         {tipo === 'VISITA' && (
-          <button onClick={capturarGps} className="mt-3 w-full rounded-lg bg-slate-100 py-2 text-sm font-medium text-slate-600 hover:bg-slate-200">
+          <button onClick={capturarGps} className="mt-3 w-full rounded-lg bg-surface-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-200">
             {gps ? '✓ Ubicación capturada' : '📍 Capturar ubicación de la visita'}
           </button>
         )}
@@ -104,7 +104,7 @@ export function ModalGestion({ clienteId, solicitudId, nombre, saldo, onClose, i
           </p>
         )}
         {!esAcuerdo && (
-          <p className="mt-3 rounded-lg bg-slate-50 px-3 py-2 text-xs text-slate-500">
+          <p className="mt-3 rounded-lg bg-surface-2 px-3 py-2 text-xs text-content-muted">
             Al registrar la gestión, el cliente sale de la ruta de hoy y reaparece mañana si sigue debiendo.
           </p>
         )}

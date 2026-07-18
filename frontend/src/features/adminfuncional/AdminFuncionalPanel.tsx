@@ -25,12 +25,12 @@ export function AdminFuncionalPanel() {
   return (
     <div>
       <h2 className="page-title">Administración de la plataforma</h2>
-      <p className="mb-4 text-sm text-slate-500">Centro técnico exclusivo del Administrador Funcional. Cada acción queda auditada.</p>
+      <p className="mb-4 text-sm text-content-muted">Centro técnico exclusivo del Administrador Funcional. Cada acción queda auditada.</p>
 
-      <div className="mb-5 flex flex-wrap gap-1.5 border-b border-slate-200">
+      <div className="mb-5 flex flex-wrap gap-1.5 border-b border-border-token">
         {tabs.map(([k, label]) => (
           <button key={k} onClick={() => setTab(k)}
-            className={`rounded-t-lg px-3 py-2 text-sm font-medium ${tab === k ? 'border-b-2 border-brand-500 text-brand-700' : 'text-slate-500 hover:text-slate-700'}`}>
+            className={`rounded-t-lg px-3 py-2 text-sm font-medium ${tab === k ? 'border-b-2 border-brand-500 text-brand-700' : 'text-content-muted hover:text-content'}`}>
             {label}
           </button>
         ))}
@@ -67,7 +67,7 @@ function Licencia() {
     onError: (e) => toast.error((e as { response?: { data?: { message?: string } } })?.response?.data?.message ?? 'Error al guardar.'),
   });
 
-  if (!lic) return <p className="text-sm text-slate-400">Cargando…</p>;
+  if (!lic) return <p className="text-sm text-content-muted">Cargando…</p>;
   const set = (k: string, v: unknown) => setForm({ ...lic, [k]: v });
 
   const campos: [string, string, string][] = [
@@ -84,7 +84,7 @@ function Licencia() {
           <div key={k}>
             <label className="label">{label}</label>
             <input type="number" value={Number(lic[k] ?? 0)} onChange={(e) => set(k, Number(e.target.value))} className="input" />
-            {uso && <p className="mt-1 text-xs text-slate-400">En uso: {uso[usoKey]} de {Number(lic[k] ?? 0)}</p>}
+            {uso && <p className="mt-1 text-xs text-content-muted">En uso: {uso[usoKey]} de {Number(lic[k] ?? 0)}</p>}
           </div>
         ))}
         <div>
@@ -121,15 +121,15 @@ function Flags() {
   });
 
   if (!flags || flags.length === 0) {
-    return <p className="text-sm text-slate-400">No hay funcionalidades registradas. Se irán agregando a medida que se declaren módulos controlables.</p>;
+    return <p className="text-sm text-content-muted">No hay funcionalidades registradas. Se irán agregando a medida que se declaren módulos controlables.</p>;
   }
   return (
     <div className="space-y-2">
       {flags.map((f) => (
         <div key={f.clave as string} className="card card-pad flex items-center justify-between">
           <div>
-            <div className="font-medium text-slate-700">{f.etiqueta as string}</div>
-            <div className="text-xs text-slate-400">{(f.descripcion as string) ?? f.clave as string}</div>
+            <div className="font-medium text-content">{f.etiqueta as string}</div>
+            <div className="text-xs text-content-muted">{(f.descripcion as string) ?? f.clave as string}</div>
           </div>
           <label className="flex items-center gap-2 text-sm">
             <input type="checkbox" checked={!!f.activo}
@@ -163,7 +163,7 @@ function Marca() {
     },
     onError: () => toast.error('No se pudo actualizar.'),
   });
-  if (!marca) return <p className="text-sm text-slate-400">Cargando…</p>;
+  if (!marca) return <p className="text-sm text-content-muted">Cargando…</p>;
   const set = (k: string, v: string) => setForm({ ...marca, [k]: v });
   return (
     <div className="card card-pad max-w-xl space-y-4">
@@ -185,7 +185,7 @@ function Marca() {
       <button onClick={() => m.mutate()} disabled={m.isPending || !form} className="btn-primary btn-sm">
         {m.isPending ? 'Guardando…' : 'Guardar marca'}
       </button>
-      <p className="text-xs text-slate-400">Nota: el logo y favicon como archivos requieren almacenamiento externo (R2); se habilitarán en una fase posterior.</p>
+      <p className="text-xs text-content-muted">Nota: el logo y favicon como archivos requieren almacenamiento externo (R2); se habilitarán en una fase posterior.</p>
     </div>
   );
 }
@@ -196,12 +196,12 @@ function Monitoreo() {
     queryFn: async () => (await api.get('/admin-funcional/monitoreo')).data.data,
     refetchInterval: 30_000,
   });
-  if (!data) return <p className="text-sm text-slate-400">Consultando estado…</p>;
+  if (!data) return <p className="text-sm text-content-muted">Consultando estado…</p>;
   const Item = ({ label, ok, detalle }: { label: string; ok: boolean; detalle?: string }) => (
     <div className="card card-pad flex items-center justify-between">
       <div>
-        <div className="font-medium text-slate-700">{label}</div>
-        {detalle && <div className="text-xs text-slate-400">{detalle}</div>}
+        <div className="font-medium text-content">{label}</div>
+        {detalle && <div className="text-xs text-content-muted">{detalle}</div>}
       </div>
       <span className={`h-3 w-3 rounded-full ${ok ? 'bg-money-500' : 'bg-slate-300'}`} />
     </div>
@@ -228,8 +228,8 @@ function Herramientas() {
   });
   return (
     <div className="card card-pad max-w-xl">
-      <h3 className="mb-1 text-sm font-semibold text-slate-700">Herramientas técnicas</h3>
-      <p className="mb-3 text-xs text-slate-400">Ejecuta procesos de mantenimiento solo cuando sea necesario.</p>
+      <h3 className="mb-1 text-sm font-semibold text-content">Herramientas técnicas</h3>
+      <p className="mb-3 text-xs text-content-muted">Ejecuta procesos de mantenimiento solo cuando sea necesario.</p>
       <button onClick={() => limpiar.mutate()} disabled={limpiar.isPending} className="btn-outline btn-sm">
         {limpiar.isPending ? 'Limpiando…' : 'Limpiar caché del sistema'}
       </button>
@@ -251,7 +251,7 @@ function Mantenimiento() {
     onSuccess: (r) => { toast.exito((r as { message?: string })?.message ?? 'Actualizado ✓'); qc.invalidateQueries({ queryKey: ['af-mantenimiento'] }); setForm(null); },
     onError: () => toast.error('No se pudo actualizar.'),
   });
-  if (!est) return <p className="text-sm text-slate-400">Cargando…</p>;
+  if (!est) return <p className="text-sm text-content-muted">Cargando…</p>;
   return (
     <div className="card card-pad max-w-xl space-y-4">
       <div className={`rounded-xl px-3.5 py-2.5 text-sm ${est.activo ? 'bg-amber-50 text-amber-800 ring-1 ring-amber-100' : 'bg-money-50 text-money-700 ring-1 ring-money-100'}`}>
@@ -289,7 +289,7 @@ function Versiones() {
   return (
     <div className="space-y-4">
       <div className="card card-pad max-w-xl">
-        <h3 className="mb-2 text-sm font-semibold text-slate-700">Registrar versión</h3>
+        <h3 className="mb-2 text-sm font-semibold text-content">Registrar versión</h3>
         <div className="grid grid-cols-2 gap-2">
           <input value={form.version} onChange={(e) => setForm({ ...form, version: e.target.value })} className="input" placeholder="v58" />
           <select value={form.estado} onChange={(e) => setForm({ ...form, estado: e.target.value })} className="input">
@@ -311,7 +311,7 @@ function Versiones() {
                   <td className="font-medium">{v.version as string}</td>
                   <td>{v.fecha_liberacion as string}</td>
                   <td>{v.estado as string}</td>
-                  <td className="text-slate-500">{(v.mejoras as string) ?? '—'}</td>
+                  <td className="text-content-muted">{(v.mejoras as string) ?? '—'}</td>
                 </tr>
               ))}
             </tbody>
@@ -349,7 +349,7 @@ function Auditoria() {
         <div><label className="label text-xs">Hasta</label><input type="date" value={filtros.hasta ?? ''} onChange={(e) => setFiltros((f) => ({ ...f, hasta: e.target.value }))} className="input py-1 text-sm" /></div>
       </div>
       {!data || data.length === 0 ? (
-        <p className="py-4 text-center text-sm text-slate-400">Sin registros de auditoría para los filtros.</p>
+        <p className="py-4 text-center text-sm text-content-muted">Sin registros de auditoría para los filtros.</p>
       ) : (
         <div className="table-wrap">
           <table className="table-base">
@@ -358,10 +358,10 @@ function Auditoria() {
               {data.map((a) => (
                 <tr key={a.id as number}>
                   <td>{fechaHora(a.created_at as string)}</td>
-                  <td>{(a.usuario as string) ?? '—'} <span className="text-xs text-slate-400">{(a.rol as string) ?? ''}</span></td>
+                  <td>{(a.usuario as string) ?? '—'} <span className="text-xs text-content-muted">{(a.rol as string) ?? ''}</span></td>
                   <td className="font-medium">{a.accion as string}</td>
                   <td>{a.entidad as string}{a.entidad_id ? ` #${a.entidad_id}` : ''}</td>
-                  <td className="text-xs text-slate-400">{(a.ip as string) ?? '—'}</td>
+                  <td className="text-xs text-content-muted">{(a.ip as string) ?? '—'}</td>
                 </tr>
               ))}
             </tbody>
@@ -387,7 +387,7 @@ function Parametros() {
     onError: () => toast.error('No se pudo actualizar.'),
   });
   const parseVal = (v: string): unknown => { const n = Number(v); return v !== '' && !isNaN(n) ? n : v; };
-  if (!data) return <p className="text-sm text-slate-400">Cargando…</p>;
+  if (!data) return <p className="text-sm text-content-muted">Cargando…</p>;
   return (
     <div className="table-wrap">
       <table className="table-base">
@@ -400,7 +400,7 @@ function Parametros() {
               <tr key={clave}>
                 <td className="font-mono text-xs">{clave}</td>
                 <td>{enEd ? <input value={valor} onChange={(e) => setValor(e.target.value)} className="input py-1 text-sm" /> : <span className="tabular-nums">{JSON.stringify(p.valor)}</span>}</td>
-                <td className="text-slate-500">{(p.descripcion as string) ?? '—'}</td>
+                <td className="text-content-muted">{(p.descripcion as string) ?? '—'}</td>
                 <td>
                   {enEd
                     ? <button onClick={() => m.mutate(clave)} disabled={m.isPending} className="btn-primary btn-sm">Guardar</button>

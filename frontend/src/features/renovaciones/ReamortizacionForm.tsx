@@ -54,7 +54,7 @@ export function ReamortizacionForm({ solicitudId, clienteId, onHecho }: Props) {
     );
 
   if (saldoQ.isLoading || cupoQ.isLoading) {
-    return <p className="text-sm text-slate-500">Cargando saldo y cupo…</p>;
+    return <p className="text-sm text-content-muted">Cargando saldo y cupo…</p>;
   }
 
   // Éxito: resumen de la renovación devuelta por el backend
@@ -77,12 +77,12 @@ export function ReamortizacionForm({ solicitudId, clienteId, onHecho }: Props) {
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
       <div className="grid grid-cols-2 gap-3 text-sm">
-        <div className="rounded bg-slate-50 p-3">
-          <p className="text-slate-500">Saldo pendiente</p>
+        <div className="rounded bg-surface-2 p-3">
+          <p className="text-content-muted">Saldo pendiente</p>
           <p className="font-semibold">{money(saldo)}</p>
         </div>
-        <div className="rounded bg-slate-50 p-3">
-          <p className="text-slate-500">Cupo disponible</p>
+        <div className="rounded bg-surface-2 p-3">
+          <p className="text-content-muted">Cupo disponible</p>
           <p className="font-semibold">{money(cupo)}</p>
         </div>
       </div>
@@ -92,7 +92,7 @@ export function ReamortizacionForm({ solicitudId, clienteId, onHecho }: Props) {
         <input type="number" step="any" {...register('nuevo_capital', { valueAsNumber: true })}
           className="input" />
         {errors.nuevo_capital && <p className="field-error">{errors.nuevo_capital.message}</p>}
-        <p className="text-xs text-slate-400 mt-0.5">
+        <p className="text-xs text-content-muted mt-0.5">
           Mínimo: {money(saldo)} (saldo) · Máximo: {money(cupo)} (cupo)
         </p>
       </div>
@@ -144,7 +144,7 @@ export function ReamortizacionForm({ solicitudId, clienteId, onHecho }: Props) {
       {/* Plan simulado según modalidad */}
       <div className="rounded-xl bg-brand-50 p-4 text-sm ring-1 ring-brand-100">
         <div className="font-semibold text-brand-700">Plan simulado</div>
-        <div className="mt-1 text-slate-700">
+        <div className="mt-1 text-content">
           {preview.numeroCuotas > 0
             ? <>{preview.numeroCuotas} cuotas {MODAL_LABEL[v.modalidad] ?? ''} de <b>{money(preview.valorCuota)}</b></>
             : 'Completa capital y plazo para ver el plan.'}
@@ -152,7 +152,7 @@ export function ReamortizacionForm({ solicitudId, clienteId, onHecho }: Props) {
       </div>
 
       {/* Preview en vivo (espejo del backend) */}
-      <div className="rounded-lg bg-slate-50 p-4 text-sm space-y-1">
+      <div className="rounded-lg bg-surface-2 p-4 text-sm space-y-1">
         <Row label="Saldo refinanciado (cancela el anterior)" value={money(preview.saldoRefinanciado)} />
         <Row label="Valor seguro" value={money(preview.valorSeguro)} />
         <Row label="Valor desembolsado (bruto)" value={money(preview.valorDesembolsado)} />

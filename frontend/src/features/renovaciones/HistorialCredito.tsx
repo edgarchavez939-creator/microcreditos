@@ -6,18 +6,18 @@ import { useHistorialCredito } from './hooks';
 export function HistorialCredito({ solicitudId }: { solicitudId: number }) {
   const { data, isLoading, isError } = useHistorialCredito(solicitudId);
 
-  if (isLoading) return <p className="text-sm text-slate-500">Cargando historial…</p>;
+  if (isLoading) return <p className="text-sm text-content-muted">Cargando historial…</p>;
   if (isError) return <p className="text-sm text-red-600">No se pudo cargar el historial.</p>;
 
   const cadena = data ?? [];
-  if (cadena.length === 0) return <p className="text-sm text-slate-500">Sin renovaciones.</p>;
+  if (cadena.length === 0) return <p className="text-sm text-content-muted">Sin renovaciones.</p>;
 
   return (
-    <ol className="relative border-l border-slate-200 ml-3">
+    <ol className="relative border-l border-border-token ml-3">
       {cadena.map((c, i) => (
         <li key={c.id} className="mb-6 ml-4">
           <span className="absolute -left-1.5 mt-1.5 h-3 w-3 rounded-full border border-white bg-brand" />
-          <div className="rounded-lg border border-slate-200 p-3">
+          <div className="rounded-lg border border-border-token p-3">
             <div className="flex items-center justify-between">
               <span className="text-sm font-semibold">
                 {i === 0 ? 'Crédito original' : `Renovación ${i}`} · #{c.id}
@@ -52,7 +52,7 @@ function CreditoResumen({ c }: { c: Solicitud }) {
 function Item({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex justify-between gap-2">
-      <dt className="text-slate-500">{label}</dt>
+      <dt className="text-content-muted">{label}</dt>
       <dd className="font-medium">{value}</dd>
     </div>
   );

@@ -44,7 +44,7 @@ export function ClienteProfile({ clienteId, onVolver, onEditar }:
     );
   };
 
-  if (isLoading || !c) return <p className="text-sm text-slate-500">Cargando perfil…</p>;
+  if (isLoading || !c) return <p className="text-sm text-content-muted">Cargando perfil…</p>;
 
   return (
     <div className="space-y-5">
@@ -54,7 +54,7 @@ export function ClienteProfile({ clienteId, onVolver, onEditar }:
         <div className="flex items-start justify-between gap-3">
           <div>
             <h3 className="text-lg font-bold">{c.nombres} {c.apellidos}</h3>
-            <p className="text-sm text-slate-500">{c.tipo_documento} {c.numero_documento}</p>
+            <p className="text-sm text-content-muted">{c.tipo_documento} {c.numero_documento}</p>
           </div>
           <div className="flex items-center gap-2">
             {c.cobrador && <span className="rounded-full bg-brand-50 px-3 py-1 text-xs text-brand-700">Cobrador: {c.cobrador}</span>}
@@ -124,16 +124,16 @@ export function ClienteProfile({ clienteId, onVolver, onEditar }:
       <div className="card card-pad">
         <h4 className="mb-3 font-semibold">Historial de actualizaciones</h4>
         {!historial || historial.length === 0 ? (
-          <p className="text-sm text-slate-500">Aún no hay cambios registrados.</p>
+          <p className="text-sm text-content-muted">Aún no hay cambios registrados.</p>
         ) : (
           <ul className="space-y-2">
             {historial.map((h, i) => (
-              <li key={i} className="rounded-lg bg-slate-50 px-3 py-2 text-sm ring-1 ring-slate-100">
+              <li key={i} className="rounded-lg bg-surface-2 px-3 py-2 text-sm ring-1 ring-border-token">
                 <div className="flex flex-wrap items-center justify-between gap-2">
-                  <span className="font-medium text-slate-700">
+                  <span className="font-medium text-content">
                     {h.campos.map((k) => ETIQUETAS[k] ?? k).join(', ') || 'Actualización'}
                   </span>
-                  <span className="text-xs text-slate-500">{fecha(h.fecha)} · {h.usuario}</span>
+                  <span className="text-xs text-content-muted">{fecha(h.fecha)} · {h.usuario}</span>
                 </div>
               </li>
             ))}
@@ -147,7 +147,7 @@ export function ClienteProfile({ clienteId, onVolver, onEditar }:
 function Dato({ label, value }: { label: string; value?: string | null }) {
   return (
     <div className="flex justify-between gap-3 border-b border-slate-50 py-1">
-      <dt className="text-slate-500">{label}</dt>
+      <dt className="text-content-muted">{label}</dt>
       <dd className="text-right font-medium">{value || '—'}</dd>
     </div>
   );

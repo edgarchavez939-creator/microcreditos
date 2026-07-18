@@ -18,7 +18,7 @@ export function UsuariosPanel() {
   return (
     <div>
       <h2 className="page-title">Usuarios</h2>
-      <p className="mb-5 text-sm text-slate-500">Crea cobradores, supervisores y administradores, y asigna sus áreas.</p>
+      <p className="mb-5 text-sm text-content-muted">Crea cobradores, supervisores y administradores, y asigna sus áreas.</p>
 
       {creando || editando ? (
         <UsuarioForm usuario={editando} onCerrar={() => { setCreando(false); setEditando(null); }} />
@@ -29,7 +29,7 @@ export function UsuariosPanel() {
           </div>
 
           {isLoading ? (
-            <p className="text-sm text-slate-500">Cargando usuarios…</p>
+            <p className="text-sm text-content-muted">Cargando usuarios…</p>
           ) : !usuarios || usuarios.length === 0 ? (
             <EstadoVacio icono={IconosVacio.usuarios} titulo="Sin usuarios" descripcion="Aún no hay usuarios registrados en el sistema." />
           ) : (
@@ -48,7 +48,7 @@ export function UsuariosPanel() {
                       <td>{ROL_LABEL[u.rol]}</td>
                       <td className="max-w-[200px] truncate">{u.areas.map((a) => a.nombre).join(', ') || '—'}</td>
                       <td>
-                        <span className={`rounded-full px-2 py-0.5 text-xs ${u.activo ? 'bg-money-50 text-money-700' : 'bg-slate-100 text-slate-500'}`}>
+                        <span className={`rounded-full px-2 py-0.5 text-xs ${u.activo ? 'bg-money-50 text-money-700' : 'bg-surface-3 text-content-muted'}`}>
                           {u.activo ? 'Activo' : 'Inactivo'}
                         </span>
                       </td>
@@ -86,7 +86,7 @@ function SeccionAreas() {
   return (
     <div className="card card-pad mt-6">
       <h3 className="mb-1 font-semibold">Áreas / territorios</h3>
-      <p className="mb-3 text-sm text-slate-500">Crea las zonas de trabajo y asígnalas a los usuarios.</p>
+      <p className="mb-3 text-sm text-content-muted">Crea las zonas de trabajo y asígnalas a los usuarios.</p>
 
       <div className="mb-4 flex flex-wrap items-center gap-2">
         <input value={nombre} onChange={(e) => setNombre(e.target.value)}
@@ -104,7 +104,7 @@ function SeccionAreas() {
 
       {error && <p className="mb-3 alert-error">{error}</p>}
 
-      <ul className="divide-y divide-slate-100">
+      <ul className="divide-y divide-border-token">
         {areas?.map((a) => (
           <li key={a.id} className="flex items-center justify-between gap-2 py-2 text-sm">
             {editId === a.id ? (
@@ -208,7 +208,7 @@ function UsuarioForm({ usuario, onCerrar }: { usuario: UsuarioAdmin | null; onCe
     <div className="card card-pad max-w-lg space-y-4">
       <h3 className="font-semibold">{usuario ? `Editar: ${usuario.nombre}` : 'Nuevo usuario'}</h3>
 
-      <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">Identificación</p>
+      <p className="text-xs font-semibold uppercase tracking-wide text-content-muted">Identificación</p>
       <div className="grid grid-cols-2 gap-3">
         <div>
           <label className="label">Nombres</label>
@@ -234,7 +234,7 @@ function UsuarioForm({ usuario, onCerrar }: { usuario: UsuarioAdmin | null; onCe
         </div>
       </div>
 
-      <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">Acceso al sistema</p>
+      <p className="text-xs font-semibold uppercase tracking-wide text-content-muted">Acceso al sistema</p>
       <div>
         <label className="label">Correo</label>
         <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} className="input" />
@@ -257,7 +257,7 @@ function UsuarioForm({ usuario, onCerrar }: { usuario: UsuarioAdmin | null; onCe
         </div>
       </div>
 
-      <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">Contacto</p>
+      <p className="text-xs font-semibold uppercase tracking-wide text-content-muted">Contacto</p>
       <div>
         <label className="label">Dirección de residencia</label>
         <input value={direccion} onChange={(e) => setDireccion(e.target.value)} className="input" />
@@ -277,7 +277,7 @@ function UsuarioForm({ usuario, onCerrar }: { usuario: UsuarioAdmin | null; onCe
         <input value={emergNombre} onChange={(e) => setEmergNombre(e.target.value)} className="input" />
       </div>
 
-      <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">Laboral y financiero</p>
+      <p className="text-xs font-semibold uppercase tracking-wide text-content-muted">Laboral y financiero</p>
       <div className="grid grid-cols-2 gap-3">
         <div>
           <label className="label">Salario base (opcional)</label>
@@ -293,7 +293,7 @@ function UsuarioForm({ usuario, onCerrar }: { usuario: UsuarioAdmin | null; onCe
         <input value={numeroCuenta} onChange={(e) => setNumeroCuenta(e.target.value)} className="input" />
       </div>
 
-      <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">Asignación</p>
+      <p className="text-xs font-semibold uppercase tracking-wide text-content-muted">Asignación</p>
       <div>
         <label className="label">Áreas asignadas</label>
         <div className="flex flex-wrap gap-2">
@@ -302,7 +302,7 @@ function UsuarioForm({ usuario, onCerrar }: { usuario: UsuarioAdmin | null; onCe
               className={`rounded-full px-3 py-1.5 text-sm ring-1 transition ${
                 areasSel.includes(a.id)
                   ? 'bg-brand text-white ring-brand'
-                  : 'bg-white text-slate-600 ring-slate-200 hover:ring-brand-200'
+                  : 'bg-surface text-slate-600 ring-border-token hover:ring-brand-200'
               }`}>
               {a.nombre}
             </button>

@@ -188,16 +188,16 @@ export function MapaPanel() {
   return (
     <div>
       <h2 className="page-title">Mapa territorial</h2>
-      <p className="mb-2 text-sm text-slate-500">
+      <p className="mb-2 text-sm text-content-muted">
         Ubicación de tus clientes con su estado de cartera. Toca un punto para ver el detalle y navegar.
       </p>
       {puedeVerVivo && (
-        <p className="mb-4 flex flex-wrap items-center gap-3 text-xs text-slate-500">
+        <p className="mb-4 flex flex-wrap items-center gap-3 text-xs text-content-muted">
           <span className="font-medium text-slate-600">Equipo en vivo:</span>
           <span className="flex items-center gap-1"><span className="inline-block h-2.5 w-2.5 rounded-full bg-green-600" /> activo (&lt;3 min)</span>
           <span className="flex items-center gap-1"><span className="inline-block h-2.5 w-2.5 rounded-full bg-amber-600" /> hace 3–15 min</span>
           <span className="flex items-center gap-1"><span className="inline-block h-2.5 w-2.5 rounded-full bg-slate-400" /> sin señal reciente</span>
-          <span className="text-slate-400">· La línea punteada es el recorrido de hoy. Se actualiza mientras el cobrador tenga la app abierta.</span>
+          <span className="text-content-muted">· La línea punteada es el recorrido de hoy. Se actualiza mientras el cobrador tenga la app abierta.</span>
         </p>
       )}
 
@@ -208,11 +208,11 @@ export function MapaPanel() {
             {areas?.map((a) => <option key={a.id} value={a.nombre}>{a.nombre}</option>)}
           </select>
         </label>
-        <div className="flex rounded-xl bg-slate-100 p-1">
+        <div className="flex rounded-xl bg-surface-3 p-1">
           {FILTROS.map((f) => (
             <button key={f.v} onClick={() => setFiltro(f.v)}
               className={`rounded-lg px-3.5 py-1.5 text-sm font-medium transition ${
-                filtro === f.v ? 'bg-white text-ink shadow-card' : 'text-slate-500 hover:text-ink'
+                filtro === f.v ? 'bg-surface text-ink shadow-card' : 'text-content-muted hover:text-ink'
               }`}>
               {f.t}
             </button>
@@ -231,7 +231,7 @@ export function MapaPanel() {
         </div>
       </div>
 
-      {isLoading && <p className="mb-2 text-sm text-slate-500">Cargando clientes…</p>}
+      {isLoading && <p className="mb-2 text-sm text-content-muted">Cargando clientes…</p>}
       {isError && <p className="mb-2 alert-error">No se pudieron cargar los clientes del mapa.</p>}
       {!isLoading && clientes && clientes.length === 0 && (
         <p className="mb-2 rounded-xl bg-amber-50 px-3.5 py-2.5 text-sm text-amber-800 ring-1 ring-amber-100">
@@ -239,7 +239,7 @@ export function MapaPanel() {
         </p>
       )}
 
-      <div ref={contenedor} className="h-[70vh] w-full overflow-hidden rounded-2xl ring-1 ring-slate-200" />
+      <div ref={contenedor} className="h-[70vh] w-full overflow-hidden rounded-2xl ring-1 ring-border-token" />
     </div>
   );
 }

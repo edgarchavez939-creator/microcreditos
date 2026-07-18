@@ -39,25 +39,25 @@ export function MoraPanel() {
         <div className="mb-5 grid grid-cols-3 gap-3">
           <div className="card card-pad text-center">
             <div className="font-display text-2xl font-bold text-rose-600">{data.resumen.creditos_mora}</div>
-            <div className="text-xs text-slate-500">Créditos en mora</div>
+            <div className="text-xs text-content-muted">Créditos en mora</div>
           </div>
           <div className="card card-pad text-center">
-            <div className="font-display text-2xl font-bold text-slate-700">{money(data.resumen.saldo_vencido)}</div>
-            <div className="text-xs text-slate-500">Saldo vencido</div>
+            <div className="font-display text-2xl font-bold text-content">{money(data.resumen.saldo_vencido)}</div>
+            <div className="text-xs text-content-muted">Saldo vencido</div>
           </div>
           <div className="card card-pad text-center">
             <div className="font-display text-2xl font-bold text-money-700">{data.resumen.con_promesa}</div>
-            <div className="text-xs text-slate-500">Con promesa de pago</div>
+            <div className="text-xs text-content-muted">Con promesa de pago</div>
           </div>
         </div>
       )}
 
       {isLoading ? (
-        <p className="text-sm text-slate-400">Cargando…</p>
+        <p className="text-sm text-content-muted">Cargando…</p>
       ) : !data?.data || data.data.length === 0 ? (
-        <div className="rounded-2xl border-2 border-dashed border-slate-200 bg-gradient-to-b from-slate-50/80 to-white py-14 text-center">
-          <p className="text-base font-semibold text-slate-700">Sin créditos en mora</p>
-          <p className="mt-1 text-sm text-slate-500">Toda la cartera visible está al día. ¡Buen trabajo!</p>
+        <div className="rounded-2xl border-2 border-dashed border-border-token bg-gradient-to-b from-slate-50/80 to-white py-14 text-center">
+          <p className="text-base font-semibold text-content">Sin créditos en mora</p>
+          <p className="mt-1 text-sm text-content-muted">Toda la cartera visible está al día. ¡Buen trabajo!</p>
         </div>
       ) : (
         <div className="space-y-2">
@@ -68,10 +68,10 @@ export function MoraPanel() {
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div className="min-w-0">
                     <div className="flex items-center gap-2">
-                      <span className="font-semibold text-slate-800">{c.cliente}</span>
+                      <span className="font-semibold text-content-strong">{c.cliente}</span>
                       <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${nm.cls}`}>{nm.txt} mora</span>
                     </div>
-                    <div className="mt-0.5 text-xs text-slate-500">
+                    <div className="mt-0.5 text-xs text-content-muted">
                       Crédito {c.numero_credito} · {c.cuotas_vencidas} cuota(s) vencida(s)
                       {c.cobrador && ` · ${c.cobrador}`}
                     </div>
@@ -81,7 +81,7 @@ export function MoraPanel() {
                       </div>
                     )}
                     {c.ultima_gestion && (
-                      <div className="mt-1 text-xs text-slate-400">
+                      <div className="mt-1 text-xs text-content-muted">
                         Última: {ETIQUETA_TIPO(c.ultima_gestion.tipo)} · {c.ultima_gestion.observacion?.slice(0, 60)}
                       </div>
                     )}
@@ -93,7 +93,7 @@ export function MoraPanel() {
                         <a href={`https://wa.me/57${c.telefono.replace(/\D/g, '')}`} target="_blank" rel="noopener noreferrer"
                           className="rounded-lg bg-money-50 px-2 py-1 text-xs font-medium text-money-700 hover:bg-money-100">WhatsApp</a>
                       )}
-                      <button onClick={() => setHistorialCliente(c)} className="rounded-lg bg-slate-100 px-2 py-1 text-xs font-medium text-slate-600 hover:bg-slate-200">Historial</button>
+                      <button onClick={() => setHistorialCliente(c)} className="rounded-lg bg-surface-3 px-2 py-1 text-xs font-medium text-slate-600 hover:bg-slate-200">Historial</button>
                       <button onClick={() => setGestionCliente(c)} className="rounded-lg bg-brand-500 px-2 py-1 text-xs font-medium text-white hover:bg-brand-600">Gestionar</button>
                     </div>
                   </div>
@@ -117,24 +117,24 @@ function ModalHistorial({ credito, onClose }: { credito: CreditoMora; onClose: (
   });
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={onClose}>
-      <div className="animate-fade-in-scale w-full max-w-lg rounded-2xl bg-white p-5 shadow-xl" onClick={(e) => e.stopPropagation()}>
-        <h3 className="text-base font-bold text-slate-800">Historial de gestiones</h3>
-        <p className="mb-4 text-sm text-slate-500">{credito.cliente}</p>
+      <div className="animate-fade-in-scale w-full max-w-lg rounded-2xl bg-surface p-5 shadow-xl" onClick={(e) => e.stopPropagation()}>
+        <h3 className="text-base font-bold text-content-strong">Historial de gestiones</h3>
+        <p className="mb-4 text-sm text-content-muted">{credito.cliente}</p>
         {!data || data.length === 0 ? (
-          <p className="py-6 text-center text-sm text-slate-400">Aún no hay gestiones registradas.</p>
+          <p className="py-6 text-center text-sm text-content-muted">Aún no hay gestiones registradas.</p>
         ) : (
           <div className="max-h-96 space-y-2 overflow-y-auto">
             {data.map((g) => (
-              <div key={g.id as number} className="rounded-xl bg-slate-50 p-3">
+              <div key={g.id as number} className="rounded-xl bg-surface-2 p-3">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-slate-700">{ETIQUETA_TIPO(g.tipo as string)}</span>
-                  <span className="text-xs text-slate-400">{fechaHora(g.created_at as string)}</span>
+                  <span className="text-sm font-medium text-content">{ETIQUETA_TIPO(g.tipo as string)}</span>
+                  <span className="text-xs text-content-muted">{fechaHora(g.created_at as string)}</span>
                 </div>
                 <p className="mt-1 text-sm text-slate-600">{g.observacion as string}</p>
                 {g.fecha_acuerdo != null && (
                   <p className="mt-1 text-xs text-money-700">Acuerdo: {money((g.monto_acuerdo as number) ?? 0)} para el {fecha(g.fecha_acuerdo as string)}</p>
                 )}
-                <p className="mt-1 text-xs text-slate-400">Por: {(g.registrado_por as string) ?? '—'}</p>
+                <p className="mt-1 text-xs text-content-muted">Por: {(g.registrado_por as string) ?? '—'}</p>
               </div>
             ))}
           </div>

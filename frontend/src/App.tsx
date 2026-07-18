@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { Logo } from '@/components/ui/Logo';
 import { useAuthStore } from '@/stores/auth';
 import { useReporteUbicacion } from '@/lib/useReporteUbicacion';
+import { ToggleTema } from '@/components/ui/ToggleTema';
 import { LoginForm } from '@/features/auth/LoginForm';
 import { Placeholder } from '@/components/Placeholder';
 import { ClientesPanel } from '@/features/clientes/ClientesPanel';
@@ -136,11 +137,14 @@ function AppShell() {
   );
 
   return (
-    <div className="min-h-screen bg-slate-50 lg:flex">
+    <div className="min-h-screen bg-surface-2 lg:flex">
       <aside className="fixed inset-y-0 hidden w-64 flex-col bg-ink p-3 lg:flex">
         <div className="py-3">{brand}</div>
         <div className="mt-4 flex-1 overflow-y-auto">{nav}</div>
-        <div className="pt-3">{userFooter}</div>
+        <div className="pt-3 space-y-2">
+          <div className="px-1"><ToggleTema /></div>
+          {userFooter}
+        </div>
       </aside>
 
       <header className="sticky top-0 z-30 flex items-center justify-between bg-ink px-4 py-3 lg:hidden">
@@ -157,7 +161,10 @@ function AppShell() {
               <button onClick={() => setDrawer(false)} className="rounded-lg p-2 text-slate-300 hover:bg-white/10"><Icon.close /></button>
             </div>
             <div className="mt-3 flex-1 overflow-y-auto">{nav}</div>
-            <div className="pt-3">{userFooter}</div>
+            <div className="pt-3 space-y-2">
+              <div className="px-1"><ToggleTema /></div>
+              {userFooter}
+            </div>
           </div>
         </div>
       )}

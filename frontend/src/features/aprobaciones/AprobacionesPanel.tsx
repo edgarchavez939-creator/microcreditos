@@ -43,7 +43,7 @@ export function AprobacionesPanel() {
   return (
     <div>
       <h2 className="page-title">Aprobaciones</h2>
-      <p className="mb-5 text-sm text-slate-500">Revisa y resuelve las solicitudes que esperan tu decisión.</p>
+      <p className="mb-5 text-sm text-content-muted">Revisa y resuelve las solicitudes que esperan tu decisión.</p>
 
       {aprobado && (
         <div className="mb-5 flex flex-wrap items-center justify-between gap-3 rounded-xl bg-money-50 p-4 ring-1 ring-money-100">
@@ -56,7 +56,7 @@ export function AprobacionesPanel() {
                 <Icon.transferencias /> Enviar por WhatsApp
               </a>
             ) : (
-              <span className="text-xs text-slate-500">El cliente no tiene teléfono registrado.</span>
+              <span className="text-xs text-content-muted">El cliente no tiene teléfono registrado.</span>
             )}
             <button onClick={() => setAprobado(null)} className="btn-ghost btn-sm">Cerrar</button>
           </div>
@@ -190,7 +190,7 @@ function TarjetaAprobacion({ s, onAprobado }: { s: Solicitud; onAprobado: (s: So
 function Item({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex justify-between gap-2">
-      <dt className="text-slate-500">{label}</dt>
+      <dt className="text-content-muted">{label}</dt>
       <dd className="font-medium">{value}</dd>
     </div>
   );

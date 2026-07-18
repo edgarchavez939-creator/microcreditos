@@ -52,24 +52,24 @@ export function ProductosFinancieros() {
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
-        <p className="text-sm text-slate-500">
+        <p className="text-sm text-content-muted">
           Los productos definen el comportamiento del crédito por configuración. Cada cambio genera una nueva versión;
           los créditos existentes conservan sus condiciones originales.
         </p>
         <button onClick={() => setEditando('nuevo')} className="btn-primary btn-sm shrink-0">Nuevo producto</button>
       </div>
 
-      {isLoading ? <p className="text-sm text-slate-400">Cargando…</p> : (
+      {isLoading ? <p className="text-sm text-content-muted">Cargando…</p> : (
         <div className="space-y-2">
           {(productos ?? []).map((p) => (
             <div key={p.id} className="card card-pad">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <div className="flex items-center gap-2">
                   <span className="inline-block h-3 w-3 rounded-full" style={{ background: p.color ?? '#4F46E5' }} />
-                  <span className="font-semibold text-slate-800">{p.nombre}</span>
-                  <span className="rounded bg-slate-100 px-1.5 py-0.5 text-xs text-slate-500">{p.codigo}</span>
-                  <span className="rounded bg-slate-100 px-1.5 py-0.5 text-xs text-slate-500">v{p.version_actual}</span>
-                  <span className={`rounded-full px-2 py-0.5 text-xs ${p.activo ? 'bg-money-50 text-money-700' : 'bg-slate-100 text-slate-400'}`}>
+                  <span className="font-semibold text-content-strong">{p.nombre}</span>
+                  <span className="rounded bg-surface-3 px-1.5 py-0.5 text-xs text-content-muted">{p.codigo}</span>
+                  <span className="rounded bg-surface-3 px-1.5 py-0.5 text-xs text-content-muted">v{p.version_actual}</span>
+                  <span className={`rounded-full px-2 py-0.5 text-xs ${p.activo ? 'bg-money-50 text-money-700' : 'bg-surface-3 text-content-muted'}`}>
                     {p.activo ? 'Activo' : 'Inactivo'}
                   </span>
                 </div>
@@ -88,7 +88,7 @@ export function ProductosFinancieros() {
                 {p.usa_valor_pactado && <span className="rounded-full bg-money-50 px-2 py-0.5 text-money-700">Valor pactado</span>}
                 {p.aprobacion_automatica && <span className="rounded-full bg-amber-50 px-2 py-0.5 text-amber-800">Aprobación automática</span>}
                 {p.requiere_administrador && <span className="rounded-full bg-amber-50 px-2 py-0.5 text-amber-800">Requiere administrador</span>}
-                <span className="rounded-full bg-slate-100 px-2 py-0.5 text-slate-500">
+                <span className="rounded-full bg-surface-3 px-2 py-0.5 text-content-muted">
                   Capital {money(p.capital_minimo)}–{money(p.capital_maximo)}
                 </span>
               </div>
@@ -110,16 +110,16 @@ function ModalVersiones({ producto, onClose }: { producto: ProductoFinanciero; o
   });
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={onClose}>
-      <div className="animate-fade-in-scale max-h-[80vh] w-full max-w-lg overflow-y-auto rounded-2xl bg-white p-5 shadow-xl" onClick={(e) => e.stopPropagation()}>
-        <h3 className="mb-3 text-base font-bold text-slate-800">Historial de versiones · {producto.nombre}</h3>
+      <div className="animate-fade-in-scale max-h-[80vh] w-full max-w-lg overflow-y-auto rounded-2xl bg-surface p-5 shadow-xl" onClick={(e) => e.stopPropagation()}>
+        <h3 className="mb-3 text-base font-bold text-content-strong">Historial de versiones · {producto.nombre}</h3>
         <div className="space-y-2">
           {(data ?? []).map((v) => (
-            <div key={v.version} className="rounded-xl bg-slate-50 p-3 text-sm">
+            <div key={v.version} className="rounded-xl bg-surface-2 p-3 text-sm">
               <div className="flex justify-between">
-                <span className="font-semibold text-slate-700">Versión {v.version}</span>
-                <span className="text-xs text-slate-400">{fecha(v.created_at)}{v.cambiado_por ? ` · ${v.cambiado_por}` : ''}</span>
+                <span className="font-semibold text-content">Versión {v.version}</span>
+                <span className="text-xs text-content-muted">{fecha(v.created_at)}{v.cambiado_por ? ` · ${v.cambiado_por}` : ''}</span>
               </div>
-              <p className="mt-1 text-xs text-slate-500">{v.cambios}</p>
+              <p className="mt-1 text-xs text-content-muted">{v.cambios}</p>
             </div>
           ))}
         </div>
@@ -199,9 +199,9 @@ function FormProducto({ producto, onCerrar }: { producto: ProductoFinanciero | n
   return (
     <div className="space-y-4">
       <button onClick={onCerrar} className="text-sm text-brand-600 hover:underline">← Volver a productos</button>
-      <h3 className="text-base font-bold text-slate-800">{producto ? `Editar: ${producto.nombre} (se generará versión ${producto.version_actual + 1})` : 'Nuevo producto financiero'}</h3>
+      <h3 className="text-base font-bold text-content-strong">{producto ? `Editar: ${producto.nombre} (se generará versión ${producto.version_actual + 1})` : 'Nuevo producto financiero'}</h3>
 
-      <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">Información general</p>
+      <p className="text-xs font-semibold uppercase tracking-wide text-content-muted">Información general</p>
       <div className="grid grid-cols-2 gap-3">
         <div><label className="label">Código</label>
           <input value={f.codigo} onChange={(e) => set('codigo', e.target.value)} className="input" disabled={!!producto} placeholder="AL_BATE" /></div>
@@ -215,7 +215,7 @@ function FormProducto({ producto, onCerrar }: { producto: ProductoFinanciero | n
       <div><label className="label">Descripción</label>
         <textarea value={f.descripcion ?? ''} onChange={(e) => set('descripcion', e.target.value)} className="input" rows={2} /></div>
 
-      <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">Condiciones financieras</p>
+      <p className="text-xs font-semibold uppercase tracking-wide text-content-muted">Condiciones financieras</p>
       <div className="grid grid-cols-2 gap-2">
         <Chk k="usa_tasa" label="Utiliza tasa de interés" />
         <Chk k="permite_modificar_tasa" label="Permite modificar la tasa" />
@@ -231,7 +231,7 @@ function FormProducto({ producto, onCerrar }: { producto: ProductoFinanciero | n
           <input type="number" step="0.1" value={f.seguro_defecto} onChange={(e) => set('seguro_defecto', Number(e.target.value))} className="input" /></div>}
       </div>
 
-      <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">Límites</p>
+      <p className="text-xs font-semibold uppercase tracking-wide text-content-muted">Límites</p>
       <div className="grid grid-cols-2 gap-3">
         <div><label className="label">Capital mínimo (pesos)</label>
           <input type="number" value={f.capital_minimo} onChange={(e) => set('capital_minimo', Number(e.target.value))} className="input" /></div>
@@ -255,7 +255,7 @@ function FormProducto({ producto, onCerrar }: { producto: ProductoFinanciero | n
         </div>
       </div>
 
-      <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">Aprobaciones y caja</p>
+      <p className="text-xs font-semibold uppercase tracking-wide text-content-muted">Aprobaciones y caja</p>
       <div className="grid grid-cols-2 gap-2">
         <Chk k="requiere_supervisor" label="Requiere supervisor" />
         <Chk k="requiere_administrador" label="Requiere administrador" />

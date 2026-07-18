@@ -43,7 +43,7 @@ export function LoginForm() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 lg:grid lg:grid-cols-2">
+    <div className="min-h-screen bg-surface-2 lg:grid lg:grid-cols-2">
       {/* Hero */}
       <div className="relative hidden overflow-hidden bg-ink lg:flex lg:flex-col lg:justify-between p-12">
         <div className="absolute -right-24 -top-24 h-96 w-96 rounded-full bg-brand-500/20 blur-3xl" />
@@ -65,7 +65,7 @@ export function LoginForm() {
             <li className="flex items-center gap-2"><Dot /> Funciona sin conexión en la calle</li>
           </ul>
         </div>
-        <div className="relative text-xs text-slate-500">Gestión territorial de crédito y cobranza</div>
+        <div className="relative text-xs text-content-muted">Gestión territorial de crédito y cobranza</div>
       </div>
 
       {/* Formulario */}
@@ -78,7 +78,7 @@ export function LoginForm() {
 
           <div className="card card-pad">
             <h2 className="font-display text-xl font-bold">Inicia sesión</h2>
-            <p className="mt-1 text-sm text-slate-500">Ingresa con tu cuenta para continuar.</p>
+            <p className="mt-1 text-sm text-content-muted">Ingresa con tu cuenta para continuar.</p>
 
             <form onSubmit={handleSubmit(onSubmit)} className="mt-5 space-y-4">
               <div>
@@ -104,12 +104,12 @@ export function LoginForm() {
             </form>
 
             <div className="mt-6 border-t border-slate-100 pt-4">
-              <p className="mb-2 text-xs text-slate-400">Cuentas de prueba (rellenan el formulario):</p>
+              <p className="mb-2 text-xs text-content-muted">Cuentas de prueba (rellenan el formulario):</p>
               <div className="flex gap-2">
                 {DEMO.map((d) => (
                   <button key={d.rol} type="button"
                     onClick={() => { setValue('email', d.email); setValue('password', d.password); setError(null); }}
-                    className="flex-1 rounded-lg px-2 py-1.5 text-xs font-medium text-slate-600 ring-1 ring-slate-200 hover:bg-slate-50">
+                    className="flex-1 rounded-lg px-2 py-1.5 text-xs font-medium text-slate-600 ring-1 ring-border-token hover:bg-surface-2">
                     {d.rol}
                   </button>
                 ))}

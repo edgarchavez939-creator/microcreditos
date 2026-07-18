@@ -2,7 +2,7 @@ import type { EstadoSolicitud } from '@/types';
 
 // color del punto + fondo/textos suaves por estado
 const estilos: Record<string, { wrap: string; dot: string }> = {
-  BORRADOR:                { wrap: 'bg-slate-100 text-slate-600', dot: 'bg-slate-400' },
+  BORRADOR:                { wrap: 'bg-surface-3 text-slate-600', dot: 'bg-slate-400' },
   PENDIENTE_SUPERVISOR:    { wrap: 'bg-amber-50 text-amber-700 ring-1 ring-amber-200', dot: 'bg-amber-500' },
   PENDIENTE_ADMINISTRADOR: { wrap: 'bg-orange-50 text-orange-700 ring-1 ring-orange-200', dot: 'bg-orange-500' },
   APROBADO:                { wrap: 'bg-brand-50 text-brand-700 ring-1 ring-brand-100', dot: 'bg-brand-500' },
@@ -14,7 +14,7 @@ const estilos: Record<string, { wrap: string; dot: string }> = {
   FINALIZADO:              { wrap: 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200', dot: 'bg-emerald-500' },
   REAMORTIZADO:            { wrap: 'bg-violet-50 text-violet-700 ring-1 ring-violet-200', dot: 'bg-violet-500' },
   REFINANCIADO:            { wrap: 'bg-purple-50 text-purple-700 ring-1 ring-purple-200', dot: 'bg-purple-500' },
-  CANCELADO:               { wrap: 'bg-slate-100 text-slate-600', dot: 'bg-slate-400' },
+  CANCELADO:               { wrap: 'bg-surface-3 text-slate-600', dot: 'bg-slate-400' },
   CASTIGADO:               { wrap: 'bg-rose-100 text-rose-800', dot: 'bg-rose-600' },
 };
 

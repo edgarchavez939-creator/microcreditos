@@ -97,13 +97,13 @@ export function SolicitudForm({ clienteId, areaId, creditoOrigenId, onCreada }:
           <div className="grid grid-cols-2 gap-2">
             {productos.map((p) => (
               <button type="button" key={p.id} onClick={() => setProductoId(p.id)}
-                className={`rounded-xl border-2 p-3 text-left transition ${p.id === productoId ? 'border-brand-500 bg-brand-50' : 'border-slate-200 hover:border-slate-300'}`}
+                className={`rounded-xl border-2 p-3 text-left transition ${p.id === productoId ? 'border-brand-500 bg-brand-50' : 'border-border-token hover:border-slate-300'}`}
                 style={p.id === productoId && p.color ? { borderColor: p.color } : undefined}>
                 <div className="flex items-center gap-2">
                   <span className="inline-block h-2.5 w-2.5 rounded-full" style={{ background: p.color ?? '#4F46E5' }} />
-                  <span className="text-sm font-semibold text-slate-800">{p.nombre}</span>
+                  <span className="text-sm font-semibold text-content-strong">{p.nombre}</span>
                 </div>
-                {p.descripcion && <p className="mt-1 text-xs text-slate-500 line-clamp-2">{p.descripcion}</p>}
+                {p.descripcion && <p className="mt-1 text-xs text-content-muted line-clamp-2">{p.descripcion}</p>}
               </button>
             ))}
           </div>
@@ -111,9 +111,9 @@ export function SolicitudForm({ clienteId, areaId, creditoOrigenId, onCreada }:
       )}
 
       <div>
-        <label className="label">Capital solicitado <span className="font-normal text-slate-400">(en pesos)</span></label>
+        <label className="label">Capital solicitado <span className="font-normal text-content-muted">(en pesos)</span></label>
         <input type="number" step="any" {...register('capital_solicitado', { valueAsNumber: true })} className="input" placeholder="Ej: 1000000" />
-        <p className="mt-1 text-xs text-slate-400">
+        <p className="mt-1 text-xs text-content-muted">
           {usaPactado
             ? 'El capital que se entrega al cliente.'
             : 'Escribe el valor en pesos completos (ej: 1.000.000). El capital aprobado lo definirá quien apruebe la solicitud.'}
@@ -123,9 +123,9 @@ export function SolicitudForm({ clienteId, areaId, creditoOrigenId, onCreada }:
       {/* VALOR PACTADO: solo productos que lo manejan (ej. Al Bate) */}
       {usaPactado && (
         <div>
-          <label className="label">Valor total pactado <span className="font-normal text-slate-400">(en pesos)</span></label>
+          <label className="label">Valor total pactado <span className="font-normal text-content-muted">(en pesos)</span></label>
           <input type="number" step="any" {...register('valor_pactado', { valueAsNumber: true })} className="input" placeholder="Ej: 1200000" />
-          <p className="mt-1 text-xs text-slate-400">El valor total que el cliente se compromete a pagar. La cuota será este valor dividido en el número de cuotas.</p>
+          <p className="mt-1 text-xs text-content-muted">El valor total que el cliente se compromete a pagar. La cuota será este valor dividido en el número de cuotas.</p>
           {errors.valor_pactado && <p className="field-error">{errors.valor_pactado.message}</p>}
         </div>
       )}
@@ -137,7 +137,7 @@ export function SolicitudForm({ clienteId, areaId, creditoOrigenId, onCreada }:
             <label className="label">Tasa interés mensual (%)</label>
             <input type="number" step="0.1" {...register('tasa_interes', { valueAsNumber: true })} className="input"
               disabled={producto ? !producto.permite_modificar_tasa : false} />
-            <p className="mt-1 text-xs text-slate-400">
+            <p className="mt-1 text-xs text-content-muted">
               {producto && !producto.permite_modificar_tasa ? 'Tasa fija del producto' : 'Ej: 10 = 10%'}
             </p>
           </div>
@@ -158,7 +158,7 @@ export function SolicitudForm({ clienteId, areaId, creditoOrigenId, onCreada }:
       {/* Simulación estimada del plan según la configuración del producto */}
       <div className="rounded-xl bg-brand-50 p-4 text-sm ring-1 ring-brand-100">
         <div className="font-semibold text-brand-700">Plan estimado {producto ? `· ${producto.nombre}` : ''}</div>
-        <div className="mt-1 text-slate-700">
+        <div className="mt-1 text-content">
           {preview.numeroCuotas > 0 && preview.totalRecaudar > 0
             ? <>{preview.numeroCuotas} cuotas {MODAL_LABEL[modalidad]} de <b>{money(preview.cuota)}</b></>
             : 'Completa los valores para ver el plan estimado.'}
@@ -178,7 +178,7 @@ export function SolicitudForm({ clienteId, areaId, creditoOrigenId, onCreada }:
               <label className="label">% Seguro (5–10)</label>
               <input type="number" step="0.1" {...register('porcentaje_seguro', { valueAsNumber: true })} className="input"
                 disabled={producto ? !producto.permite_modificar_seguro : false} />
-              <p className="mt-1 text-xs text-slate-400">
+              <p className="mt-1 text-xs text-content-muted">
                 {producto && !producto.permite_modificar_seguro ? 'Seguro fijo del producto' : 'Ej: 8 = 8%'}
               </p>
               {errors.porcentaje_seguro && <p className="field-error">{errors.porcentaje_seguro.message}</p>}
@@ -193,13 +193,13 @@ export function SolicitudForm({ clienteId, areaId, creditoOrigenId, onCreada }:
         </>
       )}
 
-      <div className="rounded-xl bg-slate-50 p-4 text-sm space-y-1.5 ring-1 ring-slate-100">
+      <div className="rounded-xl bg-surface-2 p-4 text-sm space-y-1.5 ring-1 ring-border-token">
         {usaSeguro && <div className="flex justify-between"><span>Valor seguro</span><b>{money(preview.valorSeguro)}</b></div>}
         <div className="flex justify-between"><span>Monto desembolsado (neto)</span><b>{money(preview.desembolsado)}</b></div>
         {usaPactado
           ? <div className="flex justify-between"><span>Diferencia pactado − capital</span><b>{money(preview.interes)}</b></div>
           : usaTasa && <div className="flex justify-between"><span>Intereses (sobre aprobado)</span><b>{money(preview.interes)}</b></div>}
-        <div className="flex justify-between"><span className="font-medium text-slate-700">Total a recaudar</span><b>{money(preview.totalRecaudar)}</b></div>
+        <div className="flex justify-between"><span className="font-medium text-content">Total a recaudar</span><b>{money(preview.totalRecaudar)}</b></div>
         <div className="flex justify-between"><span>Valor cuota</span><b>{money(preview.cuota)}</b></div>
       </div>
 

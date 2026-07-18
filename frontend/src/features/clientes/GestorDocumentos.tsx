@@ -63,7 +63,7 @@ export function GestorDocumentos({ clienteId }: { clienteId: number }) {
       <h4 className="mb-3 font-semibold">Documentos soporte</h4>
 
       {/* Subir nuevo */}
-      <div className="mb-4 flex flex-wrap items-end gap-2 rounded-xl bg-slate-50 p-3 ring-1 ring-slate-100">
+      <div className="mb-4 flex flex-wrap items-end gap-2 rounded-xl bg-surface-2 p-3 ring-1 ring-border-token">
         <label className="text-sm">
           <span className="mb-1 block text-slate-600">Categoría</span>
           <select value={categoria} onChange={(e) => setCategoria(e.target.value)} className="input">
@@ -80,7 +80,7 @@ export function GestorDocumentos({ clienteId }: { clienteId: number }) {
       {error && <p className="mb-2 text-xs text-rose-600">{error}</p>}
 
       {isLoading ? (
-        <p className="text-sm text-slate-500">Cargando documentos…</p>
+        <p className="text-sm text-content-muted">Cargando documentos…</p>
       ) : !docs || docs.length === 0 ? (
         <EstadoVacio icono={IconosVacio.documento} titulo="Sin documentos" descripcion="Este cliente aún no tiene documentos cargados. Usa el botón de arriba para subir el primero." />
       ) : (
@@ -134,11 +134,11 @@ function FilaDocumento({ clienteId, doc }: { clienteId: number; doc: DocumentoMe
   };
 
   return (
-    <li className="rounded-lg bg-white px-3 py-2 ring-1 ring-slate-200">
+    <li className="rounded-lg bg-surface px-3 py-2 ring-1 ring-border-token">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="min-w-0">
-          <div className="truncate text-sm font-medium text-slate-700">{ETIQUETA(doc.categoria)}</div>
-          <div className="truncate text-xs text-slate-400">
+          <div className="truncate text-sm font-medium text-content">{ETIQUETA(doc.categoria)}</div>
+          <div className="truncate text-xs text-content-muted">
             {doc.nombre_original} · {pesoLegible(doc.tamano_bytes)} · {fecha(doc.created_at)}
             {doc.subido_por ? ` · ${doc.subido_por}` : ''}
           </div>
@@ -158,7 +158,7 @@ function FilaDocumento({ clienteId, doc }: { clienteId: number; doc: DocumentoMe
             <span className="flex items-center gap-1">
               <button onClick={() => eliminar.mutate(doc.id)} disabled={eliminar.isPending}
                 className="font-medium text-rose-700 hover:underline">Confirmar</button>
-              <button onClick={() => setConfirmar(false)} className="text-slate-400 hover:underline">✕</button>
+              <button onClick={() => setConfirmar(false)} className="text-content-muted hover:underline">✕</button>
             </span>
           )}
         </div>

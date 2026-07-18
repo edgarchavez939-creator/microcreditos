@@ -52,7 +52,7 @@ export function CarteraPanel() {
   return (
     <div>
       <div className="flex items-center gap-3"><h2 className="page-title">Cartera y pagos</h2><EscalaMoneda /></div>
-      <p className="mb-5 text-sm text-slate-500">Desembolsa créditos aprobados y registra los pagos de cada cuota.</p>
+      <p className="mb-5 text-sm text-content-muted">Desembolsa créditos aprobados y registra los pagos de cada cuota.</p>
 
       <div className="mb-4">
         <input value={buscar} onChange={(e) => setBuscar(e.target.value)}
@@ -110,7 +110,7 @@ function CreditoCard({ c }: { c: Solicitud }) {
           </div>
         </div>
         <div className="text-right text-sm">
-          <div className="text-slate-500">Saldo pendiente</div>
+          <div className="text-content-muted">Saldo pendiente</div>
           <div className="font-semibold">{money(c.saldo_pendiente ?? c.total_recaudar)}</div>
         </div>
       </div>
@@ -129,11 +129,11 @@ function CreditoCard({ c }: { c: Solicitud }) {
       {esAprobado && (
         <div className="mt-4 flex flex-wrap items-end gap-3">
           <label className="text-sm">
-            <span className="block text-slate-500">Fecha de inicio del crédito</span>
+            <span className="block text-content-muted">Fecha de inicio del crédito</span>
             <input type="date" value={fechaInicio} onChange={(e) => setFechaInicio(e.target.value)} className="input" />
           </label>
           <label className="text-sm">
-            <span className="block text-slate-500">Medio de entrega</span>
+            <span className="block text-content-muted">Medio de entrega</span>
             <select value={metodo} onChange={(e) => setMetodo(e.target.value)} className="input">
               {METODOS.map((m) => <option key={m.v} value={m.v}>{m.t}</option>)}
             </select>
@@ -148,7 +148,7 @@ function CreditoCard({ c }: { c: Solicitud }) {
             className="btn-primary btn-sm">
             {desembolsar.isPending && <span className="spinner" />}{desembolsar.isPending ? 'Desembolsando…' : 'Desembolsar y activar'}
           </button>
-          <p className="w-full text-xs text-slate-400">La primera cuota vence un período después de esta fecha, según la modalidad.</p>
+          <p className="w-full text-xs text-content-muted">La primera cuota vence un período después de esta fecha, según la modalidad.</p>
         </div>
       )}
 
@@ -157,7 +157,7 @@ function CreditoCard({ c }: { c: Solicitud }) {
           <button onClick={() => setAbierto(!abierto)}
             className={`inline-flex items-center gap-1.5 rounded-lg px-3.5 py-2 text-sm font-medium transition ${
               abierto
-                ? 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                ? 'bg-surface-3 text-slate-600 hover:bg-slate-200'
                 : 'bg-brand-500 text-white shadow-card hover:bg-brand-600'
             }`}>
             {abierto ? (
@@ -275,7 +275,7 @@ function FichaCredito({ creditoId }: { creditoId: number }) {
 
       {/* PLAN DE PAGOS */}
       <div>
-        <h4 className="mb-2 text-sm font-semibold text-slate-700">Plan de pagos</h4>
+        <h4 className="mb-2 text-sm font-semibold text-content">Plan de pagos</h4>
         {sinCuotas ? (
           <div className="rounded-xl bg-amber-50 px-3.5 py-2.5 text-sm text-amber-800 ring-1 ring-amber-100">
             <p>Este crédito no tiene cuotas generadas.</p>
@@ -329,7 +329,7 @@ function FichaCredito({ creditoId }: { creditoId: number }) {
 
       {/* REGISTRAR PAGO */}
       <div>
-        <h4 className="mb-2 text-sm font-semibold text-slate-700">Registrar pago</h4>
+        <h4 className="mb-2 text-sm font-semibold text-content">Registrar pago</h4>
         <div className="flex flex-wrap items-end gap-2">
           <label className="text-sm">
             <span className="block font-medium">Valor</span>
@@ -366,20 +366,20 @@ function FichaCredito({ creditoId }: { creditoId: number }) {
               <input type="file" accept="image/jpeg,image/png,image/webp" className="hidden"
                 onChange={(e) => setComprobante(e.target.files?.[0] ?? null)} />
             </label>
-            {comprobante && <span className="ml-2 text-xs text-slate-500">{comprobante.name}</span>}
+            {comprobante && <span className="ml-2 text-xs text-content-muted">{comprobante.name}</span>}
           </div>
         )}
 
         {msg && <p className="mt-2 text-sm text-green-700">{msg}</p>}
         {error && <p className="mt-2 text-sm text-red-700">{error}</p>}
-        <p className="mt-1 text-xs text-slate-400">El pago se aplica a las cuotas pendientes, de la más antigua a la más reciente.</p>
+        <p className="mt-1 text-xs text-content-muted">El pago se aplica a las cuotas pendientes, de la más antigua a la más reciente.</p>
       </div>
 
       {/* HISTORIAL DE PAGOS */}
       <div>
-        <h4 className="mb-2 text-sm font-semibold text-slate-700">Pagos realizados</h4>
+        <h4 className="mb-2 text-sm font-semibold text-content">Pagos realizados</h4>
         {pagosExtracto.length === 0 ? (
-          <p className="text-sm text-slate-500">Aún no hay pagos registrados.</p>
+          <p className="text-sm text-content-muted">Aún no hay pagos registrados.</p>
         ) : (
           <div className="table-wrap">
             <table className="table-base">
@@ -426,7 +426,7 @@ function FichaCredito({ creditoId }: { creditoId: number }) {
 function Item({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex justify-between gap-2">
-      <dt className="text-slate-500">{label}</dt>
+      <dt className="text-content-muted">{label}</dt>
       <dd className="font-medium">{value}</dd>
     </div>
   );
@@ -450,17 +450,17 @@ function HistorialCredito({ creditoId }: { creditoId: number }) {
       {abierto && (
         <div className="mt-3">
           {isLoading ? (
-            <p className="text-sm text-slate-500">Cargando historial…</p>
+            <p className="text-sm text-content-muted">Cargando historial…</p>
           ) : !eventos || eventos.length === 0 ? (
-            <p className="text-sm text-slate-500">Sin eventos registrados.</p>
+            <p className="text-sm text-content-muted">Sin eventos registrados.</p>
           ) : (
             <ol className="relative ml-2 space-y-4 border-l-2 border-slate-100 pl-5">
               {eventos.map((e, i) => (
                 <li key={i} className="relative">
                   <span className={`absolute -left-[27px] top-1 h-3 w-3 rounded-full ring-4 ring-white ${EVENTO_COLOR[e.tipo] ?? 'bg-slate-400'}`} />
-                  <div className="text-sm font-semibold text-slate-800">{e.titulo}</div>
+                  <div className="text-sm font-semibold text-content-strong">{e.titulo}</div>
                   {e.detalle && <div className="text-sm text-slate-600">{e.detalle}</div>}
-                  <div className="mt-0.5 text-xs text-slate-400">
+                  <div className="mt-0.5 text-xs text-content-muted">
                     {fechaHora(e.fecha)}{e.usuario ? ` · ${e.usuario}` : ''}
                   </div>
                 </li>
@@ -550,7 +550,7 @@ function ExtractoPdf({ credito }: { credito: Solicitud }) {
 
   return (
     <div>
-      <h4 className="mb-2 text-sm font-semibold text-slate-700">Extracto del crédito</h4>
+      <h4 className="mb-2 text-sm font-semibold text-content">Extracto del crédito</h4>
       <div className="flex flex-wrap items-center gap-2">
         <button onClick={enviarWhatsApp} disabled={cargando}
           className="inline-flex items-center gap-1.5 rounded-lg px-3.5 py-2 text-sm font-medium text-white shadow-card disabled:opacity-50"

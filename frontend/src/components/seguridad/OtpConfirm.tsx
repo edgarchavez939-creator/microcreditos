@@ -48,14 +48,14 @@ export function OtpConfirm({ operacion, etiqueta, onConfirmar, onCancelar, pendi
 
       {/* Panel flotante fijo en la esquina superior derecha (responsivo) */}
       {info && (
-        <div className="fixed right-3 top-3 z-[60] w-[min(92vw,320px)] rounded-2xl bg-white p-4 shadow-lift ring-1 ring-slate-200 sm:right-4 sm:top-4">
+        <div className="fixed right-3 top-3 z-[60] w-[min(92vw,320px)] rounded-2xl bg-surface p-4 shadow-lift ring-1 ring-border-token sm:right-4 sm:top-4">
           <div className="mb-2 flex items-center justify-between">
             <span className="text-sm font-semibold text-ink">Código de seguridad</span>
-            <button onClick={cerrar} aria-label="Cerrar" className="text-slate-400 hover:text-ink">✕</button>
+            <button onClick={cerrar} aria-label="Cerrar" className="text-content-muted hover:text-ink">✕</button>
           </div>
-          <div className="rounded-lg bg-slate-50 px-3 py-2 text-sm ring-1 ring-slate-200">
+          <div className="rounded-lg bg-surface-2 px-3 py-2 text-sm ring-1 ring-border-token">
             <b className="font-mono text-lg tracking-widest">{info.codigo}</b>
-            <div className="mt-0.5 text-xs text-slate-400">un solo uso · vence en {info.vigencia_minutos} min</div>
+            <div className="mt-0.5 text-xs text-content-muted">un solo uso · vence en {info.vigencia_minutos} min</div>
           </div>
           <input value={otp} onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
             inputMode="numeric" placeholder="Digita el código"
@@ -67,7 +67,7 @@ export function OtpConfirm({ operacion, etiqueta, onConfirmar, onCancelar, pendi
               {pendiente ? 'Procesando…' : etiqueta}
             </button>
             <button onClick={() => generar.mutate()} disabled={generar.isPending}
-              className="text-xs text-slate-400 hover:underline">Nuevo</button>
+              className="text-xs text-content-muted hover:underline">Nuevo</button>
           </div>
           {error && <p className="mt-2 text-xs text-rose-600">{error}</p>}
         </div>

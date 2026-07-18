@@ -48,7 +48,7 @@ export function DashboardPanel() {
   return (
     <div>
       <div className="flex items-center gap-3"><h2 className="page-title">Inicio</h2><EscalaMoneda /></div>
-      <p className="mb-4 text-sm text-slate-500">Resumen {alcance} al día de hoy.</p>
+      <p className="mb-4 text-sm text-content-muted">Resumen {alcance} al día de hoy.</p>
 
       {puedeFiltrar && <FiltroAreas seleccion={areas} onCambio={setAreas} />}
 
@@ -89,7 +89,7 @@ export function DashboardPanel() {
           {/* KPIs gerenciales de cartera */}
           {d.kpis && (
             <div>
-              <h3 className="mb-2 text-sm font-semibold text-slate-700">Salud de la cartera</h3>
+              <h3 className="mb-2 text-sm font-semibold text-content">Salud de la cartera</h3>
               <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                 <Tarjeta titulo="Índice de mora" valor={`${d.kpis.indice_mora}%`}
                   detalle="Saldo vencido sobre saldo en calle"
@@ -106,7 +106,7 @@ export function DashboardPanel() {
             </div>
           )}
 
-          <Suspense fallback={<div className="h-40 animate-pulse rounded-2xl bg-slate-100" />}>
+          <Suspense fallback={<div className="h-40 animate-pulse rounded-2xl bg-surface-3" />}>
             <DashboardGraficas areas={areas} />
           </Suspense>
         </div>
@@ -121,7 +121,7 @@ const TONOS: Record<string, string> = {
   alerta: 'bg-amber-50 ring-amber-100 text-amber-800',
   atencion: 'bg-amber-50 ring-amber-100 text-amber-800',
   positivo: 'bg-money-50 ring-money-100 text-money-700',
-  neutro: 'bg-white ring-slate-100 text-slate-800',
+  neutro: 'bg-surface ring-border-token text-content-strong',
 };
 
 function Tarjeta({ titulo, valor, detalle, tono = 'neutro' }:
@@ -146,12 +146,12 @@ function FiltroAreas({ seleccion, onCambio }: { seleccion: number[]; onCambio: (
   return (
     <div className="mb-5 flex flex-wrap items-center gap-2">
       <button onClick={() => onCambio([])}
-        className={`rounded-full px-3 py-1 text-xs font-medium ring-1 transition ${seleccion.length === 0 ? 'bg-brand-500 text-white ring-brand-500' : 'bg-white text-slate-600 ring-slate-200 hover:ring-brand-300'}`}>
+        className={`rounded-full px-3 py-1 text-xs font-medium ring-1 transition ${seleccion.length === 0 ? 'bg-brand-500 text-white ring-brand-500' : 'bg-surface text-slate-600 ring-border-token hover:ring-brand-300'}`}>
         Todas
       </button>
       {areas.map((a) => (
         <button key={a.id} onClick={() => toggle(a.id)}
-          className={`rounded-full px-3 py-1 text-xs font-medium ring-1 transition ${seleccion.includes(a.id) ? 'bg-brand-500 text-white ring-brand-500' : 'bg-white text-slate-600 ring-slate-200 hover:ring-brand-300'}`}>
+          className={`rounded-full px-3 py-1 text-xs font-medium ring-1 transition ${seleccion.includes(a.id) ? 'bg-brand-500 text-white ring-brand-500' : 'bg-surface text-slate-600 ring-border-token hover:ring-brand-300'}`}>
           {a.nombre}
         </button>
       ))}

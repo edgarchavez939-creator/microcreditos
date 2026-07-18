@@ -1,6 +1,7 @@
 /** @type {import('tailwindcss').Config} */
 export default {
   content: ['./index.html', './src/**/*.{ts,tsx}'],
+  darkMode: 'class',
   theme: {
     extend: {
       colors: {
@@ -13,6 +14,17 @@ export default {
         },
         // Dinero / positivo
         money: { DEFAULT: '#059669', 50: '#ECFDF5', 100: '#D1FAE5', 400: '#34D399', 500: '#10B981', 600: '#059669', 700: '#047857' },
+
+        // --- TOKENS SEMÁNTICOS (Design System) ---
+        // Cambian de valor entre modo claro y oscuro vía variables CSS. Úsalos en vez
+        // de bg-white / text-slate-900 para que el dark mode sea automático.
+        surface: 'rgb(var(--surface) / <alpha-value>)',        // fondo de tarjetas
+        'surface-2': 'rgb(var(--surface-2) / <alpha-value>)',  // fondo de la app / zonas hundidas
+        'surface-3': 'rgb(var(--surface-3) / <alpha-value>)',  // hover / franjas
+        'border-token': 'rgb(var(--border) / <alpha-value>)',
+        'content-strong': 'rgb(var(--content-strong) / <alpha-value>)', // títulos
+        'content': 'rgb(var(--content) / <alpha-value>)',      // texto normal
+        'content-muted': 'rgb(var(--content-muted) / <alpha-value>)',   // secundario
       },
       fontFamily: {
         sans: ['Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'],

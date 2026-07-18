@@ -211,7 +211,7 @@ export function ClienteForm({ onCreado, onCancelar, cliente }:
               Ver en Google Maps ({lat}, {lng})
             </a>
           ) : null}
-          {gpsMsg && <span className="text-xs text-slate-500">{gpsMsg}</span>}
+          {gpsMsg && <span className="text-xs text-content-muted">{gpsMsg}</span>}
         </div>
         {(errors.latitud || errors.longitud) && <p className="field-error">Captura la ubicación GPS del cliente.</p>}
       </Seccion>
@@ -233,7 +233,7 @@ export function ClienteForm({ onCreado, onCancelar, cliente }:
       </Seccion>
 
       <Seccion titulo="Soportes (opcional)">
-        <p className="mb-2 text-xs text-slate-500">Imágenes (JPG, PNG, WEBP) o PDF. Máximo 2 MB por archivo.</p>
+        <p className="mb-2 text-xs text-content-muted">Imágenes (JPG, PNG, WEBP) o PDF. Máximo 2 MB por archivo.</p>
         <label className="inline-flex cursor-pointer items-center gap-2 rounded-xl px-3.5 py-2.5 text-sm font-medium text-brand ring-1 ring-brand-200 hover:bg-brand-50">
           Añadir archivos
           <input type="file" multiple accept="image/jpeg,image/png,image/webp,application/pdf" onChange={onFiles} className="hidden" />
@@ -242,8 +242,8 @@ export function ClienteForm({ onCreado, onCancelar, cliente }:
         {archivos.length > 0 && (
           <ul className="mt-3 space-y-2">
             {archivos.map((f, i) => (
-              <li key={`${f.name}-${i}`} className="flex items-center justify-between rounded-lg bg-slate-50 px-3 py-2 text-sm ring-1 ring-slate-100">
-                <span className="truncate">{f.name} <span className="text-slate-400">· {(f.size / 1024).toFixed(0)} KB</span></span>
+              <li key={`${f.name}-${i}`} className="flex items-center justify-between rounded-lg bg-surface-2 px-3 py-2 text-sm ring-1 ring-border-token">
+                <span className="truncate">{f.name} <span className="text-content-muted">· {(f.size / 1024).toFixed(0)} KB</span></span>
                 <button type="button" onClick={() => quitarArchivo(i)} className="text-rose-600 hover:underline">Quitar</button>
               </li>
             ))}
@@ -275,7 +275,7 @@ export function ClienteForm({ onCreado, onCancelar, cliente }:
 function Seccion({ titulo, children }: { titulo: string; children: React.ReactNode }) {
   return (
     <section className="card card-pad">
-      <h3 className="mb-3 text-sm font-semibold text-slate-700">{titulo}</h3>
+      <h3 className="mb-3 text-sm font-semibold text-content">{titulo}</h3>
       {children}
     </section>
   );

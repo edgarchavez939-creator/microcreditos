@@ -91,17 +91,17 @@ export function RutaPanel() {
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h2 className="page-title">Ruta y cobranza del día</h2>
-          <p className="mb-1 text-sm text-slate-500">
+          <p className="mb-1 text-sm text-content-muted">
             Cobros y mora del día. Registra el pago o la gestión en cada parada.
           </p>
         </div>
-        <div className="flex rounded-xl bg-slate-100 p-0.5">
+        <div className="flex rounded-xl bg-surface-3 p-0.5">
           <button onClick={() => setVista('ruta')}
-            className={`rounded-lg px-3 py-1.5 text-sm font-medium transition ${vista === 'ruta' ? 'bg-white text-brand-700 shadow-sm' : 'text-slate-500'}`}>
+            className={`rounded-lg px-3 py-1.5 text-sm font-medium transition ${vista === 'ruta' ? 'bg-surface text-brand-700 shadow-sm' : 'text-content-muted'}`}>
             Ruta óptima
           </button>
           <button onClick={() => setVista('prioridad')}
-            className={`rounded-lg px-3 py-1.5 text-sm font-medium transition ${vista === 'prioridad' ? 'bg-white text-brand-700 shadow-sm' : 'text-slate-500'}`}>
+            className={`rounded-lg px-3 py-1.5 text-sm font-medium transition ${vista === 'prioridad' ? 'bg-surface text-brand-700 shadow-sm' : 'text-content-muted'}`}>
             Por prioridad
           </button>
         </div>
@@ -110,12 +110,12 @@ export function RutaPanel() {
         <p className="mb-5 text-xs text-money-700">Ruta optimizada desde tu ubicación actual.</p>
       )}
       {vista === 'ruta' && (estadoGps === 'denegado' || estadoGps === 'no-disponible') && (
-        <p className="mb-5 text-xs text-slate-400">
+        <p className="mb-5 text-xs text-content-muted">
           Activa la ubicación para optimizar la ruta desde donde estás. Por ahora se ordena desde la primera parada.
         </p>
       )}
-      {vista === 'ruta' && estadoGps === 'idle' && <p className="mb-5 text-xs text-slate-400">Obteniendo tu ubicación…</p>}
-      {vista === 'prioridad' && <p className="mb-5 text-xs text-slate-400">Ordenado por días de mora, de mayor a menor.</p>}
+      {vista === 'ruta' && estadoGps === 'idle' && <p className="mb-5 text-xs text-content-muted">Obteniendo tu ubicación…</p>}
+      {vista === 'prioridad' && <p className="mb-5 text-xs text-content-muted">Ordenado por días de mora, de mayor a menor.</p>}
 
       {isLoading ? (
         <SkeletonTarjetas cantidad={3} />
@@ -160,9 +160,9 @@ function Seccion({ titulo, paradas, tramos, totalKm, tono }: {
   return (
     <div>
       <div className="mb-2 flex items-center justify-between">
-        <h3 className={`text-sm font-semibold ${tono === 'mora' ? 'text-amber-800' : 'text-slate-700'}`}>{titulo}</h3>
+        <h3 className={`text-sm font-semibold ${tono === 'mora' ? 'text-amber-800' : 'text-content'}`}>{titulo}</h3>
         {totalKm > 0 && (
-          <span className="text-xs text-slate-400">{paradas.length} parada{paradas.length === 1 ? '' : 's'} · ~{totalKm} km</span>
+          <span className="text-xs text-content-muted">{paradas.length} parada{paradas.length === 1 ? '' : 's'} · ~{totalKm} km</span>
         )}
       </div>
       <div className="space-y-3">
@@ -188,12 +188,12 @@ function Parada({ p, orden, tramo }: { p: ParadaRuta; orden: number; tramo?: { k
         </div>
         <div className="min-w-0">
           <div className="font-semibold">
-            {p.cliente} <span className="font-normal text-slate-400">· {p.numero_credito ?? `#${p.solicitud_id}`}</span>
+            {p.cliente} <span className="font-normal text-content-muted">· {p.numero_credito ?? `#${p.solicitud_id}`}</span>
           </div>
-          <div className="text-sm text-slate-500">
+          <div className="text-sm text-content-muted">
             {p.direccion ?? 'Sin dirección'}{p.barrio ? ` · ${p.barrio}` : ''}
           </div>
-          <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-slate-400">
+          <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-content-muted">
             <span>{p.cuotas_vencidas} cuota{p.cuotas_vencidas === 1 ? '' : 's'} vencida{p.cuotas_vencidas === 1 ? '' : 's'}</span>
             {p.estado === 'VENCIDA' && (
               <span className="rounded-full bg-amber-100 px-2 py-0.5 text-amber-800">{p.dias_mora} día{p.dias_mora === 1 ? '' : 's'} de mora</span>
@@ -207,7 +207,7 @@ function Parada({ p, orden, tramo }: { p: ParadaRuta; orden: number; tramo?: { k
       <div className="flex items-center gap-2">
         <div className="text-right">
           <div className="font-display text-lg font-bold">{money(p.valor_pendiente)}</div>
-          <div className="text-xs text-slate-400">en mora</div>
+          <div className="text-xs text-content-muted">en mora</div>
         </div>
         <div className="flex flex-wrap justify-end gap-1.5">
           {wa && <a href={wa} target="_blank" rel="noreferrer" className="btn-outline btn-sm">WhatsApp</a>}

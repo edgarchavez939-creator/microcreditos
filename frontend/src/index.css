@@ -2,10 +2,36 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ============================================================
+   TOKENS SEMÁNTICOS DEL DESIGN SYSTEM
+   Cada token es un triple RGB (para permitir opacidad con Tailwind).
+   El modo claro es el :root; el modo oscuro sobreescribe en .dark.
+   Cambiar aquí = cambiar toda la app.
+   ============================================================ */
+:root {
+  --surface: 255 255 255;          /* tarjetas, modales */
+  --surface-2: 248 250 252;        /* fondo de la app (slate-50) */
+  --surface-3: 241 245 249;        /* hover, franjas (slate-100) */
+  --border: 226 232 240;           /* bordes (slate-200) */
+  --content-strong: 15 23 42;      /* títulos (slate-900) */
+  --content: 30 41 59;             /* texto normal (slate-800) */
+  --content-muted: 100 116 139;    /* secundario (slate-500) */
+}
+
+.dark {
+  --surface: 30 41 59;             /* slate-800 */
+  --surface-2: 15 23 42;           /* slate-900 (fondo app) */
+  --surface-3: 51 65 85;           /* slate-700 (hover) */
+  --border: 51 65 85;              /* slate-700 */
+  --content-strong: 241 245 249;   /* casi blanco */
+  --content: 226 232 240;          /* slate-200 */
+  --content-muted: 148 163 184;    /* slate-400 */
+}
+
 @layer base {
   html { -webkit-text-size-adjust: 100%; }
   body {
-    @apply bg-slate-50 text-slate-900 antialiased;
+    @apply bg-surface-2 text-content antialiased;
     font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;
   }
   h1, h2, h3, h4 {
@@ -17,28 +43,28 @@
 }
 
 @layer components {
-  .card { @apply rounded-2xl bg-white shadow-card ring-1 ring-slate-200/70; }
+  .card { @apply rounded-2xl bg-surface shadow-card ring-1 ring-border-token; }
   .card-pad { @apply p-5; }
 
   .btn { @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-50; }
   .btn-primary { @apply btn bg-brand text-white shadow-sm hover:bg-brand-600 active:bg-brand-700; }
   .btn-money { @apply btn bg-money text-white shadow-sm hover:bg-money-700; }
-  .btn-outline { @apply btn bg-white text-slate-700 ring-1 ring-slate-300 hover:bg-slate-50; }
+  .btn-outline { @apply btn bg-surface text-content ring-1 ring-border-token hover:bg-surface-3; }
   .btn-danger { @apply btn bg-white text-rose-700 ring-1 ring-rose-200 hover:bg-rose-50; }
-  .btn-ghost { @apply btn text-slate-600 hover:bg-slate-100; }
+  .btn-ghost { @apply btn text-content-muted hover:bg-surface-3; }
   .btn-sm { @apply px-3 py-1.5 text-xs rounded-lg; }
 
-  .input { @apply mt-1 w-full rounded-xl border-0 bg-white px-3.5 py-2.5 text-sm text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-brand-500; }
+  .input { @apply mt-1 w-full rounded-xl border-0 bg-surface px-3.5 py-2.5 text-sm text-content shadow-sm ring-1 ring-inset ring-border-token placeholder:text-content-muted focus:ring-2 focus:ring-inset focus:ring-brand-500; }
   select.input { @apply pr-9; }
-  .label { @apply block text-sm font-medium text-slate-700; }
+  .label { @apply block text-sm font-medium text-content; }
   .field-error { @apply mt-1 text-xs text-rose-600; }
 
-  .table-wrap { @apply overflow-x-auto rounded-xl ring-1 ring-slate-200 shadow-card; }
+  .table-wrap { @apply overflow-x-auto rounded-xl ring-1 ring-border-token shadow-card; }
   .table-base { @apply w-full text-sm; }
-  .table-base thead { @apply bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-slate-500; }
-  .table-base thead th { @apply border-b border-slate-200; }
+  .table-base thead { @apply bg-surface-3 text-left text-xs font-semibold uppercase tracking-wide text-content-muted; }
+  .table-base thead th { @apply border-b border-border-token; }
   .table-base th, .table-base td { @apply px-3.5 py-3; }
-  .table-base tbody tr { @apply border-t border-slate-100 transition-colors hover:bg-brand-50/40; }
+  .table-base tbody tr { @apply border-t border-border-token transition-colors hover:bg-surface-3; }
   .table-base tbody tr:last-child { @apply border-b-0; }
   .table-base td { @apply tabular-nums; }
 
@@ -46,8 +72,8 @@
   .alert-ok { @apply rounded-xl bg-money-50 px-3.5 py-2.5 text-sm text-money-700 ring-1 ring-money-100; }
 
   /* --- Cambio 3: encabezado de módulo consistente en toda la app --- */
-  .page-title { @apply text-xl font-bold text-ink; }
-  .page-subtitle { @apply mt-0.5 text-sm text-slate-500; }
+  .page-title { @apply text-xl font-bold text-content-strong; }
+  .page-subtitle { @apply mt-0.5 text-sm text-content-muted; }
   .page-header { @apply mb-5; }
 
   /* --- Cambio 2: spinner para botones en estado de carga --- */

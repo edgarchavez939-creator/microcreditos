@@ -23,10 +23,10 @@ export function ParametrosPanel() {
   return (
     <div>
       <h2 className="page-title">Parámetros</h2>
-      <p className="mb-5 text-sm text-slate-500">Configura las reglas generales del sistema. Los cambios aplican de inmediato.</p>
+      <p className="mb-5 text-sm text-content-muted">Configura las reglas generales del sistema. Los cambios aplican de inmediato.</p>
 
       {isLoading ? (
-        <p className="text-sm text-slate-500">Cargando parámetros…</p>
+        <p className="text-sm text-content-muted">Cargando parámetros…</p>
       ) : isError || !data ? (
         <p className="alert-error">No se pudieron cargar los parámetros.</p>
       ) : (
@@ -70,14 +70,14 @@ function FilaParametro({ p }: { p: Parametro }) {
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div className="min-w-0 flex-1">
           <div className="font-semibold">{p.etiqueta}</div>
-          <div className="mt-0.5 text-sm text-slate-500">{p.descripcion}</div>
+          <div className="mt-0.5 text-sm text-content-muted">{p.descripcion}</div>
         </div>
         <div className="flex items-center gap-2">
-          {sufijo === '$' && <span className="text-sm text-slate-400">$</span>}
+          {sufijo === '$' && <span className="text-sm text-content-muted">$</span>}
           <input type="number" step="any" value={valor}
             onChange={(e) => { setValor(e.target.value); setError(null); }}
             className="input w-32 text-right" />
-          {sufijo === '%' && <span className="text-sm text-slate-400">%</span>}
+          {sufijo === '%' && <span className="text-sm text-content-muted">%</span>}
           <button onClick={() => { setError(null); guardar.mutate(); }}
             disabled={guardar.isPending || !cambiado || valor === ''}
             className="btn-primary btn-sm">

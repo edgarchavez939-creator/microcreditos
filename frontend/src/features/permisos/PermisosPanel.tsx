@@ -10,28 +10,28 @@ export function PermisosPanel() {
   const fijar = useFijarPermiso();
   const [vista, setVista] = useState<'roles' | 'usuario'>('roles');
 
-  if (isLoading) return <p className="text-sm text-slate-500">Cargando permisos…</p>;
+  if (isLoading) return <p className="text-sm text-content-muted">Cargando permisos…</p>;
   if (isError || !data) return <p className="alert-error">No se pudieron cargar los permisos.</p>;
 
   return (
     <div>
       <h2 className="page-title">Permisos</h2>
-      <p className="mb-4 text-sm text-slate-500">
+      <p className="mb-4 text-sm text-content-muted">
         Habilita o restringe el acceso a cada módulo. Los cambios aplican de inmediato; el módulo desaparece del menú de quien no lo tenga.
       </p>
 
-      <div className="mb-4 flex rounded-xl bg-slate-100 p-1 w-fit">
+      <div className="mb-4 flex rounded-xl bg-surface-3 p-1 w-fit">
         <button onClick={() => setVista('roles')}
-          className={`rounded-lg px-4 py-1.5 text-sm font-medium transition ${vista === 'roles' ? 'bg-white text-ink shadow-card' : 'text-slate-500 hover:text-ink'}`}>
+          className={`rounded-lg px-4 py-1.5 text-sm font-medium transition ${vista === 'roles' ? 'bg-surface text-ink shadow-card' : 'text-content-muted hover:text-ink'}`}>
           Por rol
         </button>
         <button onClick={() => setVista('usuario')}
-          className={`rounded-lg px-4 py-1.5 text-sm font-medium transition ${vista === 'usuario' ? 'bg-white text-ink shadow-card' : 'text-slate-500 hover:text-ink'}`}>
+          className={`rounded-lg px-4 py-1.5 text-sm font-medium transition ${vista === 'usuario' ? 'bg-surface text-ink shadow-card' : 'text-content-muted hover:text-ink'}`}>
           Por usuario
         </button>
       </div>
 
-      <div className="mb-3 flex items-center gap-4 text-xs text-slate-500">
+      <div className="mb-3 flex items-center gap-4 text-xs text-content-muted">
         <span className="flex items-center gap-1.5"><span className="h-4 w-7 rounded-full bg-money-500" /> Permitido</span>
         <span className="flex items-center gap-1.5"><span className="h-4 w-7 rounded-full bg-rose-500" /> Restringido</span>
       </div>
@@ -76,8 +76,8 @@ function MatrizRoles({ data, fijar }: { data: NonNullable<ReturnType<typeof useM
             </tr>
           ))}
           {(data.acciones ?? []).length > 0 && (
-            <tr className="border-t bg-slate-50">
-              <td colSpan={ROLES.length + 1} className="px-3 py-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
+            <tr className="border-t bg-surface-2">
+              <td colSpan={ROLES.length + 1} className="px-3 py-2 text-xs font-semibold uppercase tracking-wide text-content-muted">
                 Permisos por acción
               </td>
             </tr>
@@ -124,7 +124,7 @@ function MatrizUsuario({ data, fijar }: { data: NonNullable<ReturnType<typeof us
 
       {usuario && (
         <>
-          <p className="mb-2 text-xs text-slate-500">
+          <p className="mb-2 text-xs text-content-muted">
             Una regla por usuario tiene prioridad sobre la de su rol. Deja sin regla para heredar del rol ({usuario.rol}).
           </p>
           <div className="table-wrap">
@@ -137,7 +137,7 @@ function MatrizUsuario({ data, fijar }: { data: NonNullable<ReturnType<typeof us
                   return (
                     <tr key={m.id} className="border-t">
                       <td className="px-3 py-2 font-medium">{m.etiqueta}
-                        {regla === undefined && <span className="ml-2 text-xs text-slate-400">(hereda: {heredado ? 'sí' : 'no'})</span>}
+                        {regla === undefined && <span className="ml-2 text-xs text-content-muted">(hereda: {heredado ? 'sí' : 'no'})</span>}
                       </td>
                       <td className="px-3 py-2 text-center">
                         <Interruptor
@@ -150,8 +150,8 @@ function MatrizUsuario({ data, fijar }: { data: NonNullable<ReturnType<typeof us
                   );
                 })}
                 {(data.acciones ?? []).length > 0 && (
-                  <tr className="border-t bg-slate-50">
-                    <td colSpan={2} className="px-3 py-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  <tr className="border-t bg-surface-2">
+                    <td colSpan={2} className="px-3 py-2 text-xs font-semibold uppercase tracking-wide text-content-muted">
                       Permisos por acción
                     </td>
                   </tr>
@@ -162,7 +162,7 @@ function MatrizUsuario({ data, fijar }: { data: NonNullable<ReturnType<typeof us
                   return (
                     <tr key={a.id} className="border-t">
                       <td className="px-3 py-2 font-medium">{a.etiqueta}
-                        {regla === undefined && <span className="ml-2 text-xs text-slate-400">(hereda: {heredado ? 'sí' : 'no'})</span>}
+                        {regla === undefined && <span className="ml-2 text-xs text-content-muted">(hereda: {heredado ? 'sí' : 'no'})</span>}
                       </td>
                       <td className="px-3 py-2 text-center">
                         <Interruptor
@@ -192,7 +192,7 @@ function Interruptor({ activo, onChange, deshabilitado }: { activo: boolean; onC
       className={`relative inline-flex h-6 w-11 items-center rounded-full transition disabled:opacity-40 ${activo ? 'bg-money-500' : 'bg-rose-500'}`}
       aria-pressed={activo}
     >
-      <span className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition ${activo ? 'translate-x-5' : 'translate-x-0.5'}`} />
+      <span className={`inline-block h-5 w-5 transform rounded-full bg-surface shadow transition ${activo ? 'translate-x-5' : 'translate-x-0.5'}`} />
     </button>
   );
 }

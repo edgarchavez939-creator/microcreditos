@@ -65,7 +65,7 @@ export function CajaPanel() {
     return (
       <div>
         <h2 className="page-title">Caja del día</h2>
-        <p className="mb-5 text-sm text-slate-500">Cargando el estado de tu caja…</p>
+        <p className="mb-5 text-sm text-content-muted">Cargando el estado de tu caja…</p>
         <SkeletonIndicadores cantidad={6} />
       </div>
     );
@@ -75,7 +75,7 @@ export function CajaPanel() {
     <div className="space-y-6">
       <div>
         <div className="flex items-center gap-3"><h2 className="page-title">Caja del día</h2><EscalaMoneda /></div>
-        <p className="text-sm text-slate-500">
+        <p className="text-sm text-content-muted">
           {e.ya_cerrada
             ? 'La caja de hoy ya está cerrada.'
             : e.esta_abierta
@@ -83,7 +83,7 @@ export function CajaPanel() {
               : 'Tu caja está cerrada. Ábrela para comenzar a operar.'}
         </p>
         {e.hora_apertura && (
-          <p className="mt-0.5 text-xs text-slate-400">Apertura: {fechaHora(e.hora_apertura)}</p>
+          <p className="mt-0.5 text-xs text-content-muted">Apertura: {fechaHora(e.hora_apertura)}</p>
         )}
       </div>
 
@@ -156,9 +156,9 @@ function HistorialCierres() {
 
   return (
     <div className="card card-pad">
-      <button onClick={() => setAbierto((v) => !v)} className="flex w-full items-center justify-between text-sm font-semibold text-slate-700">
+      <button onClick={() => setAbierto((v) => !v)} className="flex w-full items-center justify-between text-sm font-semibold text-content">
         Historial de cierres{cierres ? ` (${cierres.length})` : ''}
-        <span className="text-slate-400">{abierto ? '▲' : '▼'}</span>
+        <span className="text-content-muted">{abierto ? '▲' : '▼'}</span>
       </button>
 
       {abierto && (
@@ -201,7 +201,7 @@ function HistorialCierres() {
           </div>
 
           {!cierres || cierres.length === 0 ? (
-            <p className="py-4 text-center text-sm text-slate-400">No hay cierres para los filtros seleccionados.</p>
+            <p className="py-4 text-center text-sm text-content-muted">No hay cierres para los filtros seleccionados.</p>
           ) : (
             <div className="table-wrap">
               <table className="table-base">
@@ -218,10 +218,10 @@ function HistorialCierres() {
                       <Fragment key={c.id}>
                         <tr onClick={() => setExpandido(abiertoFila ? null : c.id)} className="cursor-pointer">
                           <td>{fecha(c.fecha)}</td>
-                          {esAdmin && <td>{c.cerrado_por ?? '—'}{c.rol_usuario ? <span className="ml-1 text-xs text-slate-400">({c.rol_usuario.toLowerCase()})</span> : ''}</td>}
+                          {esAdmin && <td>{c.cerrado_por ?? '—'}{c.rol_usuario ? <span className="ml-1 text-xs text-content-muted">({c.rol_usuario.toLowerCase()})</span> : ''}</td>}
                           <td>{money(c.efectivo_esperado ?? 0)}</td>
                           <td>{c.efectivo_contado != null ? money(c.efectivo_contado) : '—'}</td>
-                          <td className={Math.abs(c.diferencia ?? 0) >= 0.01 ? ((c.diferencia ?? 0) < 0 ? 'text-rose-600' : 'text-amber-700') : 'text-slate-400'}>
+                          <td className={Math.abs(c.diferencia ?? 0) >= 0.01 ? ((c.diferencia ?? 0) < 0 ? 'text-rose-600' : 'text-amber-700') : 'text-content-muted'}>
                             {Math.abs(c.diferencia ?? 0) < 0.01 ? '—' : money(Math.abs(c.diferencia ?? 0))}
                           </td>
                           <td><span className={`rounded-full px-2 py-0.5 text-xs ${est.cls}`}>{est.txt}</span></td>
@@ -229,7 +229,7 @@ function HistorialCierres() {
                         </tr>
                         {abiertoFila && (
                           <tr>
-                            <td colSpan={esAdmin ? 7 : 6} className="bg-slate-50/60">
+                            <td colSpan={esAdmin ? 7 : 6} className="bg-surface-2/60">
                               <DetalleCierre c={c} />
                             </td>
                           </tr>
@@ -249,7 +249,7 @@ function HistorialCierres() {
 
 function DetalleCierre({ c }: { c: CierreFila }) {
   const dato = (label: string, val: string) => (
-    <div className="flex justify-between py-1 text-sm"><span className="text-slate-500">{label}</span><span className="font-medium tabular-nums">{val}</span></div>
+    <div className="flex justify-between py-1 text-sm"><span className="text-content-muted">{label}</span><span className="font-medium tabular-nums">{val}</span></div>
   );
   const dur = c.hora_apertura && c.hora_cierre
     ? (() => {
@@ -261,7 +261,7 @@ function DetalleCierre({ c }: { c: CierreFila }) {
   return (
     <div className="grid gap-x-8 gap-y-1 px-2 py-3 sm:grid-cols-2 lg:grid-cols-3">
       <div>
-        <div className="mb-1 text-xs font-semibold uppercase text-slate-400">Jornada</div>
+        <div className="mb-1 text-xs font-semibold uppercase text-content-muted">Jornada</div>
         {dato('Apertura', c.hora_apertura ? fechaHora(c.hora_apertura) : '—')}
         {dato('Cierre', c.hora_cierre ? fechaHora(c.hora_cierre) : '—')}
         {dato('Duración', dur)}
@@ -269,26 +269,26 @@ function DetalleCierre({ c }: { c: CierreFila }) {
         {dato('Cerró', c.cerrado_por ?? '—')}
       </div>
       <div>
-        <div className="mb-1 text-xs font-semibold uppercase text-slate-400">Ingresos</div>
+        <div className="mb-1 text-xs font-semibold uppercase text-content-muted">Ingresos</div>
         {dato('Base inicial', money(c.base_inicial ?? 0))}
         {dato('Cobros efectivo', money(c.cobros_efectivo ?? 0))}
         {dato('Cobros transferencia', money(c.cobros_transferencia ?? 0))}
         {dato('Recaudo seguros', money(c.recaudo_seguros ?? 0))}
       </div>
       <div>
-        <div className="mb-1 text-xs font-semibold uppercase text-slate-400">Egresos y arqueo</div>
+        <div className="mb-1 text-xs font-semibold uppercase text-content-muted">Egresos y arqueo</div>
         {dato('Desembolsos', money(c.total_desembolsos ?? 0))}
         {dato('Gastos', money(c.total_gastos ?? 0))}
         {dato('Efectivo esperado', money(c.efectivo_esperado ?? 0))}
         {dato('Efectivo contado', c.efectivo_contado != null ? money(c.efectivo_contado) : '—')}
         {dato('Diferencia', money(c.diferencia ?? 0))}
       </div>
-      <div className="sm:col-span-2 lg:col-span-3 mt-1 flex flex-wrap gap-x-6 gap-y-1 border-t border-slate-200 pt-2 text-xs text-slate-400">
+      <div className="sm:col-span-2 lg:col-span-3 mt-1 flex flex-wrap gap-x-6 gap-y-1 border-t border-border-token pt-2 text-xs text-content-muted">
         <span>{c.numero_pagos ?? 0} pago(s)</span>
         <span>{c.numero_desembolsos ?? 0} desembolso(s)</span>
         <span>{c.numero_gastos ?? 0} gasto(s)</span>
         <span>{c.numero_seguros ?? 0} seguro(s)</span>
-        {c.observacion && <span className="text-slate-500">Obs: {c.observacion}</span>}
+        {c.observacion && <span className="text-content-muted">Obs: {c.observacion}</span>}
       </div>
     </div>
   );
@@ -305,12 +305,12 @@ function ResumenCaja({ e }: { e: EstadoCaja }) {
   return (
     <div className="grid gap-4 lg:grid-cols-3">
       <div className="card card-pad lg:col-span-2">
-        <h3 className="mb-3 text-sm font-semibold text-slate-700">Movimientos del día</h3>
-        <dl className="divide-y divide-slate-100">
+        <h3 className="mb-3 text-sm font-semibold text-content">Movimientos del día</h3>
+        <dl className="divide-y divide-border-token">
           {filas.map(([label, val, dir]) => (
             <div key={label} className="flex items-center justify-between py-2 text-sm">
               <dt className="text-slate-600">{label}{label === 'Cobros por transferencia' && e.numero_cobros > 0 ? '' : ''}</dt>
-              <dd className={`font-semibold tabular-nums ${dir === 'out' ? 'text-rose-600' : 'text-slate-800'}`}>
+              <dd className={`font-semibold tabular-nums ${dir === 'out' ? 'text-rose-600' : 'text-content-strong'}`}>
                 {dir === 'out' ? '− ' : '+ '}{money(val)}
               </dd>
             </div>
@@ -327,10 +327,10 @@ function ResumenCaja({ e }: { e: EstadoCaja }) {
           <div className="mt-1 font-display text-2xl font-bold text-money-700">{money(e.efectivo_esperado)}</div>
           <div className="mt-1 text-xs text-money-700/60">Solo dinero físico (excluye transferencias)</div>
         </div>
-        <div className="rounded-2xl bg-slate-50 p-4 ring-1 ring-slate-100">
-          <div className="text-xs text-slate-500">Movimiento total del día</div>
-          <div className="mt-1 font-display text-lg font-bold text-slate-700">{money(e.movimiento_total)}</div>
-          <div className="mt-1 text-xs text-slate-400">{e.numero_cobros} cobro(s) · {e.numero_seguros} seguro(s)</div>
+        <div className="rounded-2xl bg-surface-2 p-4 ring-1 ring-border-token">
+          <div className="text-xs text-content-muted">Movimiento total del día</div>
+          <div className="mt-1 font-display text-lg font-bold text-content">{money(e.movimiento_total)}</div>
+          <div className="mt-1 text-xs text-content-muted">{e.numero_cobros} cobro(s) · {e.numero_seguros} seguro(s)</div>
         </div>
         {e.recaudo_seguros > 0 && (
           <div className="rounded-2xl bg-brand-50 p-4 ring-1 ring-brand-100">
@@ -358,9 +358,9 @@ function AbrirCaja({ onOk, toast }: { onOk: () => void; toast: ToastApi }) {
     <div className="card card-pad border-2 border-brand-200 bg-brand-50/40">
       <div className="mb-1 flex items-center gap-2">
         <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-brand-500 text-sm font-bold text-white">1</span>
-        <h3 className="text-base font-semibold text-slate-800">Abrir caja</h3>
+        <h3 className="text-base font-semibold text-content-strong">Abrir caja</h3>
       </div>
-      <p className="mb-3 text-sm text-slate-500">
+      <p className="mb-3 text-sm text-content-muted">
         Antes de cobrar, desembolsar o registrar gastos debes abrir tu caja. Ingresa el efectivo con el que inicias la jornada.
       </p>
       <div className="flex flex-wrap items-end gap-2">
@@ -394,8 +394,8 @@ function RegistrarGasto({ tipos, onOk, toast }: { tipos: string[]; onOk: () => v
   });
   return (
     <div className="card card-pad">
-      <h3 className="mb-2 text-sm font-semibold text-slate-700">Registrar gasto</h3>
-      <p className="mb-3 text-xs text-slate-400">Puedes registrar gastos en cualquier momento del día.</p>
+      <h3 className="mb-2 text-sm font-semibold text-content">Registrar gasto</h3>
+      <p className="mb-3 text-xs text-content-muted">Puedes registrar gastos en cualquier momento del día.</p>
       <div className="grid grid-cols-2 gap-2">
         <div>
           <label className="label">Tipo</label>
@@ -439,16 +439,16 @@ function Movimientos({ movimientos, cerrada, onOk, toast }: {
   if (movimientos.length === 0) return null;
   return (
     <div className="card card-pad">
-      <h3 className="mb-3 text-sm font-semibold text-slate-700">Movimientos de la jornada</h3>
+      <h3 className="mb-3 text-sm font-semibold text-content">Movimientos de la jornada</h3>
       <ul className="space-y-1.5">
         {movimientos.map((m) => {
           const esEgreso = m.tipo === 'EGRESO';
           const esGasto = m.referencia_tipo === 'GASTO';
           return (
-            <li key={m.id} className="flex items-center justify-between rounded-lg bg-slate-50 px-3 py-2 text-sm">
+            <li key={m.id} className="flex items-center justify-between rounded-lg bg-surface-2 px-3 py-2 text-sm">
               <div className="min-w-0">
-                <span className="font-medium text-slate-700">{m.concepto}</span>
-                <span className="ml-2 text-xs text-slate-400">
+                <span className="font-medium text-content">{m.concepto}</span>
+                <span className="ml-2 text-xs text-content-muted">
                   {fechaHora(m.created_at)} · {
                     m.medio_pago === 'EFECTIVO' ? 'Efectivo'
                     : m.medio_pago === 'TRANSFERENCIA' ? 'Transferencia'
@@ -491,8 +491,8 @@ function CierreArqueo({ e, onOk, toast }: { e: EstadoCaja; onOk: () => void; toa
 
   return (
     <div className="card card-pad border-t-4 border-brand-500">
-      <h3 className="mb-1 text-sm font-semibold text-slate-700">Cierre y arqueo de caja</h3>
-      <p className="mb-3 text-xs text-slate-400">Cuenta el efectivo físico e ingrésalo. El sistema calculará la diferencia.</p>
+      <h3 className="mb-1 text-sm font-semibold text-content">Cierre y arqueo de caja</h3>
+      <p className="mb-3 text-xs text-content-muted">Cuenta el efectivo físico e ingrésalo. El sistema calculará la diferencia.</p>
 
       <div className="grid gap-3 sm:grid-cols-2">
         <div className="rounded-xl bg-money-50 p-3 ring-1 ring-money-100">
@@ -526,8 +526,8 @@ function CierreArqueo({ e, onOk, toast }: { e: EstadoCaja; onOk: () => void; toa
           Revisar y cerrar caja
         </button>
       ) : (
-        <div className="mt-4 rounded-xl bg-slate-50 p-3 ring-1 ring-slate-200">
-          <p className="text-sm text-slate-700">
+        <div className="mt-4 rounded-xl bg-surface-2 p-3 ring-1 ring-border-token">
+          <p className="text-sm text-content">
             Vas a cerrar la caja con un efectivo contado de <b>{money(Number(contado))}</b>
             {hayDif && <> y una diferencia de <b>{money(Math.abs(diferencia))}</b> ({diferencia < 0 ? 'faltante' : 'sobrante'})</>}.
             Una vez cerrada, no podrás registrar más movimientos hoy.

@@ -8,10 +8,10 @@ import { MONEY_ESCALA_LABEL } from '@/lib/format';
 export function EscalaMoneda({ className = '' }: { className?: string }) {
   return (
     <span
-      className={`inline-flex items-center gap-1 rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-medium text-slate-500 ${className}`}
+      className={`inline-flex items-center gap-1 rounded-full bg-surface-3 px-2.5 py-0.5 text-xs font-medium text-content-muted ${className}`}
       title="Los valores se muestran en miles de pesos. Se capturan y almacenan en pesos completos."
     >
-      <span className="text-slate-400">×1.000</span>
+      <span className="text-content-muted">×1.000</span>
       {MONEY_ESCALA_LABEL}
     </span>
   );

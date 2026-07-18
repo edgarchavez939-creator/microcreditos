@@ -6,9 +6,16 @@ import { App } from './App';
 import './index.css';
 import { APP_VERSION } from './lib/version';
 import { cargarYAplicarMarca } from './lib/marca';
+import { aplicarTema, type Tema } from './stores/tema';
 
 // Cargar y aplicar la marca (nombre + color) antes de renderizar, para evitar parpadeo.
 cargarYAplicarMarca();
+
+// Aplicar el tema guardado (claro/oscuro/sistema) antes del render, para no parpadear.
+try {
+  const persistido = JSON.parse(localStorage.getItem('tema') ?? '{}');
+  aplicarTema((persistido?.state?.tema as Tema) ?? 'system');
+} catch { aplicarTema('system'); }
 
 // Purga única por versión: elimina service workers y cachés viejos que
 // puedan estar sirviendo datos o código antiguo (ejecuta una sola vez por versión).

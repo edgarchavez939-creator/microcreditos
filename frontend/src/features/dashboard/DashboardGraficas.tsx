@@ -34,7 +34,7 @@ export function DashboardGraficas({ areas }: { areas: number[] }) {
   const { data, isLoading } = useGraficas(areas);
 
   if (isLoading || !data) {
-    return <div className="h-40 animate-pulse rounded-2xl bg-slate-100" />;
+    return <div className="h-40 animate-pulse rounded-2xl bg-surface-3" />;
   }
 
   const hayRecaudo = data.recaudo.some((r) => r.total > 0);
@@ -44,7 +44,7 @@ export function DashboardGraficas({ areas }: { areas: number[] }) {
   return (
     <div className="space-y-5">
       <div className="card card-pad">
-        <h3 className="mb-3 text-sm font-semibold text-slate-700">Evolución del recaudo (últimos 30 días)</h3>
+        <h3 className="mb-3 text-sm font-semibold text-content">Evolución del recaudo (últimos 30 días)</h3>
         {hayRecaudo ? (
           <ResponsiveContainer width="100%" height={220}>
             <AreaChart data={data.recaudo} margin={{ top: 5, right: 10, left: 0, bottom: 0 }}>
@@ -62,13 +62,13 @@ export function DashboardGraficas({ areas }: { areas: number[] }) {
             </AreaChart>
           </ResponsiveContainer>
         ) : (
-          <p className="py-8 text-center text-sm text-slate-400">Aún no hay pagos registrados en el período.</p>
+          <p className="py-8 text-center text-sm text-content-muted">Aún no hay pagos registrados en el período.</p>
         )}
       </div>
 
       <div className="grid gap-5 lg:grid-cols-2">
         <div className="card card-pad">
-          <h3 className="mb-3 text-sm font-semibold text-slate-700">Cartera por área (saldo pendiente)</h3>
+          <h3 className="mb-3 text-sm font-semibold text-content">Cartera por área (saldo pendiente)</h3>
           {hayCartera ? (
             <ResponsiveContainer width="100%" height={240}>
               <PieChart>
@@ -81,12 +81,12 @@ export function DashboardGraficas({ areas }: { areas: number[] }) {
               </PieChart>
             </ResponsiveContainer>
           ) : (
-            <p className="py-8 text-center text-sm text-slate-400">Sin cartera activa.</p>
+            <p className="py-8 text-center text-sm text-content-muted">Sin cartera activa.</p>
           )}
         </div>
 
         <div className="card card-pad">
-          <h3 className="mb-3 text-sm font-semibold text-slate-700">Al día vs. en mora, por área</h3>
+          <h3 className="mb-3 text-sm font-semibold text-content">Al día vs. en mora, por área</h3>
           {hayMora ? (
             <ResponsiveContainer width="100%" height={240}>
               <BarChart data={data.mora} margin={{ top: 5, right: 10, left: 0, bottom: 0 }}>
@@ -100,7 +100,7 @@ export function DashboardGraficas({ areas }: { areas: number[] }) {
               </BarChart>
             </ResponsiveContainer>
           ) : (
-            <p className="py-8 text-center text-sm text-slate-400">Sin datos de mora.</p>
+            <p className="py-8 text-center text-sm text-content-muted">Sin datos de mora.</p>
           )}
         </div>
       </div>

@@ -41,7 +41,7 @@ export function ClientesList({ onNuevo, onVerPerfil }: { onNuevo: () => void; on
               <tbody>
                 {clientes.map((c) => (
                   <tr key={c.id} onClick={() => onVerPerfil(c.id)} className="cursor-pointer">
-                    <td className="text-slate-400">{c.id}</td>
+                    <td className="text-content-muted">{c.id}</td>
                     <td className="font-medium">{c.nombres} {c.apellidos}</td>
                     <td>{c.tipo_documento} {c.numero_documento}</td>
                     <td>{c.telefono_principal ?? '—'}</td>
@@ -62,13 +62,13 @@ export function ClientesList({ onNuevo, onVerPerfil }: { onNuevo: () => void; on
           <div className="space-y-2.5 sm:hidden">
             {clientes.map((c) => (
               <button key={c.id} onClick={() => onVerPerfil(c.id)}
-                className="block w-full rounded-xl bg-white p-3.5 text-left shadow-card ring-1 ring-slate-100 transition active:scale-[0.99]">
+                className="block w-full rounded-xl bg-surface p-3.5 text-left shadow-card ring-1 ring-border-token transition active:scale-[0.99]">
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0">
                     <div className="truncate font-semibold text-ink">{c.nombres} {c.apellidos}</div>
-                    <div className="mt-0.5 text-xs text-slate-500">{c.tipo_documento} {c.numero_documento}</div>
+                    <div className="mt-0.5 text-xs text-content-muted">{c.tipo_documento} {c.numero_documento}</div>
                   </div>
-                  <span className="shrink-0 rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-600">{c.area ?? 'Sin área'}</span>
+                  <span className="shrink-0 rounded-full bg-surface-3 px-2 py-0.5 text-xs text-slate-600">{c.area ?? 'Sin área'}</span>
                 </div>
                 <div className="mt-2 flex items-center justify-between text-sm">
                   <span className="text-slate-600">{c.telefono_principal ?? 'Sin teléfono'}</span>

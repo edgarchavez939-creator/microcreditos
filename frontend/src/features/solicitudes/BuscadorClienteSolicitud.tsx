@@ -51,7 +51,7 @@ export function BuscadorClienteSolicitud() {
   if (crear) {
     return (
       <div>
-        <p className="mb-3 text-sm text-slate-500">
+        <p className="mb-3 text-sm text-content-muted">
           El documento <b>{documento}</b> no está registrado. Crea el cliente para continuar.
         </p>
         <ClienteForm
@@ -71,11 +71,11 @@ export function BuscadorClienteSolicitud() {
             <div>
               <div className="text-xs font-medium uppercase tracking-wide text-money-700">Cliente encontrado</div>
               <div className="mt-0.5 font-semibold">{cliente.nombres} {cliente.apellidos}</div>
-              <div className="text-sm text-slate-500">
+              <div className="text-sm text-content-muted">
                 {cliente.tipo_documento} {cliente.numero_documento}
                 {cliente.telefono_principal ? ` · ${cliente.telefono_principal}` : ''}
               </div>
-              <div className="text-sm text-slate-500">
+              <div className="text-sm text-content-muted">
                 {cliente.area ? `Área: ${cliente.area}` : ''}{cliente.cobrador ? ` · Cobrador: ${cliente.cobrador}` : ''}
               </div>
             </div>
@@ -145,7 +145,7 @@ export function BuscadorClienteSolicitud() {
       </label>
 
       {noExiste && (
-        <div className="mt-3 rounded-xl bg-slate-50 p-4 text-sm ring-1 ring-slate-200">
+        <div className="mt-3 rounded-xl bg-surface-2 p-4 text-sm ring-1 ring-border-token">
           <p className="text-slate-600">No hay ningún cliente con el documento <b>{documento}</b>.</p>
           <button onClick={() => setCrear(true)} className="btn-primary btn-sm mt-2">
             Registrar cliente nuevo

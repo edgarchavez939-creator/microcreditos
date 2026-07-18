@@ -89,7 +89,7 @@ function ToastItem({ toast, onCerrar }: { toast: Toast; onCerrar: () => void }) 
 
   return (
     <div
-      className={`pointer-events-auto flex w-full max-w-sm items-start gap-3 overflow-hidden rounded-xl bg-white shadow-lift ring-1 ring-slate-200 transition-all duration-300 ${
+      className={`pointer-events-auto flex w-full max-w-sm items-start gap-3 overflow-hidden rounded-xl bg-surface shadow-lift ring-1 ring-border-token transition-all duration-300 ${
         visible ? 'translate-y-0 opacity-100' : '-translate-y-2 opacity-0'
       }`}
       role="status"
@@ -98,7 +98,7 @@ function ToastItem({ toast, onCerrar }: { toast: Toast; onCerrar: () => void }) 
       <div className="flex flex-1 items-start gap-2.5 py-3 pr-2">
         <span className="mt-0.5 shrink-0">{s.icono}</span>
         <p className="flex-1 text-sm text-ink">{toast.mensaje}</p>
-        <button onClick={onCerrar} aria-label="Cerrar" className="shrink-0 text-slate-300 hover:text-slate-500">
+        <button onClick={onCerrar} aria-label="Cerrar" className="shrink-0 text-slate-300 hover:text-content-muted">
           <svg viewBox="0 0 20 20" fill="none" className="h-4 w-4">
             <path d="M6 6l8 8M14 6l-8 8" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
           </svg>

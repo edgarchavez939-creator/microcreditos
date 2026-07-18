@@ -41,13 +41,13 @@ export function TransferenciasPanel() {
   return (
     <div>
       <h2 className="page-title">Transferencias</h2>
-      <p className="mb-5 text-sm text-slate-500">Valida los pagos recibidos por transferencia: revisa el comprobante y aprueba o rechaza.</p>
+      <p className="mb-5 text-sm text-content-muted">Valida los pagos recibidos por transferencia: revisa el comprobante y aprueba o rechaza.</p>
 
-      <div className="mb-4 flex rounded-xl bg-slate-100 p-1 w-fit">
+      <div className="mb-4 flex rounded-xl bg-surface-3 p-1 w-fit">
         {FILTROS.map((f) => (
           <button key={f.v} onClick={() => setEstado(f.v)}
             className={`rounded-lg px-4 py-1.5 text-sm font-medium transition ${
-              estado === f.v ? 'bg-white text-ink shadow-card' : 'text-slate-500 hover:text-ink'
+              estado === f.v ? 'bg-surface text-ink shadow-card' : 'text-content-muted hover:text-ink'
             }`}>
             {f.t}
           </button>
@@ -55,7 +55,7 @@ export function TransferenciasPanel() {
       </div>
 
       {isLoading ? (
-        <p className="text-sm text-slate-500">Cargando transferencias…</p>
+        <p className="text-sm text-content-muted">Cargando transferencias…</p>
       ) : !data || data.length === 0 ? (
         <EstadoVacio icono={IconosVacio.transferencia} titulo="Sin transferencias" descripcion="No hay transferencias en este estado por ahora." />
       ) : (
@@ -110,7 +110,7 @@ function TarjetaTransferencia({ t }: { t: Transferencia }) {
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <div className="font-semibold">{t.cliente}{t.numero_credito ? ` · ${t.numero_credito}` : ''}</div>
-          <div className="mt-0.5 text-sm text-slate-500">
+          <div className="mt-0.5 text-sm text-content-muted">
             {t.banco} · Ref. {t.referencia} · {fechaHora(t.created_at)}
             {t.registrado_por ? ` · Registró: ${t.registrado_por}` : ''}
           </div>
@@ -139,14 +139,14 @@ function TarjetaTransferencia({ t }: { t: Transferencia }) {
         {verComprobante && (
           <div className="mt-2">
             {cargandoComp ? (
-              <p className="text-sm text-slate-500">Cargando comprobante…</p>
+              <p className="text-sm text-content-muted">Cargando comprobante…</p>
             ) : sinComp || !comprobante ? (
               <p className="text-sm text-amber-700">Esta transferencia no tiene comprobante adjunto.</p>
             ) : (
               <div>
                 <img src={`data:${comprobante.mime};base64,${comprobante.base64}`} alt={comprobante.nombre}
-                  className="max-h-96 rounded-xl ring-1 ring-slate-200" />
-                <p className="mt-1 text-xs text-slate-400">
+                  className="max-h-96 rounded-xl ring-1 ring-border-token" />
+                <p className="mt-1 text-xs text-content-muted">
                   {comprobante.nombre}
                   {comprobante.subido_por ? ` · adjuntado por ${comprobante.subido_por}` : ''}
                   {comprobante.fecha_carga ? ` · ${fechaHora(comprobante.fecha_carga)}` : ''}

@@ -122,14 +122,14 @@ export function ReportesPanel() {
   return (
     <div>
       <div className="flex items-center gap-3"><h2 className="page-title">Reportes</h2><EscalaMoneda /></div>
-      <p className="mb-5 text-sm text-slate-500">Consulta la cartera, los pagos y la mora, y expórtalos a Excel.</p>
+      <p className="mb-5 text-sm text-content-muted">Consulta la cartera, los pagos y la mora, y expórtalos a Excel.</p>
 
       <div className="mb-4 flex flex-wrap items-end gap-3">
-        <div className="flex rounded-xl bg-slate-100 p-1">
+        <div className="flex rounded-xl bg-surface-3 p-1">
           {REPORTES.map((r) => (
             <button key={r.id} onClick={() => setTipo(r.id)}
               className={`rounded-lg px-4 py-1.5 text-sm font-medium transition ${
-                tipo === r.id ? 'bg-white text-ink shadow-card' : 'text-slate-500 hover:text-ink'
+                tipo === r.id ? 'bg-surface text-ink shadow-card' : 'text-content-muted hover:text-ink'
               }`}>
               {r.t}
             </button>
@@ -139,11 +139,11 @@ export function ReportesPanel() {
         {['pagos','caja','productividad'].includes(tipo) && (
           <>
             <label className="text-sm">
-              <span className="block text-slate-500">Desde</span>
+              <span className="block text-content-muted">Desde</span>
               <input type="date" value={desde} onChange={(e) => setDesde(e.target.value)} className="input" />
             </label>
             <label className="text-sm">
-              <span className="block text-slate-500">Hasta</span>
+              <span className="block text-content-muted">Hasta</span>
               <input type="date" value={hasta} onChange={(e) => setHasta(e.target.value)} className="input" />
             </label>
           </>

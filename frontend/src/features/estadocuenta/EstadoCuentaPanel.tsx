@@ -63,16 +63,16 @@ export function EstadoCuentaPanel() {
       </div>
 
       {isLoading ? (
-        <p className="text-sm text-slate-400">Cargando…</p>
+        <p className="text-sm text-content-muted">Cargando…</p>
       ) : !data?.data || data.data.length === 0 ? (
-        <div className="rounded-2xl border-2 border-dashed border-slate-200 bg-gradient-to-b from-slate-50/80 to-white py-14 text-center">
-          <p className="text-base font-semibold text-slate-700">Sin obligaciones pendientes</p>
-          <p className="mt-1 text-sm text-slate-500">Ningún empleado tiene saldos pendientes. Usa el selector de arriba para abrir el estado de cuenta de un empleado y registrarle un préstamo.</p>
+        <div className="rounded-2xl border-2 border-dashed border-border-token bg-gradient-to-b from-slate-50/80 to-white py-14 text-center">
+          <p className="text-base font-semibold text-content">Sin obligaciones pendientes</p>
+          <p className="mt-1 text-sm text-content-muted">Ningún empleado tiene saldos pendientes. Usa el selector de arriba para abrir el estado de cuenta de un empleado y registrarle un préstamo.</p>
         </div>
       ) : (
         <>
           <div className="card card-pad mb-4 flex items-center justify-between">
-            <span className="text-sm text-slate-500">Total pendiente por cobrar a empleados</span>
+            <span className="text-sm text-content-muted">Total pendiente por cobrar a empleados</span>
             <span className="font-display text-xl font-bold text-rose-600">{money(data.total_pendiente)}</span>
           </div>
           <div className="space-y-2">
@@ -80,8 +80,8 @@ export function EstadoCuentaPanel() {
               <div key={e.empleado_id} className="card card-pad flex cursor-pointer items-center justify-between hover:ring-1 hover:ring-brand-200"
                 onClick={() => setEmpleado(e)}>
                 <div>
-                  <div className="font-semibold text-slate-800">{e.nombre}</div>
-                  <div className="text-xs text-slate-400">
+                  <div className="font-semibold text-content-strong">{e.nombre}</div>
+                  <div className="text-xs text-content-muted">
                     {e.rol?.toLowerCase()} · {e.obligaciones_activas} obligación(es) activa(s)
                   </div>
                   <div className="mt-1 flex gap-2 text-xs">
@@ -91,7 +91,7 @@ export function EstadoCuentaPanel() {
                 </div>
                 <div className="text-right">
                   <div className="font-display text-lg font-bold text-rose-600">{money(e.saldo_pendiente)}</div>
-                  <div className="text-xs text-slate-400">pendiente ▸</div>
+                  <div className="text-xs text-content-muted">pendiente ▸</div>
                 </div>
               </div>
             ))}
@@ -151,19 +151,19 @@ function DetalleEmpleado({ empleado, onVolver }: { empleado: Consolidado; onVolv
       )}
 
       {isLoading ? (
-        <p className="text-sm text-slate-400">Cargando…</p>
+        <p className="text-sm text-content-muted">Cargando…</p>
       ) : (
         <>
           {/* Obligaciones */}
-          <h3 className="mb-2 text-sm font-semibold text-slate-700">Obligaciones</h3>
+          <h3 className="mb-2 text-sm font-semibold text-content">Obligaciones</h3>
           <div className="mb-5 space-y-2">
             {(data.obligaciones as Obligacion[]).length === 0 ? (
-              <p className="rounded-xl bg-slate-50 py-6 text-center text-sm text-slate-400">Sin obligaciones registradas.</p>
+              <p className="rounded-xl bg-surface-2 py-6 text-center text-sm text-content-muted">Sin obligaciones registradas.</p>
             ) : (data.obligaciones as Obligacion[]).map((o) => (
               <div key={o.id} className="card card-pad flex flex-wrap items-center justify-between gap-2">
                 <div>
                   <div className="flex items-center gap-2">
-                    <span className="font-medium text-slate-700">{o.concepto}</span>
+                    <span className="font-medium text-content">{o.concepto}</span>
                     <span className={`rounded-full px-2 py-0.5 text-xs ${o.estado === 'PAGADO' ? 'bg-money-50 text-money-700' : 'bg-amber-50 text-amber-800'}`}>
                       {o.estado === 'PAGADO' ? 'Pagado' : 'Pendiente'}
                     </span>
@@ -171,14 +171,14 @@ function DetalleEmpleado({ empleado, onVolver }: { empleado: Consolidado; onVolv
                       {o.tipo === 'DESCUADRE_CAJA' ? 'Descuadre' : 'Préstamo'}
                     </span>
                   </div>
-                  <div className="mt-0.5 text-xs text-slate-400">
+                  <div className="mt-0.5 text-xs text-content-muted">
                     {fecha(o.created_at)} · Monto original {money(o.monto_original)}
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
                   <div className="text-right">
                     <div className="font-display text-base font-bold tabular-nums">{money(o.saldo)}</div>
-                    <div className="text-xs text-slate-400">saldo</div>
+                    <div className="text-xs text-content-muted">saldo</div>
                   </div>
                   {o.estado !== 'PAGADO' && (
                     <button onClick={() => setAbonarA(o)} className="btn-primary btn-sm">Abonar</button>
@@ -189,13 +189,13 @@ function DetalleEmpleado({ empleado, onVolver }: { empleado: Consolidado; onVolv
           </div>
 
           {/* Extracto de movimientos */}
-          <h3 className="mb-2 text-sm font-semibold text-slate-700">Movimientos (extracto)</h3>
+          <h3 className="mb-2 text-sm font-semibold text-content">Movimientos (extracto)</h3>
           <div className="table-wrap">
             <table className="table-base">
               <thead><tr><th>Fecha</th><th>Concepto</th><th className="text-right">Débito</th><th className="text-right">Crédito</th><th className="text-right">Saldo</th><th>Usuario</th></tr></thead>
               <tbody>
                 {(data.movimientos as Movimiento[]).length === 0 ? (
-                  <tr><td colSpan={6} className="py-6 text-center text-slate-400">Sin movimientos.</td></tr>
+                  <tr><td colSpan={6} className="py-6 text-center text-content-muted">Sin movimientos.</td></tr>
                 ) : (data.movimientos as Movimiento[]).map((m) => (
                   <tr key={m.id}>
                     <td className="whitespace-nowrap text-xs">{fechaHora(m.created_at)}</td>
@@ -203,7 +203,7 @@ function DetalleEmpleado({ empleado, onVolver }: { empleado: Consolidado; onVolv
                     <td className="text-right tabular-nums text-rose-600">{m.debito > 0 ? money(m.debito) : '—'}</td>
                     <td className="text-right tabular-nums text-money-700">{m.credito > 0 ? money(m.credito) : '—'}</td>
                     <td className="text-right tabular-nums">{money(m.saldo_obligacion)}</td>
-                    <td className="text-xs text-slate-400">{m.registrado_por ?? '—'}</td>
+                    <td className="text-xs text-content-muted">{m.registrado_por ?? '—'}</td>
                   </tr>
                 ))}
               </tbody>
@@ -219,12 +219,12 @@ function DetalleEmpleado({ empleado, onVolver }: { empleado: Consolidado; onVolv
 }
 
 function Indicador({ titulo, valor, detalle, tono = 'neutro' }: { titulo: string; valor: string; detalle?: string; tono?: string }) {
-  const cls = { rose: 'text-rose-600', money: 'text-money-700', neutro: 'text-slate-800' }[tono] ?? 'text-slate-800';
+  const cls = { rose: 'text-rose-600', money: 'text-money-700', neutro: 'text-content-strong' }[tono] ?? 'text-content-strong';
   return (
     <div className="card card-pad">
-      <div className="text-xs uppercase tracking-wide text-slate-400">{titulo}</div>
+      <div className="text-xs uppercase tracking-wide text-content-muted">{titulo}</div>
       <div className={`mt-1 font-display text-lg font-bold ${cls}`}>{valor}</div>
-      {detalle && <div className="text-xs text-slate-400">{detalle}</div>}
+      {detalle && <div className="text-xs text-content-muted">{detalle}</div>}
     </div>
   );
 }
@@ -251,9 +251,9 @@ function ModalPrestamo({ empleadoId, onClose }: { empleadoId: number; onClose: (
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={onClose}>
-      <div className="animate-fade-in-scale w-full max-w-md rounded-2xl bg-white p-5 shadow-xl" onClick={(e) => e.stopPropagation()}>
-        <h3 className="text-base font-bold text-slate-800">Registrar préstamo interno</h3>
-        <p className="mb-4 text-sm text-slate-500">Sin intereses, sin plazo. El saldo se reduce con abonos.</p>
+      <div className="animate-fade-in-scale w-full max-w-md rounded-2xl bg-surface p-5 shadow-xl" onClick={(e) => e.stopPropagation()}>
+        <h3 className="text-base font-bold text-content-strong">Registrar préstamo interno</h3>
+        <p className="mb-4 text-sm text-content-muted">Sin intereses, sin plazo. El saldo se reduce con abonos.</p>
         <label className="label">Monto</label>
         <input type="number" value={monto} onChange={(e) => setMonto(e.target.value)} className="input" placeholder="0" />
         <label className="label mt-3">Concepto</label>
@@ -292,10 +292,10 @@ function ModalAbono({ empleadoId, obligacion, onClose }: { empleadoId: number; o
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={onClose}>
-      <div className="animate-fade-in-scale w-full max-w-md rounded-2xl bg-white p-5 shadow-xl" onClick={(e) => e.stopPropagation()}>
-        <h3 className="text-base font-bold text-slate-800">Registrar abono</h3>
-        <p className="mb-1 text-sm text-slate-500">{obligacion.concepto}</p>
-        <p className="mb-4 text-sm font-medium text-slate-700">Saldo actual: {money(obligacion.saldo)}</p>
+      <div className="animate-fade-in-scale w-full max-w-md rounded-2xl bg-surface p-5 shadow-xl" onClick={(e) => e.stopPropagation()}>
+        <h3 className="text-base font-bold text-content-strong">Registrar abono</h3>
+        <p className="mb-1 text-sm text-content-muted">{obligacion.concepto}</p>
+        <p className="mb-4 text-sm font-medium text-content">Saldo actual: {money(obligacion.saldo)}</p>
         <label className="label">Monto del abono</label>
         <input type="number" value={monto} onChange={(e) => setMonto(e.target.value)} className="input" placeholder="0" max={obligacion.saldo} />
         <button onClick={() => setMonto(String(obligacion.saldo))} className="mt-1 text-xs text-brand-600 hover:underline">Pagar saldo total ({money(obligacion.saldo)})</button>
