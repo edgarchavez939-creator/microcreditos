@@ -18,7 +18,7 @@ use App\Http\Controllers\Api\OtpController;
 use App\Http\Controllers\Api\PermisoController;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/health', fn () => response()->json(['status' => 'ok', 'version' => 'v78-mapa-en-vivo', 'ts' => now()]));
+Route::get('/health', fn () => response()->json(['status' => 'ok', 'version' => 'v80-dashboards-rol', 'ts' => now()]));
 
 // Marca pública (sin auth): nombre y color para aplicar en login y en toda la app.
 Route::get('/marca-publica', function () {
@@ -45,6 +45,7 @@ Route::middleware(['auth:api', 'mantenimiento'])->group(function () {
     // Áreas y Clientes
     Route::get('dashboard', [DashboardController::class, 'index'])->middleware('modulo:inicio');
     Route::get('dashboard/graficas', [DashboardController::class, 'graficas'])->middleware('modulo:inicio');
+    Route::get('dashboard/gerencial', [DashboardController::class, 'gerencial'])->middleware('modulo:inicio');
     Route::get('reportes/cartera', [ReporteController::class, 'cartera'])->middleware('modulo:reportes');
 
     // ===== Gestión de mora / cobranza =====

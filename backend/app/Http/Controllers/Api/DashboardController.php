@@ -11,7 +11,76 @@ use Illuminate\Support\Facades\DB;
 
 class DashboardController extends Controller
 {
+    /**
+     * Datos gerenciales exclusivos del ADMINISTRADOR para su dashboard estratégico:
+     * ranking de recaudo por cobrador, descuadres del día, desembolsos del día,
+     * y cajas pendientes de recibir. Complementa el índice general.
+     */
+    public function gerencial(Request $request)
+    {
+        $u = $request->user();
+        abort_unless($u->esAdministrador(), 403, 'Solo administración.');
+
+        $hoy = now()->toDateString();
+        $inicioMes = now()->startOfMonth()->toDateString();
+
+        // Ranking de cobradores por recaudo del mes (top 8)
+        $ranking = DB::table('pagos as p')
+            ->join('usuarios as u', 'u.id', '=', 'p.registrado_por')
+            ->whereDate('p.created_at', '>=', $inicioMes)
+            ->where('p.estado', 'APLICADO')
+            ->whereIn('u.rol', ['COBRADOR', 'SUPERVISOR'])
+            ->groupBy('u.id', 'u.nombre', 'u.rol')
+            ->select('u.id', 'u.nombre', 'u.rol',
+                DB::raw('SUM(p.valor) as recaudo'), DB::raw('COUNT(*) as pagos'))
+            ->orderByDesc('recaudo')
+            ->limit(8)
+            ->get();
+
+        // Desembolsos del día
+        $desembolsosHoy = DB::table('solicitudes')
+            ->whereDate('fecha_desembolso', $hoy)
+            ->whereNotNull('monto_desembolsado')
+            ->selectRaw('COUNT(*) as n, COALESCE(SUM(monto_desembolsado),0) as total')
+            ->first();
+
+        // Descuadres del día (faltantes en cierres de caja)
+        $descuadresHoy = DB::table('cierres_caja')
+            ->whereDate('fecha', $hoy)
+            ->where('diferencia', '<', -0.009)
+            ->selectRaw('COUNT(*) as n, COALESCE(SUM(ABS(diferencia)),0) as total')
+            ->first();
+
+        // Cajas pendientes de recibir (tesorería)
+        $cajasPendientes = (int) DB::table('cierres_caja')
+            ->whereDate('fecha', $hoy)
+            ->where('estado', 'PENDIENTE_ENTREGA')
+            ->count();
+
+        // Obligaciones de empleados pendientes
+        $obligacionesPend = DB::table('obligaciones_empleado')
+            ->where('estado', 'PENDIENTE')
+            ->selectRaw('COUNT(DISTINCT empleado_id) as empleados, COALESCE(SUM(saldo),0) as total')
+            ->first();
+
+        return response()->json(['data' => [
+            'ranking' => $ranking->map(fn ($r) => [
+                'nombre' => $r->nombre, 'rol' => $r->rol,
+                'recaudo' => (float) $r->recaudo, 'pagos' => (int) $r->pagos,
+            ]),
+            'desembolsos_hoy' => ['cantidad' => (int) ($desembolsosHoy->n ?? 0), 'total' => (float) ($desembolsosHoy->total ?? 0)],
+            'descuadres_hoy'  => ['cantidad' => (int) ($descuadresHoy->n ?? 0), 'total' => (float) ($descuadresHoy->total ?? 0)],
+            'cajas_pendientes' => $cajasPendientes,
+            'obligaciones_empleados' => ['empleados' => (int) ($obligacionesPend->empleados ?? 0), 'total' => (float) ($obligacionesPend->total ?? 0)],
+        ]]);
+    }
+
     public function index(Request $request, \App\Services\MoraService $mora)
+    {
+        return $this->indexReal($request, $mora);
+    }
+
+    private function indexReal(Request $request, \App\Services\MoraService $mora)
     {
         $mora->sincronizar();
         $u = $request->user();

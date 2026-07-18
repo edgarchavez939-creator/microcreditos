@@ -3,29 +3,31 @@ import { lazy, Suspense, useState } from 'react';
 import { api } from '@/lib/api/client';
 import { money } from '@/lib/format';
 import { useAuthStore } from '@/stores/auth';
-import { useAreas } from '@/features/clientes/hooks';
 import { SkeletonIndicadores } from '@/components/ui/Skeleton';
 import { EscalaMoneda } from '@/components/ui/EscalaMoneda';
+import { KpiCard, AccionRapida, KpiIcon } from './kpis';
+import { useNavStore } from '@/stores/nav';
+
 const DashboardGraficas = lazy(() => import('./DashboardGraficas').then((m) => ({ default: m.DashboardGraficas })));
 
 interface Indicadores {
-  prestado: number;
-  por_recaudar: number;
-  recuperado: number;
-  saldo_en_calle: number;
+  prestado: number; por_recaudar: number; recuperado: number; saldo_en_calle: number;
   recaudado_hoy: number;
   cobros_hoy: { cantidad: number; total: number };
   mora: { cantidad: number; total: number };
-  creditos_activos: number;
-  pendientes_aprobacion: number;
-  exoneraciones_pendientes: number;
+  creditos_activos: number; pendientes_aprobacion: number; exoneraciones_pendientes: number;
   kpis?: {
-    indice_mora: number;
-    cartera_riesgo_30: number;
-    pct_cartera_riesgo: number;
-    tasa_recuperacion: number;
-    promesas_vigentes: number;
+    indice_mora: number; cartera_riesgo_30: number; pct_cartera_riesgo: number;
+    tasa_recuperacion: number; promesas_vigentes: number;
   };
+}
+
+interface Gerencial {
+  ranking: { nombre: string; rol: string; recaudo: number; pagos: number }[];
+  desembolsos_hoy: { cantidad: number; total: number };
+  descuadres_hoy: { cantidad: number; total: number };
+  cajas_pendientes: number;
+  obligaciones_empleados: { empleados: number; total: number };
 }
 
 function useIndicadores(areas: number[]) {
@@ -34,127 +36,205 @@ function useIndicadores(areas: number[]) {
     queryFn: async () => (await api.get<{ data: Indicadores }>('/dashboard', {
       params: areas.length ? { areas: areas.join(',') } : undefined,
     })).data.data,
-    refetchInterval: 60_000, // refresca cada minuto
+    refetchInterval: 60_000,
   });
 }
 
 export function DashboardPanel() {
   const rol = useAuthStore((s) => s.usuario?.rol);
-  const [areas, setAreas] = useState<number[]>([]);
-  const { data: d, isLoading, isError } = useIndicadores(areas);
-  const alcance = rol === 'COBRADOR' ? 'de tu cartera' : rol === 'SUPERVISOR' ? 'de tus áreas' : 'de toda la operación';
-  const puedeFiltrar = rol === 'ADMINISTRADOR' || rol === 'SUPERVISOR';
+  if (rol === 'COBRADOR') return <DashboardCobrador />;
+  if (rol === 'SUPERVISOR') return <DashboardSupervisor />;
+  return <DashboardAdmin />;
+}
+
+function saludo() {
+  const h = new Date().getHours();
+  return h < 12 ? 'Buenos días' : h < 19 ? 'Buenas tardes' : 'Buenas noches';
+}
+
+function Cabecera({ subtitulo }: { subtitulo: string }) {
+  const nombre = useAuthStore((s) => s.usuario?.nombre ?? '');
+  const primerNombre = nombre.split(' ')[0];
+  return (
+    <div className="mb-5">
+      <div className="flex items-center gap-3">
+        <h2 className="page-title">{saludo()}, {primerNombre}</h2>
+        <EscalaMoneda />
+      </div>
+      <p className="mt-0.5 text-sm text-content-muted">{subtitulo}</p>
+    </div>
+  );
+}
+
+function DashboardAdmin() {
+  const [areas] = useState<number[]>([]);
+  const { data: d, isLoading } = useIndicadores(areas);
+  const { data: g } = useQuery({
+    queryKey: ['dashboard-gerencial'],
+    queryFn: async () => (await api.get<{ data: Gerencial }>('/dashboard/gerencial')).data.data,
+    refetchInterval: 60_000,
+  });
+  const irA = useNavStore((s) => s.irA);
+
+  if (isLoading || !d) return <><Cabecera subtitulo="Panorama estratégico de toda la operación." /><SkeletonIndicadores cantidad={8} /></>;
 
   return (
     <div>
-      <div className="flex items-center gap-3"><h2 className="page-title">Inicio</h2><EscalaMoneda /></div>
-      <p className="mb-4 text-sm text-content-muted">Resumen {alcance} al día de hoy.</p>
+      <Cabecera subtitulo="Panorama estratégico de toda la operación." />
 
-      {puedeFiltrar && <FiltroAreas seleccion={areas} onCambio={setAreas} />}
+      <div className="mb-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <KpiCard titulo="Recaudado hoy" valor={money(d.recaudado_hoy)} detalle="Pagos del día" tono="money" icon={<KpiIcon.money />} />
+        <KpiCard titulo="Desembolsos hoy" valor={money(g?.desembolsos_hoy.total ?? 0)}
+          detalle={`${g?.desembolsos_hoy.cantidad ?? 0} crédito(s)`} tono="brand" icon={<KpiIcon.wallet />} />
+        <KpiCard titulo="En mora" valor={money(d.mora.total)} detalle={`${d.mora.cantidad} cuota(s) vencida(s)`}
+          tono={d.mora.cantidad > 0 ? 'alerta' : 'neutro'} icon={<KpiIcon.alert />} />
+        <KpiCard titulo="Saldo en calle" valor={money(d.saldo_en_calle)} detalle="Pendiente por cobrar" icon={<KpiIcon.trend />} />
+      </div>
 
-      {isLoading ? (
-        <SkeletonIndicadores cantidad={8} />
-      ) : isError || !d ? (
-        <p className="alert-error">No se pudieron cargar los indicadores. Intenta recargar.</p>
-      ) : (
-        <div className="space-y-5">
-          {/* Lo urgente de hoy */}
-          <div className="grid gap-4 sm:grid-cols-3">
-            <Tarjeta titulo="Cobros de hoy" valor={money(d.cobros_hoy.total)}
-              detalle={`${d.cobros_hoy.cantidad} cuota${d.cobros_hoy.cantidad === 1 ? '' : 's'} vence${d.cobros_hoy.cantidad === 1 ? '' : 'n'} hoy`}
-              tono="brand" />
-            <Tarjeta titulo="Recaudado hoy" valor={money(d.recaudado_hoy)}
-              detalle="Pagos registrados en el día" tono="money" />
-            <Tarjeta titulo="En mora" valor={money(d.mora.total)}
-              detalle={`${d.mora.cantidad} cuota${d.mora.cantidad === 1 ? '' : 's'} vencida${d.mora.cantidad === 1 ? '' : 's'}`}
-              tono={d.mora.cantidad > 0 ? 'alerta' : 'neutro'} />
-          </div>
+      <div className="mb-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <KpiCard titulo="Solicitudes pendientes" valor={`${d.pendientes_aprobacion}`} detalle="Esperando aprobación"
+          tono={d.pendientes_aprobacion > 0 ? 'atencion' : 'neutro'} icon={<KpiIcon.doc />} onClick={() => irA('aprobaciones')} />
+        <KpiCard titulo="Cajas por recibir" valor={`${g?.cajas_pendientes ?? 0}`} detalle="Tesorería del día"
+          tono={(g?.cajas_pendientes ?? 0) > 0 ? 'atencion' : 'neutro'} icon={<KpiIcon.wallet />} onClick={() => irA('caja-general')} />
+        <KpiCard titulo="Descuadres hoy" valor={money(g?.descuadres_hoy.total ?? 0)}
+          detalle={`${g?.descuadres_hoy.cantidad ?? 0} faltante(s)`}
+          tono={(g?.descuadres_hoy.cantidad ?? 0) > 0 ? 'alerta' : 'neutro'} icon={<KpiIcon.alert />} />
+        <KpiCard titulo="Deuda de empleados" valor={money(g?.obligaciones_empleados.total ?? 0)}
+          detalle={`${g?.obligaciones_empleados.empleados ?? 0} empleado(s)`}
+          tono={(g?.obligaciones_empleados.empleados ?? 0) > 0 ? 'atencion' : 'neutro'} icon={<KpiIcon.users />} onClick={() => irA('estado-cuenta')} />
+      </div>
 
-          {/* La cartera en general */}
+      {d.kpis && (
+        <div className="mb-5">
+          <h3 className="mb-2 text-sm font-semibold text-content">Salud de la cartera</h3>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <Tarjeta titulo="Capital prestado" valor={money(d.prestado)} detalle="Créditos desembolsados" />
-            <Tarjeta titulo="Total a recaudar" valor={money(d.por_recaudar)} detalle="Capital + intereses vigentes" />
-            <Tarjeta titulo="Recuperado" valor={money(d.recuperado)} detalle="Suma de pagos recibidos" />
-            <Tarjeta titulo="Saldo en calle" valor={money(d.saldo_en_calle)} detalle="Pendiente por cobrar" />
+            <KpiCard titulo="Índice de mora" valor={`${d.kpis.indice_mora}%`} detalle="Saldo vencido / saldo en calle"
+              tono={d.kpis.indice_mora > 15 ? 'alerta' : d.kpis.indice_mora > 8 ? 'atencion' : 'positivo'} icon={<KpiIcon.alert />} />
+            <KpiCard titulo="Cartera en riesgo" valor={`${d.kpis.pct_cartera_riesgo}%`} detalle={`${money(d.kpis.cartera_riesgo_30)} > 30 días`}
+              tono={d.kpis.pct_cartera_riesgo > 10 ? 'alerta' : d.kpis.pct_cartera_riesgo > 5 ? 'atencion' : 'positivo'} icon={<KpiIcon.trend />} />
+            <KpiCard titulo="Recuperación" valor={`${d.kpis.tasa_recuperacion}%`} detalle="Recaudado / colocado"
+              tono={d.kpis.tasa_recuperacion >= 70 ? 'positivo' : 'neutro'} icon={<KpiIcon.check />} />
+            <KpiCard titulo="Promesas vigentes" valor={`${d.kpis.promesas_vigentes}`} detalle="Acuerdos activos" icon={<KpiIcon.clock />} />
           </div>
-
-          {/* Gestión */}
-          <div className="grid gap-4 sm:grid-cols-3">
-            <Tarjeta titulo="Créditos activos" valor={`${d.creditos_activos}`} detalle="En curso" />
-            <Tarjeta titulo="Pendientes de aprobación" valor={`${d.pendientes_aprobacion}`} detalle="Esperando decisión" />
-            <Tarjeta titulo="Exoneraciones pendientes" valor={`${d.exoneraciones_pendientes}`}
-              detalle="Requieren administrador" tono={d.exoneraciones_pendientes > 0 ? 'alerta' : 'neutro'} />
-          </div>
-
-          {/* KPIs gerenciales de cartera */}
-          {d.kpis && (
-            <div>
-              <h3 className="mb-2 text-sm font-semibold text-content">Salud de la cartera</h3>
-              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                <Tarjeta titulo="Índice de mora" valor={`${d.kpis.indice_mora}%`}
-                  detalle="Saldo vencido sobre saldo en calle"
-                  tono={d.kpis.indice_mora > 15 ? 'alerta' : d.kpis.indice_mora > 8 ? 'atencion' : 'positivo'} />
-                <Tarjeta titulo="Cartera en riesgo" valor={`${d.kpis.pct_cartera_riesgo}%`}
-                  detalle={`${money(d.kpis.cartera_riesgo_30)} con mora > 30 días`}
-                  tono={d.kpis.pct_cartera_riesgo > 10 ? 'alerta' : d.kpis.pct_cartera_riesgo > 5 ? 'atencion' : 'positivo'} />
-                <Tarjeta titulo="Tasa de recuperación" valor={`${d.kpis.tasa_recuperacion}%`}
-                  detalle="Recaudado sobre lo colocado"
-                  tono={d.kpis.tasa_recuperacion >= 70 ? 'positivo' : 'neutro'} />
-                <Tarjeta titulo="Promesas vigentes" valor={`${d.kpis.promesas_vigentes}`}
-                  detalle="Acuerdos de pago activos" />
-              </div>
-            </div>
-          )}
-
-          <Suspense fallback={<div className="h-40 animate-pulse rounded-2xl bg-surface-3" />}>
-            <DashboardGraficas areas={areas} />
-          </Suspense>
         </div>
       )}
+
+      {g && g.ranking.length > 0 && (
+        <div className="mb-5">
+          <h3 className="mb-2 text-sm font-semibold text-content">Ranking de recaudo del mes</h3>
+          <div className="card overflow-hidden">
+            {g.ranking.map((r, i) => {
+              const max = g.ranking[0].recaudo || 1;
+              return (
+                <div key={r.nombre + i} className="flex items-center gap-3 border-b border-border-token px-4 py-2.5 last:border-0">
+                  <span className={`grid h-7 w-7 shrink-0 place-items-center rounded-full text-xs font-bold ${i < 3 ? 'bg-brand-100 text-brand-700' : 'bg-surface-3 text-content-muted'}`}>{i + 1}</span>
+                  <div className="min-w-0 flex-1">
+                    <div className="truncate text-sm font-medium text-content-strong">{r.nombre}</div>
+                    <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-surface-3">
+                      <div className="h-full rounded-full bg-brand-500" style={{ width: `${Math.round((r.recaudo / max) * 100)}%` }} />
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-sm font-bold tabular-nums text-content-strong">{money(r.recaudo)}</div>
+                    <div className="text-xs text-content-muted">{r.pagos} pago(s)</div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      <Suspense fallback={<div className="h-40 animate-pulse rounded-2xl bg-surface-3" />}>
+        <DashboardGraficas areas={areas} />
+      </Suspense>
     </div>
   );
 }
 
-const TONOS: Record<string, string> = {
-  brand:  'bg-brand-50 ring-brand-100 text-brand-700',
-  money:  'bg-money-50 ring-money-100 text-money-700',
-  alerta: 'bg-amber-50 ring-amber-100 text-amber-800',
-  atencion: 'bg-amber-50 ring-amber-100 text-amber-800',
-  positivo: 'bg-money-50 ring-money-100 text-money-700',
-  neutro: 'bg-surface ring-border-token text-content-strong',
-};
+function DashboardSupervisor() {
+  const [areas] = useState<number[]>([]);
+  const { data: d, isLoading } = useIndicadores(areas);
+  const irA = useNavStore((s) => s.irA);
 
-function Tarjeta({ titulo, valor, detalle, tono = 'neutro' }:
-  { titulo: string; valor: string; detalle?: string; tono?: string }) {
+  if (isLoading || !d) return <><Cabecera subtitulo="Tu operación del día." /><SkeletonIndicadores cantidad={6} /></>;
+
   return (
-    <div className={`rounded-2xl p-4 shadow-card ring-1 ${TONOS[tono]}`}>
-      <div className="text-xs font-medium uppercase tracking-wide opacity-70">{titulo}</div>
-      <div className="mt-1 font-display text-2xl font-bold">{valor}</div>
-      {detalle && <div className="mt-0.5 text-xs opacity-70">{detalle}</div>}
+    <div>
+      <Cabecera subtitulo="Resumen operativo de tus áreas." />
+
+      <div className="mb-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <KpiCard titulo="Solicitudes por aprobar" valor={`${d.pendientes_aprobacion}`} detalle="Requieren tu decisión"
+          tono={d.pendientes_aprobacion > 0 ? 'atencion' : 'neutro'} icon={<KpiIcon.doc />} onClick={() => irA('aprobaciones')} />
+        <KpiCard titulo="Cobros de hoy" valor={money(d.cobros_hoy.total)} detalle={`${d.cobros_hoy.cantidad} cuota(s) vencen hoy`}
+          tono="brand" icon={<KpiIcon.clock />} onClick={() => irA('ruta')} />
+        <KpiCard titulo="En mora" valor={money(d.mora.total)} detalle={`${d.mora.cantidad} cuota(s) vencida(s)`}
+          tono={d.mora.cantidad > 0 ? 'alerta' : 'neutro'} icon={<KpiIcon.alert />} onClick={() => irA('mora')} />
+      </div>
+
+      <div className="mb-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <KpiCard titulo="Recaudado hoy" valor={money(d.recaudado_hoy)} detalle="Pagos del día" tono="money" icon={<KpiIcon.money />} />
+        <KpiCard titulo="Créditos activos" valor={`${d.creditos_activos}`} detalle="En curso" icon={<KpiIcon.wallet />} />
+        <KpiCard titulo="Saldo en calle" valor={money(d.saldo_en_calle)} detalle="Pendiente por cobrar" icon={<KpiIcon.trend />} />
+        <KpiCard titulo="Promesas vigentes" valor={`${d.kpis?.promesas_vigentes ?? 0}`} detalle="Acuerdos activos" icon={<KpiIcon.clock />} />
+      </div>
+
+      {d.kpis && (
+        <div className="mb-5 grid gap-4 sm:grid-cols-3">
+          <KpiCard titulo="Índice de mora" valor={`${d.kpis.indice_mora}%`} detalle="De tus áreas"
+            tono={d.kpis.indice_mora > 15 ? 'alerta' : d.kpis.indice_mora > 8 ? 'atencion' : 'positivo'} icon={<KpiIcon.alert />} />
+          <KpiCard titulo="Recuperación" valor={`${d.kpis.tasa_recuperacion}%`} detalle="Recaudado / colocado"
+            tono={d.kpis.tasa_recuperacion >= 70 ? 'positivo' : 'neutro'} icon={<KpiIcon.check />} />
+          <KpiCard titulo="Cartera en riesgo" valor={`${d.kpis.pct_cartera_riesgo}%`} detalle={`${money(d.kpis.cartera_riesgo_30)} > 30 días`}
+            tono={d.kpis.pct_cartera_riesgo > 10 ? 'alerta' : 'positivo'} icon={<KpiIcon.trend />} />
+        </div>
+      )}
+
+      <Suspense fallback={<div className="h-40 animate-pulse rounded-2xl bg-surface-3" />}>
+        <DashboardGraficas areas={areas} />
+      </Suspense>
     </div>
   );
 }
 
-function FiltroAreas({ seleccion, onCambio }: { seleccion: number[]; onCambio: (a: number[]) => void }) {
-  const { data: areas } = useAreas();
-  if (!areas || areas.length === 0) return null;
+function DashboardCobrador() {
+  const { data: d, isLoading } = useIndicadores([]);
+  const irA = useNavStore((s) => s.irA);
 
-  const toggle = (id: number) => {
-    onCambio(seleccion.includes(id) ? seleccion.filter((x) => x !== id) : [...seleccion, id]);
-  };
+  const { data: caja } = useQuery({
+    queryKey: ['caja-resumen-dash'],
+    queryFn: async () => (await api.get('/caja/resumen-dia')).data.data,
+    refetchInterval: 60_000,
+  });
+  const cajaAbierta = caja?.esta_abierta;
+  const cajaCerrada = caja?.ya_cerrada;
 
   return (
-    <div className="mb-5 flex flex-wrap items-center gap-2">
-      <button onClick={() => onCambio([])}
-        className={`rounded-full px-3 py-1 text-xs font-medium ring-1 transition ${seleccion.length === 0 ? 'bg-brand-500 text-white ring-brand-500' : 'bg-surface text-slate-600 ring-border-token hover:ring-brand-300'}`}>
-        Todas
-      </button>
-      {areas.map((a) => (
-        <button key={a.id} onClick={() => toggle(a.id)}
-          className={`rounded-full px-3 py-1 text-xs font-medium ring-1 transition ${seleccion.includes(a.id) ? 'bg-brand-500 text-white ring-brand-500' : 'bg-surface text-slate-600 ring-border-token hover:ring-brand-300'}`}>
-          {a.nombre}
-        </button>
-      ))}
+    <div>
+      <Cabecera subtitulo="Tu jornada de hoy." />
+
+      <div className="mb-5 space-y-3">
+        {!cajaCerrada && !cajaAbierta && (
+          <AccionRapida titulo="Abrir caja" detalle="Inicia tu jornada registrando la base"
+            icon={<KpiIcon.wallet />} tono="brand" onClick={() => irA('caja')} />
+        )}
+        <AccionRapida titulo="Ruta del día" detalle="Clientes por visitar y cobrar hoy"
+          icon={<KpiIcon.route />} tono="brand" onClick={() => irA('ruta')} badge={d?.cobros_hoy.cantidad} />
+        {cajaAbierta && (
+          <AccionRapida titulo="Cerrar caja" detalle="Cuadra y entrega el efectivo del día"
+            icon={<KpiIcon.wallet />} tono="money" onClick={() => irA('caja')} />
+        )}
+      </div>
+
+      {isLoading || !d ? <SkeletonIndicadores cantidad={4} /> : (
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <KpiCard titulo="Cobros de hoy" valor={`${d.cobros_hoy.cantidad}`} detalle="Cuotas que vencen hoy" tono="brand" icon={<KpiIcon.clock />} />
+          <KpiCard titulo="Recaudado hoy" valor={money(d.recaudado_hoy)} detalle="Lo que llevas cobrado" tono="money" icon={<KpiIcon.money />} />
+          <KpiCard titulo="En mora" valor={`${d.mora.cantidad}`} detalle="Cuotas vencidas por gestionar"
+            tono={d.mora.cantidad > 0 ? 'alerta' : 'positivo'} icon={<KpiIcon.alert />} />
+          <KpiCard titulo="Promesas vigentes" valor={`${d.kpis?.promesas_vigentes ?? 0}`} detalle="Acuerdos con clientes" icon={<KpiIcon.check />} />
+        </div>
+      )}
     </div>
   );
 }

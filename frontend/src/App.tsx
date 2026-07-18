@@ -5,6 +5,7 @@ import { Logo } from '@/components/ui/Logo';
 import { useAuthStore } from '@/stores/auth';
 import { useReporteUbicacion } from '@/lib/useReporteUbicacion';
 import { ToggleTema } from '@/components/ui/ToggleTema';
+import { useNavStore } from '@/stores/nav';
 import { LoginForm } from '@/features/auth/LoginForm';
 import { Placeholder } from '@/components/Placeholder';
 import { ClientesPanel } from '@/features/clientes/ClientesPanel';
@@ -76,7 +77,10 @@ function AppShell() {
   const visibles = MENU
     .filter((m) => usuario.rol === 'ADMIN_FUNCIONAL' || m.roles.includes(usuario.rol))
     .filter((m) => !permitidos || permitidos.includes(m.id));
-  const [activo, setActivo] = useState(visibles[0]?.id ?? 'solicitud');
+  const moduloNav = useNavStore((s) => s.modulo);
+  const setModuloNav = useNavStore((s) => s.setModulo);
+  const activo = moduloNav;
+  const setActivo = setModuloNav;
   const [drawer, setDrawer] = useState(false);
 
   useEffect(() => {
