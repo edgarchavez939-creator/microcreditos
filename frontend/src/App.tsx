@@ -3,6 +3,7 @@ import { api } from '@/lib/api/client';
 import { useEffect, useState } from 'react';
 import { Logo } from '@/components/ui/Logo';
 import { useAuthStore } from '@/stores/auth';
+import { useReporteUbicacion } from '@/lib/useReporteUbicacion';
 import { LoginForm } from '@/features/auth/LoginForm';
 import { Placeholder } from '@/components/Placeholder';
 import { ClientesPanel } from '@/features/clientes/ClientesPanel';
@@ -66,6 +67,8 @@ export function App() {
 function AppShell() {
   const usuario = useAuthStore((s) => s.usuario)!;
   const logout = useAuthStore((s) => s.logout);
+  // Mapa en vivo: cobradores y supervisores reportan su ubicación cada 60s
+  useReporteUbicacion(usuario.rol);
   const { data: permitidos } = useMisPermisos(true);
   // Primero por rol (defensa base) y luego por permisos dinámicos del servidor.
   // Mientras cargan los permisos, se usa solo el filtro por rol para no parpadear.

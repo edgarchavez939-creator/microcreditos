@@ -18,7 +18,7 @@ use App\Http\Controllers\Api\OtpController;
 use App\Http\Controllers\Api\PermisoController;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/health', fn () => response()->json(['status' => 'ok', 'version' => 'v77-motor-productos', 'ts' => now()]));
+Route::get('/health', fn () => response()->json(['status' => 'ok', 'version' => 'v78-mapa-en-vivo', 'ts' => now()]));
 
 // Marca pública (sin auth): nombre y color para aplicar en login y en toda la app.
 Route::get('/marca-publica', function () {
@@ -90,6 +90,8 @@ Route::middleware(['auth:api', 'mantenimiento'])->group(function () {
     Route::get('parametros', [ParametroController::class, 'index']);
     Route::patch('parametros', [ParametroController::class, 'update']);
     Route::get('mapa/clientes', [MapaController::class, 'clientes'])->middleware('modulo:mapa');
+    Route::post('mapa/ubicacion', [MapaController::class, 'reportarUbicacion']);
+    Route::get('mapa/cobradores-en-vivo', [MapaController::class, 'cobradoresEnVivo'])->middleware('modulo:mapa');
     Route::get('ruta-dia', [CajaController::class, 'rutaDia'])->middleware('modulo:ruta');
     Route::get('caja/resumen-dia', [CajaController::class, 'resumenDia'])->middleware('modulo:caja');
     Route::post('caja/abrir', [CajaController::class, 'abrirCaja'])->middleware('modulo:caja');

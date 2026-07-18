@@ -5,6 +5,15 @@ import 'leaflet/dist/leaflet.css';
 import { api } from '@/lib/api/client';
 import { money } from '@/lib/format';
 import { useAreas } from '@/features/clientes/hooks';
+import { useAuthStore } from '@/stores/auth';
+
+interface CobradorVivo {
+  empleado_id: number;
+  nombre: string;
+  rol: string;
+  ultima: { latitud: number; longitud: number; hace_seg: number };
+  recorrido: [number, number][];
+}
 
 interface ClienteMapa {
   id: number;
@@ -59,6 +68,18 @@ export function MapaPanel() {
   const contenedor = useRef<HTMLDivElement | null>(null);
   const mapa = useRef<L.Map | null>(null);
   const capa = useRef<L.LayerGroup | null>(null);
+  const capaVivo = useRef<L.LayerGroup | null>(null);
+
+  // COBRADORES EN VIVO: última posición + recorrido del día (solo admin/supervisor).
+  // Se refresca cada 60 segundos, alineado con la frecuencia de reporte.
+  const rol = useAuthStore((s) => s.usuario?.rol);
+  const puedeVerVivo = rol === 'ADMINISTRADOR' || rol === 'SUPERVISOR' || rol === 'ADMIN_FUNCIONAL';
+  const { data: cobradoresVivo } = useQuery({
+    queryKey: ['mapa-cobradores-vivo'],
+    queryFn: async () => (await api.get<{ data: CobradorVivo[] }>('/mapa/cobradores-en-vivo')).data.data,
+    enabled: puedeVerVivo,
+    refetchInterval: 60000,
+  });
 
   const visibles = useMemo(
     () => (clientes ?? [])
@@ -77,8 +98,9 @@ export function MapaPanel() {
       attribution: '&copy; OpenStreetMap',
     }).addTo(mapa.current);
     capa.current = L.layerGroup().addTo(mapa.current);
+    capaVivo.current = L.layerGroup().addTo(mapa.current);
 
-    return () => { mapa.current?.remove(); mapa.current = null; capa.current = null; };
+    return () => { mapa.current?.remove(); mapa.current = null; capa.current = null; capaVivo.current = null; };
   }, []);
 
   // Pintar marcadores cuando cambian los datos o el filtro
@@ -119,6 +141,40 @@ export function MapaPanel() {
     m.fitBounds(L.latLngBounds(bounds).pad(0.2), { maxZoom: 15 });
   }, [visibles]);
 
+  // Pintar COBRADORES EN VIVO: marcador con inicial + recorrido del día (polyline)
+  useEffect(() => {
+    const grupo = capaVivo.current;
+    if (!grupo) return;
+    grupo.clearLayers();
+    for (const c of cobradoresVivo ?? []) {
+      // Recorrido del día
+      if (c.recorrido.length > 1) {
+        L.polyline(c.recorrido as L.LatLngTuple[], {
+          color: '#4f46e5', weight: 3, opacity: 0.6, dashArray: '6 6',
+        }).addTo(grupo);
+      }
+      // Última posición: marcador con la inicial del nombre
+      const inicial = (c.nombre?.charAt(0) ?? '?').toUpperCase();
+      const haceMin = Math.round(c.ultima.hace_seg / 60);
+      const frescura = c.ultima.hace_seg < 180 ? '#16a34a' : c.ultima.hace_seg < 900 ? '#d97706' : '#94a3b8';
+      const icono = L.divIcon({
+        className: '',
+        html: `<div style="width:30px;height:30px;border-radius:9999px;background:${frescura};color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;border:3px solid #fff;box-shadow:0 1px 6px rgba(0,0,0,.35)">${inicial}</div>`,
+        iconSize: [30, 30], iconAnchor: [15, 15],
+      });
+      const marcador = L.marker([c.ultima.latitud, c.ultima.longitud], { icon: icono, zIndexOffset: 1000 });
+      marcador.bindPopup(`
+        <div style="min-width:180px;font-size:13px;line-height:1.5">
+          <b>${c.nombre}</b><br/>
+          ${c.rol === 'SUPERVISOR' ? 'Supervisor' : 'Cobrador'}<br/>
+          Última señal: hace ${haceMin < 1 ? 'menos de 1 min' : haceMin + ' min'}<br/>
+          <span style="color:#64748b;font-size:12px">La ubicación se actualiza mientras tenga la app abierta.</span>
+        </div>
+      `);
+      marcador.addTo(grupo);
+    }
+  }, [cobradoresVivo]);
+
   const base = useMemo(
     () => (clientes ?? []).filter((c) => areaSel === 'TODAS' || c.area === areaSel),
     [clientes, areaSel],
@@ -132,9 +188,18 @@ export function MapaPanel() {
   return (
     <div>
       <h2 className="page-title">Mapa territorial</h2>
-      <p className="mb-4 text-sm text-slate-500">
+      <p className="mb-2 text-sm text-slate-500">
         Ubicación de tus clientes con su estado de cartera. Toca un punto para ver el detalle y navegar.
       </p>
+      {puedeVerVivo && (
+        <p className="mb-4 flex flex-wrap items-center gap-3 text-xs text-slate-500">
+          <span className="font-medium text-slate-600">Equipo en vivo:</span>
+          <span className="flex items-center gap-1"><span className="inline-block h-2.5 w-2.5 rounded-full bg-green-600" /> activo (&lt;3 min)</span>
+          <span className="flex items-center gap-1"><span className="inline-block h-2.5 w-2.5 rounded-full bg-amber-600" /> hace 3–15 min</span>
+          <span className="flex items-center gap-1"><span className="inline-block h-2.5 w-2.5 rounded-full bg-slate-400" /> sin señal reciente</span>
+          <span className="text-slate-400">· La línea punteada es el recorrido de hoy. Se actualiza mientras el cobrador tenga la app abierta.</span>
+        </p>
+      )}
 
       <div className="mb-3 flex flex-wrap items-center gap-3">
         <label className="text-sm">
