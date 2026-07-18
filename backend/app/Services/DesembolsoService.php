@@ -25,6 +25,20 @@ class DesembolsoService
             throw new DomainException('Solo se puede desembolsar un crédito en estado APROBADO.');
         }
 
+        // MOTOR DE PRODUCTOS: validar que el método de desembolso esté permitido
+        // por la configuración del producto del crédito.
+        if ($credito->producto_financiero_id) {
+            $pf = DB::table('productos_financieros')->where('id', $credito->producto_financiero_id)->first();
+            if ($pf) {
+                if (($d['metodo'] ?? null) === 'EFECTIVO' && ! $pf->permite_desembolso_efectivo) {
+                    throw new DomainException("El producto {$pf->nombre} no permite desembolso en efectivo.");
+                }
+                if (($d['metodo'] ?? null) === 'TRANSFERENCIA' && ! $pf->permite_desembolso_transferencia) {
+                    throw new DomainException("El producto {$pf->nombre} no permite desembolso por transferencia.");
+                }
+            }
+        }
+
         // Guardia de tesorería: un desembolso en EFECTIVO reduce el efectivo de la caja,
         // así que exige la caja ABIERTA. Por transferencia no toca el efectivo en caja.
         if (($d['metodo'] ?? null) === 'EFECTIVO') {

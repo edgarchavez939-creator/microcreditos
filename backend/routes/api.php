@@ -18,7 +18,7 @@ use App\Http\Controllers\Api\OtpController;
 use App\Http\Controllers\Api\PermisoController;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/health', fn () => response()->json(['status' => 'ok', 'version' => 'v76-valores-en-miles', 'ts' => now()]));
+Route::get('/health', fn () => response()->json(['status' => 'ok', 'version' => 'v77-motor-productos', 'ts' => now()]));
 
 // Marca pública (sin auth): nombre y color para aplicar en login y en toda la app.
 Route::get('/marca-publica', function () {
@@ -132,6 +132,15 @@ Route::middleware(['auth:api', 'mantenimiento'])->group(function () {
     Route::post('solicitudes/{solicitud}/rechazar', [SolicitudController::class, 'rechazar'])->middleware('accion:solicitudes.rechazar');
     Route::post('solicitudes/{solicitud}/cronograma', [SolicitudController::class, 'generarCronograma']);
     // ===== Estado de Cuenta del Empleado =====
+    // ===== Motor de Productos Financieros =====
+    Route::get('productos-financieros/activos', [\App\Http\Controllers\Api\ProductoFinancieroController::class, 'activos']);
+    Route::get('productos-financieros', [\App\Http\Controllers\Api\ProductoFinancieroController::class, 'index']);
+    Route::post('productos-financieros', [\App\Http\Controllers\Api\ProductoFinancieroController::class, 'store']);
+    Route::patch('productos-financieros/{producto}', [\App\Http\Controllers\Api\ProductoFinancieroController::class, 'update']);
+    Route::post('productos-financieros/{producto}/activar', [\App\Http\Controllers\Api\ProductoFinancieroController::class, 'activar']);
+    Route::post('productos-financieros/{producto}/duplicar', [\App\Http\Controllers\Api\ProductoFinancieroController::class, 'duplicar']);
+    Route::get('productos-financieros/{producto}/versiones', [\App\Http\Controllers\Api\ProductoFinancieroController::class, 'versiones']);
+
     Route::prefix('empleados')->group(function () {
         Route::get('estado-cuenta', [\App\Http\Controllers\Api\EstadoCuentaEmpleadoController::class, 'consolidado']);
         Route::get('{empleado}/estado-cuenta', [\App\Http\Controllers\Api\EstadoCuentaEmpleadoController::class, 'show']);

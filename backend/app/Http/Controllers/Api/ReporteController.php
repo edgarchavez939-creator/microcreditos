@@ -32,17 +32,22 @@ class ReporteController extends Controller
             ->join('clientes as c', 'c.id', '=', 's.cliente_id')
             ->leftJoin('usuarios as u', 'u.id', '=', 's.cobrador_id')
             ->leftJoin('areas as a', 'a.id', '=', 's.area_id')
+            ->leftJoin('productos_financieros as pf', 'pf.id', '=', 's.producto_financiero_id')
             ->leftJoin('cuotas as q', 'q.solicitud_id', '=', 's.id')
             ->whereIn('s.id', $ids)
             ->whereIn('s.estado', ['ACTIVO', 'DESEMBOLSADO', 'EN_MORA', 'FINALIZADO'])
             ->groupBy('s.id', 's.numero_credito', 'c.nombres', 'c.apellidos', 'c.numero_documento',
-                'u.nombre', 'a.nombre', 's.monto_aprobado', 's.total_recaudar', 's.estado', 's.modalidad')
+                'u.nombre', 'a.nombre', 's.monto_aprobado', 's.total_recaudar', 's.estado', 's.modalidad',
+                'pf.nombre', 'pf.codigo', 's.producto_version')
             ->orderBy('s.id')
             ->get([
                 's.numero_credito',
                 DB::raw("TRIM(c.nombres || ' ' || c.apellidos) as cliente"),
                 'c.numero_documento as documento',
                 'u.nombre as cobrador',
+                DB::raw("COALESCE(pf.nombre, 'Crédito Tradicional') as producto"),
+                DB::raw("COALESCE(pf.codigo, 'TRADICIONAL') as producto_codigo"),
+                's.producto_version',
                 'a.nombre as area',
                 's.modalidad',
                 's.monto_aprobado as capital',
@@ -105,6 +110,9 @@ class ReporteController extends Controller
                 DB::raw("TRIM(c.nombres || ' ' || c.apellidos) as cliente"),
                 'c.telefono_principal as telefono',
                 'u.nombre as cobrador',
+                DB::raw("COALESCE(pf.nombre, 'Crédito Tradicional') as producto"),
+                DB::raw("COALESCE(pf.codigo, 'TRADICIONAL') as producto_codigo"),
+                's.producto_version',
                 'a.nombre as area',
                 'q.numero_cuota',
                 'q.fecha_vencimiento',

@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { ProductosFinancieros } from './ProductosFinancieros';
 import { useState } from 'react';
 import { api } from '@/lib/api/client';
 import { fechaHora } from '@/lib/format';
@@ -7,9 +8,10 @@ import { useToast } from '@/components/ui/Toast';
 
 
 export function AdminFuncionalPanel() {
-  const [tab, setTab] = useState<'licencia' | 'flags' | 'marca' | 'mantenimiento' | 'versiones' | 'auditoria' | 'parametros' | 'monitoreo' | 'herramientas'>('licencia');
+  const [tab, setTab] = useState<'licencia' | 'productos' | 'flags' | 'marca' | 'mantenimiento' | 'versiones' | 'auditoria' | 'parametros' | 'monitoreo' | 'herramientas'>('licencia');
   const tabs = [
     ['licencia', 'Licenciamiento'],
+    ['productos', 'Productos financieros'],
     ['flags', 'Funcionalidades'],
     ['marca', 'Marca'],
     ['mantenimiento', 'Mantenimiento'],
@@ -35,6 +37,7 @@ export function AdminFuncionalPanel() {
       </div>
 
       {tab === 'licencia' && <Licencia />}
+      {tab === 'productos' && <ProductosFinancieros />}
       {tab === 'flags' && <Flags />}
       {tab === 'marca' && <Marca />}
       {tab === 'mantenimiento' && <Mantenimiento />}

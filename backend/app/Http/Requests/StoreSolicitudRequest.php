@@ -14,15 +14,17 @@ class StoreSolicitudRequest extends FormRequest
             'cliente_id'          => ['required','integer','exists:clientes,id'],
             'area_id'             => ['nullable','integer','exists:areas,id'],
             'producto_id'         => ['nullable','integer','exists:productos,id'],
+            'producto_financiero_id' => ['nullable','integer','exists:productos_financieros,id'],
+            'valor_pactado'       => ['nullable','numeric','gt:0'],
             'credito_origen_id'   => ['nullable','integer','exists:solicitudes,id'],
             'es_venta_financiada' => ['boolean'],
             'capital_solicitado'  => ['required','numeric','gt:0'],
-            'tasa_interes'        => ['required','numeric','gte:0'],
+            'tasa_interes'        => ['nullable','numeric','gte:0'],  // el motor la normaliza según el producto
             'tipo_interes'        => ['nullable','in:FIJO,SOBRE_SALDO'],
             'modalidad'           => ['required','in:DIARIO,SEMANAL,QUINCENAL,MENSUAL'],
             'plazo_meses'         => ['required','integer','min:1','max:60'],
             'fecha_primer_pago'   => ['nullable','date'],
-            'porcentaje_seguro'   => ['required_unless:seguro_exonerado,true','numeric','between:0,0.10'],
+            'porcentaje_seguro'   => ['nullable','numeric','between:0,0.10'],  // el motor lo normaliza según el producto
             'seguro_exonerado'    => ['boolean'],
             'motivo_exoneracion'  => ['required_if:seguro_exonerado,true','nullable','string','min:5'],
         ];

@@ -118,8 +118,15 @@ class RenovacionService
             ->where('cliente_id', $clienteId)
             ->where('estado', 'PAGADO')
             ->orderByDesc('updated_at')
-            ->first(['id', 'numero_credito', 'monto_aprobado', 'updated_at']);
+            ->first(['id', 'numero_credito', 'monto_aprobado', 'updated_at', 'producto_financiero_id']);
         if (! $ultimo) return null;
+
+        // MOTOR DE PRODUCTOS: si el producto del crédito no permite renovación, no se ofrece.
+        if ($ultimo->producto_financiero_id) {
+            $permite = DB::table('productos_financieros')
+                ->where('id', $ultimo->producto_financiero_id)->value('permite_renovacion');
+            if ($permite === false) return null;
+        }
 
         $fechaCancelacion = DB::table('cuotas')->where('solicitud_id', $ultimo->id)
             ->where('estado', 'PAGADA')->max('updated_at') ?? $ultimo->updated_at;

@@ -12,6 +12,7 @@ class Solicitud extends Model
     protected $table = 'solicitudes';
     protected $fillable = [
         'cliente_id','area_id','cobrador_id','producto_id','es_venta_financiada',
+        'producto_financiero_id','producto_version','valor_pactado',
         'capital_solicitado','monto_aprobado','tasa_interes','tipo_interes','interes',
         'modalidad','numero_cuotas','fecha_primer_pago','valor_cuota','total_financiado',
         'porcentaje_seguro','valor_seguro','monto_desembolsado','total_recaudar',

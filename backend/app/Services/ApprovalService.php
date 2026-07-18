@@ -19,11 +19,26 @@ class ApprovalService
      *  - exoneración de seguro           => siempre PENDIENTE_ADMINISTRADOR
      * Nunca usa valores fijos: lee el parámetro configurable.
      */
-    public function estadoInicial(float $montoSolicitado, bool $exonerado): string
+    public function estadoInicial(float $montoSolicitado, bool $exonerado, ?object $producto = null): string
     {
         if ($exonerado) {
             return EstadoSolicitud::PENDIENTE_ADMINISTRADOR->value;
         }
+
+        // MOTOR DE PRODUCTOS: la configuración del producto puede definir el ruteo.
+        if ($producto) {
+            if ($producto->aprobacion_automatica) {
+                return EstadoSolicitud::APROBADO->value;
+            }
+            if ($producto->requiere_administrador) {
+                return EstadoSolicitud::PENDIENTE_ADMINISTRADOR->value;
+            }
+            if (isset($producto->requiere_supervisor) && ! $producto->requiere_supervisor) {
+                // No requiere supervisor ni admin: pasa directo a aprobado
+                return EstadoSolicitud::APROBADO->value;
+            }
+        }
+
         $maxSupervisor = (float) \App\Models\Parametro::valor('aprobacion.max_supervisor', 2000000);
         return $montoSolicitado > $maxSupervisor
             ? EstadoSolicitud::PENDIENTE_ADMINISTRADOR->value

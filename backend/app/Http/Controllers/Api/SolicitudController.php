@@ -66,11 +66,25 @@ class SolicitudController extends Controller
         // El crédito hereda cobrador y área del CLIENTE (para visibilidad correcta por rol)
         $cliente = \App\Models\Cliente::findOrFail($data['cliente_id']);
 
+        // MOTOR DE PRODUCTOS: la solicitud se valida contra la CONFIGURACIÓN del
+        // producto elegido (límites, frecuencias, tasa/seguro fijos o modificables).
+        // Si no se envía producto, se usa el TRADICIONAL (compatibilidad).
+        $motor = app(\App\Services\ProductoFinancieroService::class);
+        $productoId = $data['producto_financiero_id']
+            ?? \Illuminate\Support\Facades\DB::table('productos_financieros')->where('codigo', 'TRADICIONAL')->value('id');
+        $producto = $motor->obtenerActivo((int) $productoId);
+        $numeroCuotasPre = (int) $data['plazo_meses'] * \App\Services\LoanService::periodosPorMes($data['modalidad']);
+        $normalizado = $motor->validarSolicitud($producto, $data + ['numero_cuotas' => $numeroCuotasPre]);
+
         // Número de cuotas = plazo (meses) × periodos por mes de la modalidad
         $factor = \App\Services\LoanService::periodosPorMes($data['modalidad']);
         $numeroCuotas = (int) $data['plazo_meses'] * $factor;
 
         $exonerado = (bool) ($data['seguro_exonerado'] ?? false);
+        // Si el producto no usa seguro, no aplica exoneración (no hay nada que exonerar)
+        if (! $producto->usa_seguro) {
+            $exonerado = false;
+        }
 
         // NUEVO FLUJO: la solicitud se crea SIN monto aprobado. El capital aprobado,
         // el seguro, los intereses y el cronograma se definen durante la APROBACIÓN.
@@ -79,23 +93,25 @@ class SolicitudController extends Controller
             'cliente_id'          => $data['cliente_id'],
             'area_id'             => $cliente->area_id,
             'cobrador_id'         => $cliente->cobrador_id ?? $request->user()->id,
-            'producto_id'         => $data['producto_id'] ?? null,
+            'producto_id'         => $data['producto_id'] ?? null,   // artículo (venta financiada)
+            'producto_financiero_id' => $producto->id,
+            'producto_version'    => (int) $producto->version_actual,
+            'valor_pactado'       => $normalizado['valor_pactado'],
             'es_venta_financiada' => $data['es_venta_financiada'] ?? false,
             'capital_solicitado'  => $data['capital_solicitado'],
             'tipo_interes'        => $data['tipo_interes'] ?? 'FIJO',
             'numero_cuotas'       => $numeroCuotas,
-            'tasa_interes'        => $data['tasa_interes'],
+            'tasa_interes'        => $normalizado['tasa_interes'],
             'modalidad'           => $data['modalidad'],
             // Condiciones de seguro/plazo se guardan para aplicarlas al aprobar
-            'porcentaje_seguro'   => $exonerado ? 0 : ($data['porcentaje_seguro'] ?? 0),
+            'porcentaje_seguro'   => $exonerado ? 0 : $normalizado['porcentaje_seguro'],
             'seguro_exonerado'    => $exonerado,
             'motivo_exoneracion'  => $data['motivo_exoneracion'] ?? null,
             'fecha_primer_pago'   => $data['fecha_primer_pago'] ?? null,
             // Sin monto_aprobado todavía (queda NULL hasta la aprobación)
-            // El estado inicial se decide por el MONTO SOLICITADO contra los límites
-            // vigentes en Parámetros (motor de aprobación por niveles).
+            // El estado inicial lo decide el motor: config del producto + monto vs límites.
             'estado'              => $this->approvals->estadoInicial(
-                (float) $data['capital_solicitado'], $exonerado
+                (float) $data['capital_solicitado'], $exonerado, $producto
             ),
             'created_by'          => $request->user()->id,
         ]);

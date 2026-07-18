@@ -60,12 +60,32 @@ class LoanService
             }
         }
 
-        // --- Fórmulas ---
+        // --- Fórmulas (MOTOR DE PRODUCTOS: el cálculo depende de la CONFIG, no del nombre) ---
+        $producto = $solicitud->producto_financiero_id
+            ? DB::table('productos_financieros')->where('id', $solicitud->producto_financiero_id)->first()
+            : null;
+
         $valorSeguro       = $exonerado ? 0.0 : round($montoAprobado * $pctSeguro, 2);
         $montoDesembolsado = round($montoAprobado - $valorSeguro, 2);
         $plazoMeses        = (int) ($datos['plazo_meses'] ?? max(1, (int) round($cuotas / self::periodosPorMes($datos['modalidad']))));
-        $interes           = round($montoAprobado * $tasa * $plazoMeses, 2);  // capital × tasa × plazo(meses)
-        $totalRecaudar     = round($montoAprobado + $interes, 2);
+
+        if ($producto && $producto->usa_valor_pactado) {
+            // Producto de VALOR PACTADO (ej. Al Bate): el total es el valor acordado con el
+            // cliente; no hay cálculo de intereses por tasa. El "interés" informativo es la
+            // diferencia entre lo pactado y el capital.
+            $valorPactado  = round((float) ($datos['valor_pactado'] ?? $solicitud->valor_pactado ?? 0), 2);
+            if ($valorPactado <= 0) {
+                throw new InvalidArgumentException('Este producto requiere el valor total pactado.');
+            }
+            $totalRecaudar = $valorPactado;
+            $interes       = round($valorPactado - $montoAprobado, 2);
+            $solicitud->valor_pactado = $valorPactado;
+        } else {
+            // Producto con TASA (tradicional): capital × tasa × plazo(meses).
+            // Si el producto no usa tasa, la tasa efectiva llega en 0 y el interés es 0.
+            $interes       = round($montoAprobado * $tasa * $plazoMeses, 2);
+            $totalRecaudar = round($montoAprobado + $interes, 2);
+        }
         $valorCuota        = round($totalRecaudar / max($cuotas, 1), 2);
 
         $solicitud->fill([
