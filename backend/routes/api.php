@@ -18,7 +18,7 @@ use App\Http\Controllers\Api\OtpController;
 use App\Http\Controllers\Api\PermisoController;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/health', fn () => response()->json(['status' => 'ok', 'version' => 'v83-fix-panorama360', 'ts' => now()]));
+Route::get('/health', fn () => response()->json(['status' => 'ok', 'version' => 'v84-wizard-inbox', 'ts' => now()]));
 
 // Marca pública (sin auth): nombre y color para aplicar en login y en toda la app.
 Route::get('/marca-publica', function () {
@@ -160,6 +160,11 @@ Route::middleware(['auth:api', 'mantenimiento'])->group(function () {
     // Tareas pendientes por módulo (badges del menú); calculado del estado real
     Route::get('tareas/badges', function (\Illuminate\Http\Request $request, \App\Services\TareaService $tareas) {
         return response()->json(['data' => $tareas->badges($request->user())]);
+    });
+
+    // Inbox de Trabajo: detalles de las tareas pendientes del usuario
+    Route::get('tareas/inbox', function (\Illuminate\Http\Request $request, \App\Services\TareaService $tareas) {
+        return response()->json(['data' => $tareas->inbox($request->user())]);
     });
     Route::get('solicitudes/{solicitud}/cuotas', [SolicitudController::class, 'cuotas']);
     Route::get('solicitudes/{solicitud}/extracto-enlace', [SolicitudController::class, 'extractoEnlace']);

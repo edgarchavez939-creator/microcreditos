@@ -69,6 +69,12 @@ export function SolicitudForm({ clienteId, areaId, creditoOrigenId, onCreada }:
   const usaSeguro = producto?.usa_seguro ?? true;
   const usaPactado = producto?.usa_valor_pactado ?? false;
 
+  // WIZARD: 3 pasos que agrupan el formulario dinámico sin alterar su lógica.
+  const [paso, setPaso] = useState(1);
+  const pasos = ['Producto', 'Condiciones', 'Confirmación'];
+  const capital = watch('capital_solicitado');
+  const puedeAvanzar = paso === 1 ? !!producto : paso === 2 ? !!capital && capital > 0 : true;
+
   const onSubmit = (data: TForm) => {
     setExito(false);
     // La marca de renovación viaja con la solicitud (el backend valida el origen)
@@ -77,6 +83,7 @@ export function SolicitudForm({ clienteId, areaId, creditoOrigenId, onCreada }:
       onSuccess: () => {
         setExito(true);
         reset(defaults(producto));
+        setPaso(1);
         onCreada?.();
       },
     });
@@ -90,8 +97,30 @@ export function SolicitudForm({ clienteId, areaId, creditoOrigenId, onCreada }:
         </div>
       )}
 
+      {/* STEPPER: indicador de pasos del asistente */}
+      <ol className="flex items-center gap-2">
+        {pasos.map((nombre, i) => {
+          const n = i + 1;
+          const activo = n === paso;
+          const hecho = n < paso;
+          return (
+            <li key={nombre} className="flex flex-1 items-center gap-2">
+              <span className={`grid h-7 w-7 shrink-0 place-items-center rounded-full text-xs font-bold transition ${
+                activo ? 'bg-brand-500 text-white' : hecho ? 'bg-money-500 text-white' : 'bg-surface-3 text-content-muted'}`}>
+                {hecho ? '✓' : n}
+              </span>
+              <span className={`text-xs font-medium ${activo ? 'text-content-strong' : 'text-content-muted'}`}>{nombre}</span>
+              {i < pasos.length - 1 && <span className="mx-1 h-px flex-1 bg-border-token" />}
+            </li>
+          );
+        })}
+      </ol>
+
+      {/* PASO 1 · PRODUCTO */}
+      {paso === 1 && (
+      <>
       {/* SELECTOR DE PRODUCTO (motor de productos) */}
-      {productos && productos.length > 1 && (
+      {productos && productos.length > 1 ? (
         <div>
           <label className="label">Producto de crédito</label>
           <div className="grid grid-cols-2 gap-2">
@@ -108,8 +137,15 @@ export function SolicitudForm({ clienteId, areaId, creditoOrigenId, onCreada }:
             ))}
           </div>
         </div>
+      ) : (
+        <p className="rounded-xl bg-surface-2 p-4 text-sm text-content-muted">Producto: <b className="text-content-strong">{producto?.nombre ?? 'Tradicional'}</b></p>
+      )}
+      </>
       )}
 
+      {/* PASO 2 · CONDICIONES */}
+      {paso === 2 && (
+      <>
       <div>
         <label className="label">Capital solicitado <span className="font-normal text-content-muted">(en pesos)</span></label>
         <input type="number" step="any" {...register('capital_solicitado', { valueAsNumber: true })} className="input" placeholder="Ej: 1000000" />
@@ -192,20 +228,40 @@ export function SolicitudForm({ clienteId, areaId, creditoOrigenId, onCreada }:
           )}
         </>
       )}
+      </>
+      )}
 
+      {/* PASO 3 · CONFIRMACIÓN */}
+      {paso === 3 && (
       <div className="rounded-xl bg-surface-2 p-4 text-sm space-y-1.5 ring-1 ring-border-token">
+        <div className="mb-2 font-semibold text-content-strong">Revisa antes de crear · {producto?.nombre}</div>
         {usaSeguro && <div className="flex justify-between"><span>Valor seguro</span><b>{money(preview.valorSeguro)}</b></div>}
         <div className="flex justify-between"><span>Monto desembolsado (neto)</span><b>{money(preview.desembolsado)}</b></div>
         {usaPactado
           ? <div className="flex justify-between"><span>Diferencia pactado − capital</span><b>{money(preview.interes)}</b></div>
           : usaTasa && <div className="flex justify-between"><span>Intereses (sobre aprobado)</span><b>{money(preview.interes)}</b></div>}
         <div className="flex justify-between"><span className="font-medium text-content">Total a recaudar</span><b>{money(preview.totalRecaudar)}</b></div>
-        <div className="flex justify-between"><span>Valor cuota</span><b>{money(preview.cuota)}</b></div>
+        <div className="flex justify-between"><span>Plan</span><b>{preview.numeroCuotas} cuotas {MODAL_LABEL[modalidad]} de {money(preview.cuota)}</b></div>
       </div>
+      )}
 
-      <button type="submit" disabled={crear.isPending} className="btn-primary">
-        {crear.isPending ? 'Guardando…' : 'Crear solicitud'}
-      </button>
+      {/* NAVEGACIÓN DEL WIZARD */}
+      <div className="flex gap-2 pt-1">
+        {paso > 1 && (
+          <button type="button" onClick={() => setPaso((p) => p - 1)} className="btn-outline flex-1">
+            ← Atrás
+          </button>
+        )}
+        {paso < 3 ? (
+          <button type="button" onClick={() => setPaso((p) => p + 1)} disabled={!puedeAvanzar} className="btn-primary flex-1">
+            Continuar →
+          </button>
+        ) : (
+          <button type="submit" disabled={crear.isPending} className="btn-primary flex-1">
+            {crear.isPending ? 'Guardando…' : 'Crear solicitud'}
+          </button>
+        )}
+      </div>
     </form>
   );
 }

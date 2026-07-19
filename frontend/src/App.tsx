@@ -14,6 +14,7 @@ import { ClientesPanel } from '@/features/clientes/ClientesPanel';
 import { AprobacionesPanel } from '@/features/aprobaciones/AprobacionesPanel';
 import { CarteraPanel } from '@/features/cartera/CarteraPanel';
 import { DashboardPanel } from '@/features/dashboard/DashboardPanel';
+import { InboxPanel } from '@/features/inbox/InboxPanel';
 import { UsuariosPanel } from '@/features/usuarios/UsuariosPanel';
 import { ReportesPanel } from '@/features/reportes/ReportesPanel';
 import { TransferenciasPanel } from '@/features/transferencias/TransferenciasPanel';
@@ -37,6 +38,7 @@ interface MenuItem { id: string; label: string; icon: IconName; roles: Rol[] }
 
 const MENU: MenuItem[] = [
   { id: 'inicio',         label: 'Inicio',           icon: 'inicio',         roles: ['ADMINISTRADOR', 'SUPERVISOR', 'COBRADOR'] },
+  { id: 'inbox',          label: 'Bandeja',          icon: 'aprobaciones',   roles: ['ADMINISTRADOR', 'SUPERVISOR'] },
   { id: 'ruta',           label: 'Ruta y cobranza',  icon: 'ruta',           roles: ['ADMINISTRADOR', 'SUPERVISOR', 'COBRADOR'] },
   { id: 'caja',           label: 'Caja',             icon: 'caja',           roles: ['SUPERVISOR', 'COBRADOR'] },
   { id: 'caja-general',   label: 'Caja General',     icon: 'caja',           roles: ['ADMINISTRADOR'] },
@@ -114,11 +116,16 @@ function AppShell() {
     </div>
   );
 
-  const { data: badges } = useQuery({
+  const { data: badgesRaw } = useQuery({
     queryKey: ['tareas-badges'],
     queryFn: async () => (await api.get<{ data: Record<string, number> }>('/tareas/badges')).data.data,
     refetchInterval: 30_000, // el badge se actualiza solo cada 30s
   });
+
+  // El badge de la Bandeja es el total de tareas pendientes (suma de los módulos).
+  const badges: Record<string, number> | undefined = badgesRaw
+    ? { ...badgesRaw, inbox: Object.values(badgesRaw).reduce((a, b) => a + b, 0) }
+    : badgesRaw;
 
   const nav = (
     <nav className="flex flex-col gap-1">
@@ -214,6 +221,7 @@ function AppShell() {
 function Pantalla({ id }: { id: string }) {
   switch (id) {
     case 'inicio':         return <DashboardPanel />;
+    case 'inbox':          return <InboxPanel />;
     case 'ruta':           return <RutaPanel />;
     case 'caja':           return <CajaPanel />;
     case 'caja-general':   return <CajaGeneralPanel />;
