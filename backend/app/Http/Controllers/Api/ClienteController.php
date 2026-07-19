@@ -85,53 +85,74 @@ class ClienteController extends Controller
      * para evitar múltiples llamadas. Resumen financiero, créditos, alertas, estado
      * de cuenta (saldos) y timeline de actividad reciente. Respeta el modelo territorial.
      */
+    /**
+     * VISTA 360° del cliente: toda la información consolidada en una sola respuesta,
+     * para evitar múltiples llamadas. Resumen financiero, créditos, alertas, estado
+     * de cuenta (saldos) y timeline de actividad reciente. Respeta el modelo territorial.
+     */
     public function panorama360(Cliente $cliente, \App\Services\RenovacionService $renovaciones)
     {
         $this->authorize('view', $cliente);
         $cliente->load(['area', 'cobrador', 'referencias']);
 
-        // Créditos del cliente con su estado y saldos
+        // Créditos del cliente con su producto y fecha de desembolso (join a desembolsos)
         $creditos = \Illuminate\Support\Facades\DB::table('solicitudes as s')
             ->leftJoin('productos_financieros as pf', 'pf.id', '=', 's.producto_financiero_id')
+            ->leftJoin('desembolsos as d', 'd.solicitud_id', '=', 's.id')
             ->where('s.cliente_id', $cliente->id)
             ->orderByDesc('s.created_at')
             ->get([
                 's.id', 's.numero_credito', 's.estado', 's.capital_solicitado', 's.monto_aprobado',
-                's.total_recaudar', 's.total_pagado', 's.numero_cuotas', 's.modalidad',
-                's.created_at', 's.fecha_desembolso',
+                's.total_recaudar', 's.numero_cuotas', 's.modalidad', 's.created_at',
+                'd.fecha as fecha_desembolso',
                 \Illuminate\Support\Facades\DB::raw("COALESCE(pf.nombre, 'Crédito Tradicional') as producto"),
             ]);
 
+        // Total pagado por crédito (suma de valor_pagado de sus cuotas)
+        $ids = $creditos->pluck('id');
+        $pagadoPorCredito = \Illuminate\Support\Facades\DB::table('cuotas')
+            ->whereIn('solicitud_id', $ids)
+            ->groupBy('solicitud_id')
+            ->selectRaw('solicitud_id, COALESCE(SUM(valor_pagado),0) as pagado')
+            ->pluck('pagado', 'solicitud_id');
+
+        // Enriquecer créditos con su total pagado y saldo
+        $creditos = $creditos->map(function ($c) use ($pagadoPorCredito) {
+            $c->total_pagado = (float) ($pagadoPorCredito[$c->id] ?? 0);
+            $c->saldo = max(0, (float) ($c->total_recaudar ?? 0) - $c->total_pagado);
+            return $c;
+        });
+
         // Resumen financiero
         $activos = $creditos->whereIn('estado', ['ACTIVO', 'DESEMBOLSADO', 'EN_MORA']);
-        $saldoTotal = $activos->sum(fn ($c) => max(0, (float) $c->total_recaudar - (float) ($c->total_pagado ?? 0)));
+        $saldoTotal = $activos->sum(fn ($c) => $c->saldo);
         $prestadoHist = $creditos->sum(fn ($c) => (float) ($c->monto_aprobado ?? 0));
-        $pagadoHist = $creditos->sum(fn ($c) => (float) ($c->total_pagado ?? 0));
+        $pagadoHist = $creditos->sum(fn ($c) => $c->total_pagado);
 
-        // Cuotas vencidas (mora) del cliente
+        // Mora: cuotas vencidas del cliente (columnas reales: valor, saldo, estado)
         $mora = \Illuminate\Support\Facades\DB::table('cuotas as q')
             ->join('solicitudes as s', 's.id', '=', 'q.solicitud_id')
             ->where('s.cliente_id', $cliente->id)
-            ->where('q.estado', '!=', 'PAGADA')
+            ->whereIn('q.estado', ['PENDIENTE', 'PARCIAL', 'VENCIDA'])
             ->whereDate('q.fecha_vencimiento', '<', now()->toDateString())
-            ->selectRaw('COUNT(*) as n, COALESCE(SUM(q.saldo_cuota),0) as total, MIN(q.fecha_vencimiento) as desde')
+            ->selectRaw('COUNT(*) as n, COALESCE(SUM(q.saldo),0) as total, MIN(q.fecha_vencimiento) as desde')
             ->first();
 
         // Próxima cuota por vencer
         $proxima = \Illuminate\Support\Facades\DB::table('cuotas as q')
             ->join('solicitudes as s', 's.id', '=', 'q.solicitud_id')
             ->where('s.cliente_id', $cliente->id)
-            ->where('q.estado', '!=', 'PAGADA')
+            ->whereIn('q.estado', ['PENDIENTE', 'PARCIAL'])
             ->whereDate('q.fecha_vencimiento', '>=', now()->toDateString())
             ->orderBy('q.fecha_vencimiento')
-            ->first(['q.fecha_vencimiento', 'q.valor_cuota', 'q.saldo_cuota']);
+            ->first(['q.fecha_vencimiento', 'q.valor', 'q.saldo']);
 
         // Renovación disponible
         $renovacion = $renovaciones->creditoRenovable($cliente->id);
 
-        // Timeline: últimos pagos + gestiones de mora + cambios de estado de crédito
+        // Timeline: últimos pagos (la existencia del pago = aplicado) + gestiones de mora
         $pagos = \Illuminate\Support\Facades\DB::table('pagos')
-            ->where('cliente_id', $cliente->id)->where('estado', 'APLICADO')
+            ->where('cliente_id', $cliente->id)
             ->orderByDesc('created_at')->limit(15)
             ->get(['valor', 'metodo', 'created_at'])
             ->map(fn ($p) => [
@@ -149,8 +170,7 @@ class ClienteController extends Controller
                 'detalle' => $g->observacion, 'fecha' => $g->created_at,
             ]);
 
-        $timeline = $pagos->concat($gestiones)
-            ->sortByDesc('fecha')->take(20)->values();
+        $timeline = $pagos->concat($gestiones)->sortByDesc('fecha')->take(20)->values();
 
         return response()->json(['data' => [
             'cliente'    => new ClienteResource($cliente),
@@ -168,7 +188,7 @@ class ClienteController extends Controller
             ],
             'proxima_cuota' => $proxima ? [
                 'fecha' => $proxima->fecha_vencimiento,
-                'valor' => (float) ($proxima->saldo_cuota ?? $proxima->valor_cuota),
+                'valor' => (float) ($proxima->saldo ?? $proxima->valor),
             ] : null,
             'renovacion' => $renovacion,
             'creditos'   => $creditos,
