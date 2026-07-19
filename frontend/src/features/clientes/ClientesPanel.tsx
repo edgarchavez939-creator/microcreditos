@@ -31,7 +31,7 @@ export function ClientesPanel() {
       <p className="mb-5 text-sm text-content-muted">Registra, consulta y actualiza los clientes de tu territorio.</p>
 
       {perfilId ? (
-        <ClienteProfile clienteId={perfilId} onVolver={() => setPerfilId(null)} onEditar={(c) => setEditando(c)} />
+        <ClienteProfile clienteId={perfilId} onVolver={() => setPerfilId(null)} onEditar={(c) => setEditando(c as ClienteDetalle)} />
       ) : modo === 'lista' ? (
         <ClientesList onNuevo={() => setModo('nuevo')} onVerPerfil={(id) => setPerfilId(id)} />
       ) : (

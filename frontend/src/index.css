@@ -113,8 +113,15 @@
   }
   .animate-fade-in-scale { animation: fadeInScale 0.16s ease-out; }
 
+  /* Deslizamiento lateral para drawers (paneles) */
+  @keyframes slideInRight {
+    from { transform: translateX(100%); }
+    to { transform: translateX(0); }
+  }
+  .animate-slide-in-right { animation: slideInRight 0.22s cubic-bezier(0.32, 0.72, 0, 1); }
+
   /* Respeta la preferencia de reducir movimiento (accesibilidad) */
   @media (prefers-reduced-motion: reduce) {
-    .animate-fade-in, .animate-fade-in-scale { animation: none; }
+    .animate-fade-in, .animate-fade-in-scale, .animate-slide-in-right { animation: none; }
   }
 }

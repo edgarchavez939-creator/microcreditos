@@ -153,3 +153,30 @@ export async function verDocumento(clienteId: number, id: number) {
     `/clientes/${clienteId}/documentos/${id}`);
   return r.data.data;
 }
+
+export interface Panorama360 {
+  cliente: {
+    id: number; nombres: string; apellidos: string; tipo_documento: string; numero_documento: string;
+    telefono_principal?: string | null; correo?: string | null; direccion?: string | null;
+    area?: string | null; cobrador?: string | null; latitud?: number | null; longitud?: number | null;
+    barrio?: string | null; estado?: string | null;
+  };
+  resumen: { saldo_actual: number; prestado_hist: number; pagado_hist: number; creditos_activos: number; creditos_total: number };
+  mora: { cantidad: number; total: number; desde: string | null };
+  proxima_cuota: { fecha: string; valor: number } | null;
+  renovacion: { id: number; dias_restantes?: number } | null;
+  creditos: Array<{
+    id: number; numero_credito: string; estado: string; producto: string;
+    capital_solicitado: number; monto_aprobado: number | null; total_recaudar: number | null;
+    total_pagado: number | null; numero_cuotas: number; modalidad: string; created_at: string;
+  }>;
+  timeline: Array<{ tipo: string; titulo: string; detalle: string | null; fecha: string }>;
+}
+
+export function usePanorama360(id: number | null) {
+  return useQuery({
+    queryKey: ['cliente-360', id],
+    queryFn: async () => (await api.get<{ data: Panorama360 }>(`/clientes/${id}/panorama`)).data.data,
+    enabled: id !== null,
+  });
+}

@@ -18,7 +18,7 @@ use App\Http\Controllers\Api\OtpController;
 use App\Http\Controllers\Api\PermisoController;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/health', fn () => response()->json(['status' => 'ok', 'version' => 'v80-dashboards-rol', 'ts' => now()]));
+Route::get('/health', fn () => response()->json(['status' => 'ok', 'version' => 'v82-buscador-acciones', 'ts' => now()]));
 
 // Marca pública (sin auth): nombre y color para aplicar en login y en toda la app.
 Route::get('/marca-publica', function () {
@@ -108,6 +108,7 @@ Route::middleware(['auth:api', 'mantenimiento'])->group(function () {
     Route::get('permisos', [PermisoController::class, 'index']);
     Route::patch('permisos', [PermisoController::class, 'update']);
     Route::get('clientes-buscar', [ClienteController::class, 'porDocumento']);
+    Route::get('busqueda-global', [\App\Http\Controllers\Api\BusquedaController::class, 'global']);
     // Administración de documentos del cliente
     Route::get('clientes/{cliente}/documentos', [DocumentoController::class, 'index']);
     Route::post('clientes/{cliente}/documentos', [DocumentoController::class, 'store'])->middleware('accion:documentos.subir');
@@ -123,6 +124,7 @@ Route::middleware(['auth:api', 'mantenimiento'])->group(function () {
     Route::apiResource('clientes', ClienteController::class)->only(['index', 'store', 'show', 'update']);
     Route::patch('clientes/{cliente}/contacto', [ClienteController::class, 'actualizarContacto']);
     Route::get('clientes/{cliente}/historial', [ClienteController::class, 'historial']);
+    Route::get('clientes/{cliente}/panorama', [ClienteController::class, 'panorama360']);
     Route::get('clientes/{cliente}/historial-creditos', [ClienteController::class, 'historialCreditos']);
     Route::delete('solicitudes/{solicitud}', [SolicitudController::class, 'destroy'])->middleware('accion:solicitudes.eliminar');
     Route::post('auth/logout', [AuthController::class, 'logout']);

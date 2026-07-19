@@ -6,6 +6,8 @@ import { useAuthStore } from '@/stores/auth';
 import { useReporteUbicacion } from '@/lib/useReporteUbicacion';
 import { ToggleTema } from '@/components/ui/ToggleTema';
 import { useNavStore } from '@/stores/nav';
+import { BuscadorGlobal } from '@/components/ui/BuscadorGlobal';
+import { AccionesRapidas } from '@/components/ui/AccionesRapidas';
 import { LoginForm } from '@/features/auth/LoginForm';
 import { Placeholder } from '@/components/Placeholder';
 import { ClientesPanel } from '@/features/clientes/ClientesPanel';
@@ -82,6 +84,19 @@ function AppShell() {
   const activo = moduloNav;
   const setActivo = setModuloNav;
   const [drawer, setDrawer] = useState(false);
+  const [buscador, setBuscador] = useState(false);
+
+  // Atajo global Ctrl/Cmd + K para abrir el buscador
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        setBuscador((v) => !v);
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, []);
 
   useEffect(() => {
     if (visibles.length > 0 && !visibles.some((m) => m.id === activo)) {
@@ -144,7 +159,13 @@ function AppShell() {
     <div className="min-h-screen bg-surface-2 lg:flex">
       <aside className="fixed inset-y-0 hidden w-64 flex-col bg-ink p-3 lg:flex">
         <div className="py-3">{brand}</div>
-        <div className="mt-4 flex-1 overflow-y-auto">{nav}</div>
+        <button onClick={() => setBuscador(true)}
+          className="mt-2 flex items-center gap-2 rounded-xl bg-white/5 px-3 py-2 text-sm text-slate-300 transition hover:bg-white/10 hover:text-white">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8" /><path d="m21 21-4.3-4.3" /></svg>
+          <span className="flex-1 text-left">Buscar…</span>
+          <kbd className="rounded bg-white/10 px-1.5 py-0.5 text-[10px]">⌘K</kbd>
+        </button>
+        <div className="mt-3 flex-1 overflow-y-auto">{nav}</div>
         <div className="pt-3 space-y-2">
           <div className="px-1"><ToggleTema /></div>
           {userFooter}
@@ -153,7 +174,12 @@ function AppShell() {
 
       <header className="sticky top-0 z-30 flex items-center justify-between bg-ink px-4 py-3 lg:hidden">
         {brand}
-        <button onClick={() => setDrawer(true)} className="rounded-lg p-2 text-slate-200 hover:bg-white/10"><Icon.menu /></button>
+        <div className="flex items-center gap-1">
+          <button onClick={() => setBuscador(true)} aria-label="Buscar" className="rounded-lg p-2 text-slate-200 hover:bg-white/10">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8" /><path d="m21 21-4.3-4.3" /></svg>
+          </button>
+          <button onClick={() => setDrawer(true)} className="rounded-lg p-2 text-slate-200 hover:bg-white/10"><Icon.menu /></button>
+        </div>
       </header>
 
       {drawer && (
@@ -178,6 +204,9 @@ function AppShell() {
           <Pantalla id={activo} />
         </div>
       </main>
+
+      <BuscadorGlobal abierto={buscador} onCerrar={() => setBuscador(false)} />
+      <AccionesRapidas />
     </div>
   );
 }

@@ -80,6 +80,102 @@ class ClienteController extends Controller
         return new ClienteResource($cliente->load(['area', 'cobrador', 'referencias', 'solicitudes']));
     }
 
+    /**
+     * VISTA 360° del cliente: toda la información consolidada en una sola respuesta,
+     * para evitar múltiples llamadas. Resumen financiero, créditos, alertas, estado
+     * de cuenta (saldos) y timeline de actividad reciente. Respeta el modelo territorial.
+     */
+    public function panorama360(Cliente $cliente, \App\Services\RenovacionService $renovaciones)
+    {
+        $this->authorize('view', $cliente);
+        $cliente->load(['area', 'cobrador', 'referencias']);
+
+        // Créditos del cliente con su estado y saldos
+        $creditos = \Illuminate\Support\Facades\DB::table('solicitudes as s')
+            ->leftJoin('productos_financieros as pf', 'pf.id', '=', 's.producto_financiero_id')
+            ->where('s.cliente_id', $cliente->id)
+            ->orderByDesc('s.created_at')
+            ->get([
+                's.id', 's.numero_credito', 's.estado', 's.capital_solicitado', 's.monto_aprobado',
+                's.total_recaudar', 's.total_pagado', 's.numero_cuotas', 's.modalidad',
+                's.created_at', 's.fecha_desembolso',
+                \Illuminate\Support\Facades\DB::raw("COALESCE(pf.nombre, 'Crédito Tradicional') as producto"),
+            ]);
+
+        // Resumen financiero
+        $activos = $creditos->whereIn('estado', ['ACTIVO', 'DESEMBOLSADO', 'EN_MORA']);
+        $saldoTotal = $activos->sum(fn ($c) => max(0, (float) $c->total_recaudar - (float) ($c->total_pagado ?? 0)));
+        $prestadoHist = $creditos->sum(fn ($c) => (float) ($c->monto_aprobado ?? 0));
+        $pagadoHist = $creditos->sum(fn ($c) => (float) ($c->total_pagado ?? 0));
+
+        // Cuotas vencidas (mora) del cliente
+        $mora = \Illuminate\Support\Facades\DB::table('cuotas as q')
+            ->join('solicitudes as s', 's.id', '=', 'q.solicitud_id')
+            ->where('s.cliente_id', $cliente->id)
+            ->where('q.estado', '!=', 'PAGADA')
+            ->whereDate('q.fecha_vencimiento', '<', now()->toDateString())
+            ->selectRaw('COUNT(*) as n, COALESCE(SUM(q.saldo_cuota),0) as total, MIN(q.fecha_vencimiento) as desde')
+            ->first();
+
+        // Próxima cuota por vencer
+        $proxima = \Illuminate\Support\Facades\DB::table('cuotas as q')
+            ->join('solicitudes as s', 's.id', '=', 'q.solicitud_id')
+            ->where('s.cliente_id', $cliente->id)
+            ->where('q.estado', '!=', 'PAGADA')
+            ->whereDate('q.fecha_vencimiento', '>=', now()->toDateString())
+            ->orderBy('q.fecha_vencimiento')
+            ->first(['q.fecha_vencimiento', 'q.valor_cuota', 'q.saldo_cuota']);
+
+        // Renovación disponible
+        $renovacion = $renovaciones->creditoRenovable($cliente->id);
+
+        // Timeline: últimos pagos + gestiones de mora + cambios de estado de crédito
+        $pagos = \Illuminate\Support\Facades\DB::table('pagos')
+            ->where('cliente_id', $cliente->id)->where('estado', 'APLICADO')
+            ->orderByDesc('created_at')->limit(15)
+            ->get(['valor', 'metodo', 'created_at'])
+            ->map(fn ($p) => [
+                'tipo' => 'PAGO', 'titulo' => 'Pago registrado',
+                'detalle' => number_format((float) $p->valor / 1000, 0, ',', '.') . ' mil · ' . strtolower($p->metodo),
+                'fecha' => $p->created_at,
+            ]);
+
+        $gestiones = \Illuminate\Support\Facades\DB::table('gestiones_mora')
+            ->where('cliente_id', $cliente->id)
+            ->orderByDesc('created_at')->limit(15)
+            ->get(['tipo', 'observacion', 'created_at'])
+            ->map(fn ($g) => [
+                'tipo' => 'GESTION', 'titulo' => str_replace('_', ' ', $g->tipo),
+                'detalle' => $g->observacion, 'fecha' => $g->created_at,
+            ]);
+
+        $timeline = $pagos->concat($gestiones)
+            ->sortByDesc('fecha')->take(20)->values();
+
+        return response()->json(['data' => [
+            'cliente'    => new ClienteResource($cliente),
+            'resumen'    => [
+                'saldo_actual'    => round($saldoTotal, 2),
+                'prestado_hist'   => round($prestadoHist, 2),
+                'pagado_hist'     => round($pagadoHist, 2),
+                'creditos_activos'=> $activos->count(),
+                'creditos_total'  => $creditos->count(),
+            ],
+            'mora'       => [
+                'cantidad' => (int) ($mora->n ?? 0),
+                'total'    => (float) ($mora->total ?? 0),
+                'desde'    => $mora->desde ?? null,
+            ],
+            'proxima_cuota' => $proxima ? [
+                'fecha' => $proxima->fecha_vencimiento,
+                'valor' => (float) ($proxima->saldo_cuota ?? $proxima->valor_cuota),
+            ] : null,
+            'renovacion' => $renovacion,
+            'creditos'   => $creditos,
+            'timeline'   => $timeline,
+        ]]);
+    }
+
     public function update(StoreClienteRequest $request, Cliente $cliente)
     {
         $this->authorize('update', $cliente);
