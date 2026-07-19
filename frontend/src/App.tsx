@@ -61,6 +61,15 @@ const ROL_LABEL: Record<Rol, string> = {
   ADMINISTRADOR: 'Administrador', SUPERVISOR: 'Supervisor', COBRADOR: 'Cobrador', ADMIN_FUNCIONAL: 'Admin. Funcional',
 };
 
+// Módulos que el backend gobierna por permisos dinámicos. Un módulo del MENÚ que NO
+// esté aquí se rige solo por el filtro de rol (evita que un módulo nuevo del frontend
+// desaparezca porque el catálogo de permisos del backend todavía no lo liste).
+const MODULOS_CATALOGADOS = new Set<string>([
+  'inicio', 'inbox', 'ruta', 'caja', 'caja-general', 'estado-cuenta', 'solicitud',
+  'aprobaciones', 'pagos', 'reamortizacion', 'transferencias', 'clientes', 'mapa',
+  'reportes', 'usuarios', 'parametros', 'permisos', 'admin-funcional',
+]);
+
 function iniciales(nombre: string) {
   return nombre.split(' ').filter(Boolean).slice(0, 2).map((p) => p[0]?.toUpperCase()).join('');
 }
@@ -78,9 +87,15 @@ function AppShell() {
   const { data: permitidos } = useMisPermisos(true);
   // Primero por rol (defensa base) y luego por permisos dinámicos del servidor.
   // Mientras cargan los permisos, se usa solo el filtro por rol para no parpadear.
+  // Salvaguarda: si el servidor devuelve permisos pero NO incluye un módulo (p. ej. uno
+  // nuevo del frontend que el catálogo del backend aún no lista), no se oculta por eso;
+  // se rige solo por el filtro de rol. Así un módulo nuevo nunca "parpadea y desaparece".
+  const permitidosSet = permitidos ? new Set(permitidos) : null;
+  const backendConoce = (id: string) =>
+    !permitidosSet || permitidosSet.has(id) || !MODULOS_CATALOGADOS.has(id);
   const visibles = MENU
     .filter((m) => usuario.rol === 'ADMIN_FUNCIONAL' || m.roles.includes(usuario.rol))
-    .filter((m) => !permitidos || permitidos.includes(m.id));
+    .filter((m) => backendConoce(m.id));
   const moduloNav = useNavStore((s) => s.modulo);
   const setModuloNav = useNavStore((s) => s.setModulo);
   const activo = moduloNav;

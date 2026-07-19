@@ -15,6 +15,7 @@ class PermisoService
      */
     public const MODULOS = [
         'inicio'         => ['etiqueta' => 'Inicio (indicadores)',       'defecto' => ['ADMINISTRADOR', 'SUPERVISOR', 'COBRADOR']],
+        'inbox'          => ['etiqueta' => 'Bandeja de trabajo',          'defecto' => ['ADMINISTRADOR', 'SUPERVISOR']],
         'ruta'           => ['etiqueta' => 'Ruta del día',               'defecto' => ['ADMINISTRADOR', 'SUPERVISOR', 'COBRADOR']],
         'caja'           => ['etiqueta' => 'Caja individual',            'defecto' => ['SUPERVISOR', 'COBRADOR']],
         'mora'           => ['etiqueta' => 'Gestión de mora',            'defecto' => ['ADMINISTRADOR', 'SUPERVISOR', 'COBRADOR']],
