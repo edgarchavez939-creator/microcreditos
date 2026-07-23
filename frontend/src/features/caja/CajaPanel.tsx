@@ -366,8 +366,10 @@ function AbrirCaja({ onOk, toast }: { onOk: () => void; toast: ToastApi }) {
       </p>
       <div className="flex flex-wrap items-end gap-2">
         <div className="flex-1 min-w-[140px]">
-          <label className="label">Base inicial en efectivo</label>
-          <InputMoneda valorPesos={valor} onChangePesos={setValor} />
+          <label className="label">
+            Base inicial en efectivo{valor !== null && <span className="ml-1.5 font-normal text-content-muted">= ${valor.toLocaleString('es-CO')}</span>}
+          </label>
+          <InputMoneda valorPesos={valor} onChangePesos={setValor} mostrarEquivalencia={false} />
         </div>
         <div className="flex-1 min-w-[160px]">
           <label className="label">Observación (opcional)</label>
@@ -405,8 +407,10 @@ function RegistrarGasto({ tipos, onOk, toast }: { tipos: string[]; onOk: () => v
           </select>
         </div>
         <div>
-          <label className="label">Valor</label>
-          <InputMoneda valorPesos={valor} onChangePesos={setValor} />
+          <label className="label">
+            Valor{valor !== null && <span className="ml-1.5 font-normal text-content-muted">= ${valor.toLocaleString('es-CO')}</span>}
+          </label>
+          <InputMoneda valorPesos={valor} onChangePesos={setValor} mostrarEquivalencia={false} />
         </div>
         <div>
           <label className="label">Medio</label>
@@ -501,8 +505,10 @@ function CierreArqueo({ e, onOk, toast }: { e: EstadoCaja; onOk: () => void; toa
           <div className="font-display text-xl font-bold text-money-700">{money(e.efectivo_esperado)}</div>
         </div>
         <div>
-          <label className="label">Efectivo contado (arqueo)</label>
-          <InputMoneda valorPesos={contado} onChangePesos={setContado} />
+          <label className="label">
+            Efectivo contado (arqueo){contado !== null && <span className="ml-1.5 font-normal text-content-muted">= ${contado.toLocaleString('es-CO')}</span>}
+          </label>
+          <InputMoneda valorPesos={contado} onChangePesos={setContado} mostrarEquivalencia={false} />
         </div>
       </div>
 

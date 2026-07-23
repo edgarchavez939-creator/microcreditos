@@ -224,8 +224,10 @@ function FilaCaja({ caja }: { caja: CajaDia }) {
               <p className="mb-2 text-xs font-semibold text-slate-600">Confirmar recepción del dinero</p>
               <div className="flex flex-wrap items-end gap-2">
                 <div>
-                  <label className="label text-xs">Efectivo entregado</label>
-                  <InputMoneda valorPesos={entregado} onChangePesos={setEntregado} />
+                  <label className="label text-xs">
+                    Efectivo entregado{entregado !== null && <span className="ml-1.5 font-normal text-content-muted">= ${entregado.toLocaleString('es-CO')}</span>}
+                  </label>
+                  <div className="w-40"><InputMoneda valorPesos={entregado} onChangePesos={setEntregado} mostrarEquivalencia={false} /></div>
                 </div>
                 <input value={obs} onChange={(e) => setObs(e.target.value)} className="input flex-1 py-1 text-sm" placeholder="Observación (opcional)" />
                 <button onClick={() => recibir.mutate()} disabled={recibir.isPending || entregado === null} className="btn-primary btn-sm">

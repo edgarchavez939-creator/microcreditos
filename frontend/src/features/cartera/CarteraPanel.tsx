@@ -333,8 +333,10 @@ function FichaCredito({ creditoId }: { creditoId: number }) {
         <h4 className="mb-2 text-sm font-semibold text-content">Registrar pago</h4>
         <div className="flex flex-wrap items-end gap-2">
           <label className="text-sm">
-            <span className="block font-medium">Valor</span>
-            <div className="w-44"><InputMoneda valorPesos={valor} onChangePesos={setValor} /></div>
+            <span className="block font-medium">
+              Valor{valor !== null && <span className="ml-1.5 font-normal text-content-muted">= ${valor.toLocaleString('es-CO')}</span>}
+            </span>
+            <div className="w-44"><InputMoneda valorPesos={valor} onChangePesos={setValor} mostrarEquivalencia={false} /></div>
           </label>
           <label className="text-sm">
             <span className="block font-medium">Medio</span>
