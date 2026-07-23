@@ -47,26 +47,42 @@ class SolicitudPolicy
     }
 
     /** Aprobar/rechazar: nunca cobrador. Exoneración: solo admin. */
+    /**
+     * Aprobar: la exoneración de seguro queda reservada al administrador (control de
+     * negocio). Fuera de ese caso, aprueba quien TENGA la acción asignada en el motor
+     * de permisos, dentro de su alcance territorial. Por defecto el cobrador no la
+     * tiene, así que el comportamiento no cambia salvo que se le conceda expresamente.
+     */
     public function approve(Usuario $u, Solicitud $s): bool
     {
-        if ($u->esCobrador()) return false;
         if ($s->seguro_exonerado) return $u->esAdministrador();
         if ($u->esAdministrador()) return true;
-        return $u->esSupervisor() && $this->cubreArea($u, $s);
+
+        return app(\App\Services\PermisoService::class)->autoriza($u, 'solicitudes.aprobar')
+            && $this->cubreArea($u, $s);
     }
 
-    /** Reamortizar: cobrador dueño, supervisor del área o administrador. */
+    /** Reamortizar: administrador, o quien tenga la acción asignada en su área. */
     public function reamortizar(Usuario $u, Solicitud $s): bool
     {
         if ($u->esAdministrador()) return true;
-        return $this->cubreArea($u, $s);
+
+        return app(\App\Services\PermisoService::class)->autoriza($u, 'creditos.reamortizar')
+            && $this->cubreArea($u, $s);
     }
 
-    /** Desembolsar: supervisor del área o administrador. */
+    /**
+     * Desembolsar: administrador siempre; cualquier otro rol que TENGA la acción
+     * asignada en el motor de permisos, siempre dentro de su alcance territorial.
+     * (No se cablea el rol: si el administrador concede 'creditos.desembolsar' a un
+     * cobrador, la política lo respeta.)
+     */
     public function disburse(Usuario $u, Solicitud $s): bool
     {
         if ($u->esAdministrador()) return true;
-        return $u->esSupervisor() && $this->cubreArea($u, $s);
+
+        return app(\App\Services\PermisoService::class)->autoriza($u, 'creditos.desembolsar')
+            && $this->cubreArea($u, $s);
     }
 
     /** Registrar pago: cobrador dueño, supervisor del área o administrador. */
