@@ -78,9 +78,18 @@ class ParametroController extends Controller
         ],
     ];
 
+    /**
+     * Acceso a parámetros del negocio: consulta el MOTOR DE PERMISOS
+     * ('parametros.editar'), configurable por el administrador, en vez de cablear el rol.
+     */
     private function soloAdmin(Request $request): void
     {
-        abort_unless($request->user()->esAdministrador(), 403, 'Solo el administrador puede gestionar parámetros.');
+        $u = $request->user();
+        abort_unless(
+            $u && ($u->esAdministrador() || app(\App\Services\PermisoService::class)->autoriza($u, 'parametros.editar')),
+            403,
+            'No tienes permiso para gestionar los parámetros del negocio.'
+        );
     }
 
     public function index(Request $request)

@@ -75,17 +75,20 @@ class AperturaCajaService
 
             // La base inicial se registra como movimiento de caja (fuente única del efectivo),
             // igual que antes, para que estadoDia la contabilice sin cambios.
+            // NOTA: movimientos_caja NO tiene columna updated_at; solo created_at.
             if ($baseInicial > 0) {
+                $areaId = DB::table('usuario_area')->where('usuario_id', $empleadoId)->value('area_id');
                 DB::table('movimientos_caja')->insert([
                     'tipo'            => 'INGRESO',
                     'valor'           => $baseInicial,
                     'medio_pago'      => 'EFECTIVO',
                     'referencia_tipo' => 'BASE_INICIAL',
-                    'concepto'        => 'Base inicial de caja',
+                    'concepto'        => 'Base inicial',
+                    'observacion'     => $observacion,
+                    'area_id'         => $areaId,
                     'registrado_por'  => $empleadoId,
                     'fecha'           => $fecha,
                     'created_at'      => now(),
-                    'updated_at'      => now(),
                 ]);
             }
 

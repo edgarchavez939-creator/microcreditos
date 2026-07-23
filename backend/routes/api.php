@@ -18,7 +18,7 @@ use App\Http\Controllers\Api\OtpController;
 use App\Http\Controllers\Api\PermisoController;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/health', fn () => response()->json(['status' => 'ok', 'version' => 'v87-fix-permiso-desembolso', 'ts' => now()]));
+Route::get('/health', fn () => response()->json(['status' => 'ok', 'version' => 'v89-fix-abrir-caja', 'ts' => now()]));
 
 // Marca pública (sin auth): nombre y color para aplicar en login y en toda la app.
 Route::get('/marca-publica', function () {
@@ -89,7 +89,7 @@ Route::middleware(['auth:api', 'mantenimiento'])->group(function () {
     Route::post('transferencias/{transferencia}/aprobar', [TransferenciaController::class, 'aprobar'])->middleware(['modulo:transferencias', 'accion:transferencias.validar']);
     Route::post('transferencias/{transferencia}/rechazar', [TransferenciaController::class, 'rechazar'])->middleware(['modulo:transferencias', 'accion:transferencias.validar']);
     Route::get('parametros', [ParametroController::class, 'index']);
-    Route::patch('parametros', [ParametroController::class, 'update']);
+    Route::patch('parametros', [ParametroController::class, 'update'])->middleware('accion:parametros.editar');
     Route::get('mapa/clientes', [MapaController::class, 'clientes'])->middleware('modulo:mapa');
     Route::post('mapa/ubicacion', [MapaController::class, 'reportarUbicacion']);
     Route::get('mapa/cobradores-en-vivo', [MapaController::class, 'cobradoresEnVivo'])->middleware('modulo:mapa');
@@ -116,7 +116,8 @@ Route::middleware(['auth:api', 'mantenimiento'])->group(function () {
     Route::post('clientes/{cliente}/documentos/{documento}/reemplazar', [DocumentoController::class, 'replace']);
     Route::delete('clientes/{cliente}/documentos/{documento}', [DocumentoController::class, 'destroy'])->middleware('accion:documentos.eliminar');
     Route::get('reamortizacion/buscar', [ReamortizacionController::class, 'porNumero']);
-    Route::apiResource('usuarios', UsuarioController::class)->only(['index', 'store', 'update']);
+    Route::apiResource('usuarios', UsuarioController::class)->only(['index', 'store', 'update'])
+        ->middleware('accion:usuarios.gestionar');
     Route::get('areas', [AreaController::class, 'index']);
     Route::post('areas', [AreaController::class, 'store']);
     Route::patch('areas/{area}', [AreaController::class, 'update']);

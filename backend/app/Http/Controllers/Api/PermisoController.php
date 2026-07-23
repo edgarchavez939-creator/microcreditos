@@ -12,7 +12,14 @@ class PermisoController extends Controller
     /** Matriz de permisos para la pantalla del administrador. */
     public function index(Request $request, PermisoService $svc)
     {
-        abort_unless($request->user()->esAdministrador(), 403, 'Solo el administrador gestiona permisos.');
+        // Motor de permisos ('permisos.gestionar'). El propio motor blinda al
+        // administrador para que nunca pueda quedarse sin esta acción.
+        $u = $request->user();
+        abort_unless(
+            $u && ($u->esAdministrador() || app(\App\Services\PermisoService::class)->autoriza($u, 'permisos.gestionar')),
+            403,
+            'No tienes permiso para gestionar los permisos del sistema.'
+        );
 
         $modulos = collect(PermisoService::MODULOS)->map(fn ($def, $id) => [
             'id' => $id, 'etiqueta' => $def['etiqueta'], 'defecto' => $def['defecto'],
@@ -43,7 +50,14 @@ class PermisoController extends Controller
     /** Crea/actualiza una regla de acceso (por rol o por usuario). Efecto inmediato. */
     public function update(Request $request, PermisoService $svc)
     {
-        abort_unless($request->user()->esAdministrador(), 403, 'Solo el administrador gestiona permisos.');
+        // Motor de permisos ('permisos.gestionar'). El propio motor blinda al
+        // administrador para que nunca pueda quedarse sin esta acción.
+        $u = $request->user();
+        abort_unless(
+            $u && ($u->esAdministrador() || app(\App\Services\PermisoService::class)->autoriza($u, 'permisos.gestionar')),
+            403,
+            'No tienes permiso para gestionar los permisos del sistema.'
+        );
 
         $data = $request->validate([
             'modulo'     => ['required', 'string'],

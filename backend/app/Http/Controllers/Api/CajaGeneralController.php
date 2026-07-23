@@ -13,9 +13,21 @@ use Illuminate\Support\Facades\DB;
  */
 class CajaGeneralController extends Controller
 {
+    /**
+     * Acceso al módulo de tesorería (Caja General).
+     * Consulta el MOTOR DE PERMISOS en lugar de cablear el rol: el administrador
+     * puede conceder este módulo a otro perfil desde la pantalla de permisos.
+     * Las operaciones de escritura exigen además su acción concreta en la ruta
+     * ('caja-general.recibir' / 'caja-general.cerrar'), doble control intencional.
+     */
     private function soloAdmin(Request $request): void
     {
-        abort_unless($request->user()?->esAdministrador(), 403, 'Acceso exclusivo del Administrador.');
+        $u = $request->user();
+        abort_unless(
+            $u && app(\App\Services\PermisoService::class)->permite($u, 'caja-general'),
+            403,
+            'No tienes acceso al módulo de Caja General.'
+        );
     }
 
     private function auditar(Request $request, string $accion, ?int $entidadId, array $datos): void

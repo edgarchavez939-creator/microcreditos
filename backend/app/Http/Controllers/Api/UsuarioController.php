@@ -11,9 +11,18 @@ use Illuminate\Validation\Rule;
 class UsuarioController extends Controller
 {
     /** Solo el administrador gestiona usuarios. */
+    /**
+     * Gestión de usuarios: consulta el MOTOR DE PERMISOS ('usuarios.gestionar'),
+     * configurable por el administrador, en lugar de cablear el rol.
+     */
     private function soloAdmin(Request $request): void
     {
-        abort_unless($request->user()->esAdministrador(), 403, 'Solo el administrador puede gestionar usuarios.');
+        $u = $request->user();
+        abort_unless(
+            $u && ($u->esAdministrador() || app(\App\Services\PermisoService::class)->autoriza($u, 'usuarios.gestionar')),
+            403,
+            'No tienes permiso para gestionar usuarios.'
+        );
     }
 
     public function index(Request $request)

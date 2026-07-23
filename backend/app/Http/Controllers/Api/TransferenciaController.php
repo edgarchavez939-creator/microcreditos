@@ -10,12 +10,19 @@ use App\Services\PaymentService;
 
 class TransferenciaController extends Controller
 {
-    /** Solo supervisor o administrador validan transferencias. */
+    /**
+     * Autorización para validar transferencias.
+     * Consulta el MOTOR DE PERMISOS ('transferencias.validar') en lugar de cablear el
+     * rol: así respeta lo que el administrador configure desde el módulo de permisos.
+     */
     private function soloValidadores(Request $request): void
     {
         $u = $request->user();
-        abort_unless($u->esAdministrador() || $u->esSupervisor(), 403,
-            'Solo el supervisor o el administrador pueden validar transferencias.');
+        abort_unless(
+            $u->esAdministrador() || app(\App\Services\PermisoService::class)->autoriza($u, 'transferencias.validar'),
+            403,
+            'No tienes permiso para validar transferencias.'
+        );
     }
 
     public function index(Request $request)

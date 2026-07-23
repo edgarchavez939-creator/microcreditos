@@ -29,10 +29,12 @@ class PagoController extends Controller
         ], 201);
     }
 
-    /** Anula un pago mal digitado (solo administrador, con clave especial). */
+    /** Anula un pago mal digitado. Autorización por el motor de permisos + clave OTP. */
     public function destroy(\Illuminate\Http\Request $request, \App\Models\Pago $pago, \App\Services\PaymentService $svc)
     {
-        abort_unless($request->user()->esAdministrador(), 403, 'Solo el administrador puede anular pagos.');
+        // La ruta ya exige la acción 'pagos.anular' (motor de permisos), que por defecto
+        // tienen administrador y supervisor y es configurable por el administrador.
+        // No se cablea el rol aquí para no contradecir esa configuración.
         $request->validate([
             'otp'    => ['required', 'string', 'digits:6'],
             'motivo' => ['nullable', 'string', 'max:255'],
