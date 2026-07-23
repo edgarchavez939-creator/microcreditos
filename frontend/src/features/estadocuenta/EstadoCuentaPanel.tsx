@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import * as XLSX from 'xlsx';
 import { api } from '@/lib/api/client';
+import { InputMoneda } from '@/components/ui/InputMoneda';
 import { money, fecha, fechaHora, aMiles } from '@/lib/format';
 import { useToast } from '@/components/ui/Toast';
 import { useUsuarios } from '@/features/usuarios/hooks';
@@ -232,13 +233,13 @@ function Indicador({ titulo, valor, detalle, tono = 'neutro' }: { titulo: string
 function ModalPrestamo({ empleadoId, onClose }: { empleadoId: number; onClose: () => void }) {
   const qc = useQueryClient();
   const toast = useToast();
-  const [monto, setMonto] = useState('');
+  const [monto, setMonto] = useState<number | null>(null);
   const [concepto, setConcepto] = useState('');
   const [obs, setObs] = useState('');
 
   const crear = useMutation({
     mutationFn: async () => (await api.post(`/empleados/${empleadoId}/prestamos`, {
-      monto: Number(monto), concepto, observaciones: obs || undefined,
+      monto: monto ?? 0, concepto, observaciones: obs || undefined,
     })).data,
     onSuccess: () => {
       toast.exito('Préstamo registrado ✓');
@@ -255,7 +256,7 @@ function ModalPrestamo({ empleadoId, onClose }: { empleadoId: number; onClose: (
         <h3 className="text-base font-bold text-content-strong">Registrar préstamo interno</h3>
         <p className="mb-4 text-sm text-content-muted">Sin intereses, sin plazo. El saldo se reduce con abonos.</p>
         <label className="label">Monto</label>
-        <input type="number" value={monto} onChange={(e) => setMonto(e.target.value)} className="input" placeholder="0" />
+        <InputMoneda valorPesos={monto} onChangePesos={setMonto} />
         <label className="label mt-3">Concepto</label>
         <input value={concepto} onChange={(e) => setConcepto(e.target.value)} className="input" placeholder="Préstamo para…" />
         <label className="label mt-3">Observaciones</label>
@@ -274,12 +275,12 @@ function ModalPrestamo({ empleadoId, onClose }: { empleadoId: number; onClose: (
 function ModalAbono({ empleadoId, obligacion, onClose }: { empleadoId: number; obligacion: Obligacion; onClose: () => void }) {
   const qc = useQueryClient();
   const toast = useToast();
-  const [monto, setMonto] = useState('');
+  const [monto, setMonto] = useState<number | null>(null);
   const [obs, setObs] = useState('');
 
   const abonar = useMutation({
     mutationFn: async () => (await api.post(`/empleados/${empleadoId}/obligaciones/${obligacion.id}/abonar`, {
-      monto: Number(monto), observaciones: obs || undefined,
+      monto: monto ?? 0, observaciones: obs || undefined,
     })).data,
     onSuccess: (res) => {
       toast.exito(res.estado === 'PAGADO' ? 'Obligación pagada por completo ✓' : 'Abono registrado ✓');
@@ -297,8 +298,8 @@ function ModalAbono({ empleadoId, obligacion, onClose }: { empleadoId: number; o
         <p className="mb-1 text-sm text-content-muted">{obligacion.concepto}</p>
         <p className="mb-4 text-sm font-medium text-content">Saldo actual: {money(obligacion.saldo)}</p>
         <label className="label">Monto del abono</label>
-        <input type="number" value={monto} onChange={(e) => setMonto(e.target.value)} className="input" placeholder="0" max={obligacion.saldo} />
-        <button onClick={() => setMonto(String(obligacion.saldo))} className="mt-1 text-xs text-brand-600 hover:underline">Pagar saldo total ({money(obligacion.saldo)})</button>
+        <InputMoneda valorPesos={monto} onChangePesos={setMonto} maxPesos={obligacion.saldo} />
+        <button onClick={() => setMonto(obligacion.saldo)} className="mt-1 text-xs text-brand-600 hover:underline">Pagar saldo total ({money(obligacion.saldo)})</button>
         <label className="label mt-3">Observaciones</label>
         <textarea value={obs} onChange={(e) => setObs(e.target.value)} className="input" rows={2} />
         <div className="mt-4 flex gap-2">

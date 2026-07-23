@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api/client';
+import { InputMoneda } from '@/components/ui/InputMoneda';
 
 interface Parametro {
   clave: string;
@@ -73,11 +74,22 @@ function FilaParametro({ p }: { p: Parametro }) {
           <div className="mt-0.5 text-sm text-content-muted">{p.descripcion}</div>
         </div>
         <div className="flex items-center gap-2">
-          {sufijo === '$' && <span className="text-sm text-content-muted">$</span>}
-          <input type="number" step="any" value={valor}
-            onChange={(e) => { setValor(e.target.value); setError(null); }}
-            className="input w-32 text-right" />
-          {sufijo === '%' && <span className="text-sm text-content-muted">%</span>}
+          {p.tipo === 'dinero' ? (
+            <div className="w-44">
+              <InputMoneda
+                valorPesos={valor === '' ? null : Number(valor)}
+                onChangePesos={(v) => { setValor(v === null ? '' : String(v)); setError(null); }}
+                mostrarEquivalencia={false}
+              />
+            </div>
+          ) : (
+            <>
+              <input type="number" step="any" value={valor}
+                onChange={(e) => { setValor(e.target.value); setError(null); }}
+                className="input w-32 text-right" />
+              {sufijo === '%' && <span className="text-sm text-content-muted">%</span>}
+            </>
+          )}
           <button onClick={() => { setError(null); guardar.mutate(); }}
             disabled={guardar.isPending || !cambiado || valor === ''}
             className="btn-primary btn-sm">

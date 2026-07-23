@@ -5,6 +5,7 @@ import { useQuery } from '@tanstack/react-query';
 import { solicitudSchema, aPayloadSolicitud, type SolicitudForm as TForm, calcularPreview, frecuenciasDe, type ProductoFinanciero } from './schema';
 import { useCrearSolicitud } from './hooks';
 import { money } from '@/lib/format';
+import { InputMoneda } from '@/components/ui/InputMoneda';
 import { api } from '@/lib/api/client';
 
 const MODAL_TITULO: Record<string, string> = { MENSUAL: 'Mensual', QUINCENAL: 'Quincenal', SEMANAL: 'Semanal', DIARIO: 'Diario' };
@@ -46,7 +47,7 @@ export function SolicitudForm({ clienteId, areaId, creditoOrigenId, onCreada }:
     producto_financiero_id: p?.id,
   });
 
-  const { register, handleSubmit, watch, reset, formState: { errors } } = useForm<TForm>({
+  const { register, handleSubmit, watch, reset, setValue, formState: { errors } } = useForm<TForm>({
     resolver: zodResolver(solicitudSchema),
     defaultValues: defaults(null),
   });
@@ -147,20 +148,22 @@ export function SolicitudForm({ clienteId, areaId, creditoOrigenId, onCreada }:
       {paso === 2 && (
       <>
       <div>
-        <label className="label">Capital solicitado <span className="font-normal text-content-muted">(en pesos)</span></label>
-        <input type="number" step="any" {...register('capital_solicitado', { valueAsNumber: true })} className="input" placeholder="Ej: 1000000" />
+        <label className="label">Capital solicitado</label>
+        <InputMoneda valorPesos={watch('capital_solicitado')}
+          onChangePesos={(v) => setValue('capital_solicitado', (v ?? 0) as number, { shouldValidate: true })} />
         <p className="mt-1 text-xs text-content-muted">
           {usaPactado
             ? 'El capital que se entrega al cliente.'
-            : 'Escribe el valor en pesos completos (ej: 1.000.000). El capital aprobado lo definirá quien apruebe la solicitud.'}
+            : 'El capital aprobado lo definirá quien apruebe la solicitud.'}
         </p>
       </div>
 
       {/* VALOR PACTADO: solo productos que lo manejan (ej. Al Bate) */}
       {usaPactado && (
         <div>
-          <label className="label">Valor total pactado <span className="font-normal text-content-muted">(en pesos)</span></label>
-          <input type="number" step="any" {...register('valor_pactado', { valueAsNumber: true })} className="input" placeholder="Ej: 1200000" />
+          <label className="label">Valor total pactado</label>
+          <InputMoneda valorPesos={watch('valor_pactado')}
+            onChangePesos={(v) => setValue('valor_pactado', (v ?? undefined) as number, { shouldValidate: true })} />
           <p className="mt-1 text-xs text-content-muted">El valor total que el cliente se compromete a pagar. La cuota será este valor dividido en el número de cuotas.</p>
           {errors.valor_pactado && <p className="field-error">{errors.valor_pactado.message}</p>}
         </div>

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { EstadoBadge } from '@/components/ui/EstadoBadge';
+import { InputMoneda } from '@/components/ui/InputMoneda';
 import { money, fecha, fechaHora } from '@/lib/format';
 import { Icon } from '@/components/ui/icons';
 import type { Solicitud } from '@/types';
@@ -201,7 +202,7 @@ function FichaCredito({ creditoId }: { creditoId: number }) {
   const generar = useGenerarCronograma();
   const rol = useAuthStore((st) => st.usuario?.rol);
   const puedeGenerar = rol === 'ADMINISTRADOR' || rol === 'SUPERVISOR';
-  const [valor, setValor] = useState('');
+  const [valor, setValor] = useState<number | null>(null);
   const [metodo, setMetodo] = useState('EFECTIVO');
   const [obs, setObs] = useState('');
   const [comprobante, setComprobante] = useState<File | null>(null);
@@ -230,7 +231,7 @@ function FichaCredito({ creditoId }: { creditoId: number }) {
 
   const onPagar = async () => {
     setError(null); setMsg(null);
-    const v = Number(valor);
+    const v = valor ?? 0;
     if (!v || v <= 0) { setError('Ingresa un valor mayor a 0.'); return; }
     let comp: { nombre: string; mime: string; tamano: number; contenido_base64: string } | undefined;
     if (metodo === 'TRANSFERENCIA' && comprobante) {
@@ -249,7 +250,7 @@ function FichaCredito({ creditoId }: { creditoId: number }) {
             : 'Pago registrado ✓';
           setMsg(m);
           toast.exito(m);
-          setValor(''); setObs(''); setComprobante(null); setBanco(''); setReferencia('');
+          setValor(null); setObs(''); setComprobante(null); setBanco(''); setReferencia('');
         },
         onError: (e) => {
           const x = e as { message?: string; response?: { data?: { message?: string } } };
@@ -333,8 +334,7 @@ function FichaCredito({ creditoId }: { creditoId: number }) {
         <div className="flex flex-wrap items-end gap-2">
           <label className="text-sm">
             <span className="block font-medium">Valor</span>
-            <input type="number" step="any" value={valor} onChange={(e) => setValor(e.target.value)}
-              className="input w-36" />
+            <div className="w-44"><InputMoneda valorPesos={valor} onChangePesos={setValor} /></div>
           </label>
           <label className="text-sm">
             <span className="block font-medium">Medio</span>

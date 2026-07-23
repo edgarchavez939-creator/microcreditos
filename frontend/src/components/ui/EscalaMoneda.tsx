@@ -9,7 +9,7 @@ export function EscalaMoneda({ className = '' }: { className?: string }) {
   return (
     <span
       className={`inline-flex items-center gap-1 rounded-full bg-surface-3 px-2.5 py-0.5 text-xs font-medium text-content-muted ${className}`}
-      title="Los valores se muestran en miles de pesos. Se capturan y almacenan en pesos completos."
+      title="Los valores se muestran y se escriben en miles de pesos (350 = $350.000). El sistema guarda y calcula siempre en pesos reales."
     >
       <span className="text-content-muted">×1.000</span>
       {MONEY_ESCALA_LABEL}

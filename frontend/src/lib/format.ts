@@ -5,8 +5,8 @@
  * calcula en pesos reales. La conversión es exclusivamente de presentación: se hace
  * aquí, en un único lugar, y todos los componentes que usan money() la heredan.
  *
- * Los formularios NO usan esta división: siguen capturando pesos completos, que es
- * lo más seguro para dinero real (evita errores ×1000 y ambigüedad con centavos).
+ * Los formularios capturan en MILES a través del componente InputMoneda, que convierte
+ * a pesos antes de enviar y muestra bajo el campo el valor real que se guardará.
  *
  * MONEY_DIVISOR es el factor de presentación. Para volver a pesos completos en toda
  * la app, basta con ponerlo en 1.

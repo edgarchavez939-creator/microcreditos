@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import * as XLSX from 'xlsx';
 import { api } from '@/lib/api/client';
+import { InputMoneda } from '@/components/ui/InputMoneda';
 import { money, fecha, fechaHora, aMiles } from '@/lib/format';
 import { useToast } from '@/components/ui/Toast';
 import { EscalaMoneda } from '@/components/ui/EscalaMoneda';
@@ -165,12 +166,12 @@ function FilaCaja({ caja }: { caja: CajaDia }) {
   const qc = useQueryClient();
   const toast = useToast();
   const [abierto, setAbierto] = useState(false);
-  const [entregado, setEntregado] = useState('');
+  const [entregado, setEntregado] = useState<number | null>(null);
   const [obs, setObs] = useState('');
   const info = ESTADO_INFO[caja.estado] ?? { txt: caja.estado, cls: 'bg-surface-3 text-slate-600' };
 
   const recibir = useMutation({
-    mutationFn: async () => (await api.post(`/caja-general/recibir/${caja.id}`, { efectivo_entregado: Number(entregado), observacion: obs || undefined })).data,
+    mutationFn: async () => (await api.post(`/caja-general/recibir/${caja.id}`, { efectivo_entregado: entregado ?? 0, observacion: obs || undefined })).data,
     onSuccess: () => { toast.exito('Caja recibida ✓'); qc.invalidateQueries({ queryKey: ['caja-general'] }); },
     onError: (e) => toast.error((e as { response?: { data?: { message?: string } } })?.response?.data?.message ?? 'No se pudo recibir.'),
   });
@@ -224,10 +225,10 @@ function FilaCaja({ caja }: { caja: CajaDia }) {
               <div className="flex flex-wrap items-end gap-2">
                 <div>
                   <label className="label text-xs">Efectivo entregado</label>
-                  <input type="number" value={entregado} onChange={(e) => setEntregado(e.target.value)} className="input py-1 text-sm" placeholder={String(caja.efectivo_esperado)} />
+                  <InputMoneda valorPesos={entregado} onChangePesos={setEntregado} />
                 </div>
                 <input value={obs} onChange={(e) => setObs(e.target.value)} className="input flex-1 py-1 text-sm" placeholder="Observación (opcional)" />
-                <button onClick={() => recibir.mutate()} disabled={recibir.isPending || entregado === ''} className="btn-primary btn-sm">
+                <button onClick={() => recibir.mutate()} disabled={recibir.isPending || entregado === null} className="btn-primary btn-sm">
                   {recibir.isPending && <span className="spinner" />}Marcar recibida
                 </button>
               </div>

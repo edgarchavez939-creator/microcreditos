@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { api } from '@/lib/api/client';
 import { money } from '@/lib/format';
 import { useToast } from '@/components/ui/Toast';
+import { InputMoneda } from '@/components/ui/InputMoneda';
 
 export const TIPO_GESTION = [
   { v: 'LLAMADA', t: 'Llamada' },
@@ -28,7 +29,7 @@ export function ModalGestion({ clienteId, solicitudId, nombre, saldo, onClose, i
   const [tipo, setTipo] = useState('LLAMADA');
   const [observacion, setObservacion] = useState('');
   const [fechaAcuerdo, setFechaAcuerdo] = useState('');
-  const [montoAcuerdo, setMontoAcuerdo] = useState('');
+  const [montoAcuerdo, setMontoAcuerdo] = useState<number | null>(null);
   const [gps, setGps] = useState<{ lat: number; lng: number } | null>(null);
 
   const capturarGps = () => {
@@ -45,7 +46,7 @@ export function ModalGestion({ clienteId, solicitudId, nombre, saldo, onClose, i
       solicitud_id: solicitudId,
       tipo, observacion,
       fecha_acuerdo: tipo === 'ACUERDO_PAGO' ? fechaAcuerdo : undefined,
-      monto_acuerdo: tipo === 'ACUERDO_PAGO' && montoAcuerdo ? Number(montoAcuerdo) : undefined,
+      monto_acuerdo: tipo === 'ACUERDO_PAGO' && montoAcuerdo ? montoAcuerdo : undefined,
       latitud: gps?.lat, longitud: gps?.lng,
     })).data,
     onSuccess: () => {
@@ -87,7 +88,7 @@ export function ModalGestion({ clienteId, solicitudId, nombre, saldo, onClose, i
             </div>
             <div>
               <label className="label text-xs">Monto acordado</label>
-              <input type="number" value={montoAcuerdo} onChange={(e) => setMontoAcuerdo(e.target.value)} className="input py-1 text-sm" placeholder="Opcional" />
+              <InputMoneda valorPesos={montoAcuerdo} onChangePesos={setMontoAcuerdo} placeholder="Opcional" mostrarEquivalencia={false} />
             </div>
           </div>
         )}

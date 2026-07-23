@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { EstadoBadge } from '@/components/ui/EstadoBadge';
 import { Icon } from '@/components/ui/icons';
+import { InputMoneda } from '@/components/ui/InputMoneda';
 import { money } from '@/lib/format';
 import type { Solicitud } from '@/types';
 import { useToast } from '@/components/ui/Toast';
@@ -129,10 +130,9 @@ function TarjetaAprobacion({ s, onAprobado }: { s: Solicitud; onAprobado: (s: So
       {!rechazando && (
         <div className="mt-4 rounded-xl bg-brand-50 p-4 ring-1 ring-brand-100">
           <label className="label">Capital a aprobar</label>
-          <input
-            type="number" step="any" value={montoAprobado}
-            onChange={(e) => setMontoAprobado(Number(e.target.value))}
-            className="input max-w-xs" />
+          <div className="max-w-xs">
+            <InputMoneda valorPesos={montoAprobado} onChangePesos={(v) => setMontoAprobado(v ?? 0)} />
+          </div>
           <div className="mt-3 grid grid-cols-2 gap-x-4 gap-y-1 text-sm sm:grid-cols-3">
             <Item label="Seguro" value={money(valorSeguro)} />
             <Item label="Interés" value={money(interes)} />

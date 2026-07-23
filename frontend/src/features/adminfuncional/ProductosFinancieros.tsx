@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api/client';
 import { money, fecha } from '@/lib/format';
+import { InputMoneda } from '@/components/ui/InputMoneda';
 import { useToast } from '@/components/ui/Toast';
 import type { ProductoFinanciero } from '@/features/solicitudes/schema';
 
@@ -233,10 +234,10 @@ function FormProducto({ producto, onCerrar }: { producto: ProductoFinanciero | n
 
       <p className="text-xs font-semibold uppercase tracking-wide text-content-muted">Límites</p>
       <div className="grid grid-cols-2 gap-3">
-        <div><label className="label">Capital mínimo (pesos)</label>
-          <input type="number" value={f.capital_minimo} onChange={(e) => set('capital_minimo', Number(e.target.value))} className="input" /></div>
-        <div><label className="label">Capital máximo (pesos)</label>
-          <input type="number" value={f.capital_maximo} onChange={(e) => set('capital_maximo', Number(e.target.value))} className="input" /></div>
+        <div><label className="label">Capital mínimo</label>
+          <InputMoneda valorPesos={f.capital_minimo} onChangePesos={(v) => set('capital_minimo', (v ?? 0) as never)} /></div>
+        <div><label className="label">Capital máximo</label>
+          <InputMoneda valorPesos={f.capital_maximo} onChangePesos={(v) => set('capital_maximo', (v ?? 0) as never)} /></div>
         <div><label className="label">Cuotas mínimo</label>
           <input type="number" value={f.cuotas_minimo} onChange={(e) => set('cuotas_minimo', Number(e.target.value))} className="input" /></div>
         <div><label className="label">Cuotas máximo</label>

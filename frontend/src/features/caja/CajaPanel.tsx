@@ -4,6 +4,7 @@ import { api } from '@/lib/api/client';
 import { money, fecha, fechaHora } from '@/lib/format';
 import { useToast } from '@/components/ui/Toast';
 import { EscalaMoneda } from '@/components/ui/EscalaMoneda';
+import { InputMoneda } from '@/components/ui/InputMoneda';
 import { SkeletonIndicadores } from '@/components/ui/Skeleton';
 import { useAuthStore } from '@/stores/auth';
 
@@ -347,11 +348,11 @@ function ResumenCaja({ e }: { e: EstadoCaja }) {
 type ToastApi = ReturnType<typeof useToast>;
 
 function AbrirCaja({ onOk, toast }: { onOk: () => void; toast: ToastApi }) {
-  const [valor, setValor] = useState('');
+  const [valor, setValor] = useState<number | null>(null);
   const [obs, setObs] = useState('');
   const m = useMutation({
-    mutationFn: async () => (await api.post('/caja/abrir', { base_inicial: Number(valor), observacion: obs || undefined })).data,
-    onSuccess: () => { toast.exito('Caja abierta ✓ Ya puedes operar'); setValor(''); setObs(''); onOk(); },
+    mutationFn: async () => (await api.post('/caja/abrir', { base_inicial: valor ?? 0, observacion: obs || undefined })).data,
+    onSuccess: () => { toast.exito('Caja abierta ✓ Ya puedes operar'); setValor(null); setObs(''); onOk(); },
     onError: (err) => toast.error((err as { response?: { data?: { message?: string } } })?.response?.data?.message ?? 'No se pudo abrir la caja.'),
   });
   return (
@@ -366,13 +367,13 @@ function AbrirCaja({ onOk, toast }: { onOk: () => void; toast: ToastApi }) {
       <div className="flex flex-wrap items-end gap-2">
         <div className="flex-1 min-w-[140px]">
           <label className="label">Base inicial en efectivo</label>
-          <input type="number" step="any" value={valor} onChange={(ev) => setValor(ev.target.value)} className="input" placeholder="0" />
+          <InputMoneda valorPesos={valor} onChangePesos={setValor} />
         </div>
         <div className="flex-1 min-w-[160px]">
           <label className="label">Observación (opcional)</label>
           <input value={obs} onChange={(ev) => setObs(ev.target.value)} className="input" />
         </div>
-        <button onClick={() => m.mutate()} disabled={m.isPending || valor === ''} className="btn-primary btn-sm">
+        <button onClick={() => m.mutate()} disabled={m.isPending || valor === null} className="btn-primary btn-sm">
           {m.isPending ? 'Abriendo…' : 'ABRIR CAJA'}
         </button>
       </div>
@@ -382,14 +383,14 @@ function AbrirCaja({ onOk, toast }: { onOk: () => void; toast: ToastApi }) {
 
 function RegistrarGasto({ tipos, onOk, toast }: { tipos: string[]; onOk: () => void; toast: ToastApi }) {
   const [subtipo, setSubtipo] = useState(tipos[0] ?? 'OTROS');
-  const [valor, setValor] = useState('');
+  const [valor, setValor] = useState<number | null>(null);
   const [medio, setMedio] = useState('EFECTIVO');
   const [obs, setObs] = useState('');
   const m = useMutation({
     mutationFn: async () => (await api.post('/caja/gasto', {
-      subtipo, valor: Number(valor), medio_pago: medio, observacion: obs || undefined,
+      subtipo, valor: valor ?? 0, medio_pago: medio, observacion: obs || undefined,
     })).data,
-    onSuccess: () => { toast.exito('Gasto registrado ✓'); setValor(''); setObs(''); onOk(); },
+    onSuccess: () => { toast.exito('Gasto registrado ✓'); setValor(null); setObs(''); onOk(); },
     onError: (err) => toast.error((err as { response?: { data?: { message?: string } } })?.response?.data?.message ?? 'No se pudo registrar el gasto.'),
   });
   return (
@@ -405,7 +406,7 @@ function RegistrarGasto({ tipos, onOk, toast }: { tipos: string[]; onOk: () => v
         </div>
         <div>
           <label className="label">Valor</label>
-          <input type="number" step="any" value={valor} onChange={(ev) => setValor(ev.target.value)} className="input" placeholder="0" />
+          <InputMoneda valorPesos={valor} onChangePesos={setValor} />
         </div>
         <div>
           <label className="label">Medio</label>
@@ -421,7 +422,7 @@ function RegistrarGasto({ tipos, onOk, toast }: { tipos: string[]; onOk: () => v
           <input value={obs} onChange={(ev) => setObs(ev.target.value)} className="input" />
         </div>
       </div>
-      <button onClick={() => m.mutate()} disabled={m.isPending || !valor} className="btn-primary btn-sm mt-3">
+      <button onClick={() => m.mutate()} disabled={m.isPending || valor === null} className="btn-primary btn-sm mt-3">
         {m.isPending ? 'Guardando…' : 'Agregar gasto'}
       </button>
     </div>
@@ -474,16 +475,16 @@ function Movimientos({ movimientos, cerrada, onOk, toast }: {
 }
 
 function CierreArqueo({ e, onOk, toast }: { e: EstadoCaja; onOk: () => void; toast: ToastApi }) {
-  const [contado, setContado] = useState('');
+  const [contado, setContado] = useState<number | null>(null);
   const [obs, setObs] = useState('');
   const [confirmar, setConfirmar] = useState(false);
 
-  const diferencia = contado !== '' ? Number(contado) - e.efectivo_esperado : 0;
-  const hayDif = contado !== '' && Math.abs(diferencia) >= 0.01;
+  const diferencia = contado !== null ? contado - e.efectivo_esperado : 0;
+  const hayDif = contado !== null && Math.abs(diferencia) >= 0.01;
 
   const m = useMutation({
     mutationFn: async () => (await api.post('/caja/cerrar', {
-      efectivo_contado: Number(contado), observacion: obs || undefined,
+      efectivo_contado: contado ?? 0, observacion: obs || undefined,
     })).data,
     onSuccess: () => { toast.exito('Caja cerrada ✓'); onOk(); },
     onError: (err) => toast.error((err as { response?: { data?: { message?: string } } })?.response?.data?.message ?? 'No se pudo cerrar la caja.'),
@@ -501,7 +502,7 @@ function CierreArqueo({ e, onOk, toast }: { e: EstadoCaja; onOk: () => void; toa
         </div>
         <div>
           <label className="label">Efectivo contado (arqueo)</label>
-          <input type="number" step="any" value={contado} onChange={(ev) => setContado(ev.target.value)} className="input" placeholder="0" />
+          <InputMoneda valorPesos={contado} onChangePesos={setContado} />
         </div>
       </div>
 
@@ -512,7 +513,7 @@ function CierreArqueo({ e, onOk, toast }: { e: EstadoCaja; onOk: () => void; toa
         </div>
       )}
 
-      {(hayDif || contado !== '') && (
+      {(hayDif || contado !== null) && (
         <div className="mt-3">
           <label className="label">Observación {hayDif && <span className="text-rose-500">*</span>}</label>
           <textarea value={obs} onChange={(ev) => setObs(ev.target.value)} className="input" rows={2}
@@ -521,14 +522,14 @@ function CierreArqueo({ e, onOk, toast }: { e: EstadoCaja; onOk: () => void; toa
       )}
 
       {!confirmar ? (
-        <button onClick={() => setConfirmar(true)} disabled={contado === '' || (hayDif && obs.trim().length < 3)}
+        <button onClick={() => setConfirmar(true)} disabled={contado === null || (hayDif && obs.trim().length < 3)}
           className="btn-primary btn-sm mt-4">
           Revisar y cerrar caja
         </button>
       ) : (
         <div className="mt-4 rounded-xl bg-surface-2 p-3 ring-1 ring-border-token">
           <p className="text-sm text-content">
-            Vas a cerrar la caja con un efectivo contado de <b>{money(Number(contado))}</b>
+            Vas a cerrar la caja con un efectivo contado de <b>{money(contado ?? 0)}</b>
             {hayDif && <> y una diferencia de <b>{money(Math.abs(diferencia))}</b> ({diferencia < 0 ? 'faltante' : 'sobrante'})</>}.
             Una vez cerrada, no podrás registrar más movimientos hoy.
           </p>

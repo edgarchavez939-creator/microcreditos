@@ -6,6 +6,7 @@ import { money } from '@/lib/format';
 import { calcularReamortizacion } from './calc';
 import { makeReamortizacionSchema, type ReamortizacionFormValues } from './schema';
 import { useCupoCliente, useReamortizar, useSaldoPendiente } from './hooks';
+import { InputMoneda } from '@/components/ui/InputMoneda';
 
 interface Props {
   solicitudId: number;
@@ -26,7 +27,7 @@ export function ReamortizacionForm({ solicitudId, clienteId, onHecho }: Props) {
     [saldo, cupo],
   );
 
-  const { register, handleSubmit, watch, formState: { errors } } =
+  const { register, handleSubmit, watch, setValue, formState: { errors } } =
     useForm<ReamortizacionFormValues>({
       resolver,
       defaultValues: {
@@ -89,8 +90,8 @@ export function ReamortizacionForm({ solicitudId, clienteId, onHecho }: Props) {
 
       <div>
         <label className="block text-sm font-medium">Nuevo capital aprobado</label>
-        <input type="number" step="any" {...register('nuevo_capital', { valueAsNumber: true })}
-          className="input" />
+        <InputMoneda valorPesos={watch('nuevo_capital')}
+          onChangePesos={(v) => setValue('nuevo_capital', (v ?? 0) as number, { shouldValidate: true })} />
         {errors.nuevo_capital && <p className="field-error">{errors.nuevo_capital.message}</p>}
         <p className="text-xs text-content-muted mt-0.5">
           Mínimo: {money(saldo)} (saldo) · Máximo: {money(cupo)} (cupo)
