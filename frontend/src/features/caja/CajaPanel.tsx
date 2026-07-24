@@ -5,6 +5,7 @@ import { money, fecha, fechaHora } from '@/lib/format';
 import { useToast } from '@/components/ui/Toast';
 import { EscalaMoneda } from '@/components/ui/EscalaMoneda';
 import { InputMoneda } from '@/components/ui/InputMoneda';
+import { Tooltip } from '@/components/ui/Tooltip';
 import { SkeletonIndicadores } from '@/components/ui/Skeleton';
 import { useAuthStore } from '@/stores/auth';
 
@@ -346,7 +347,12 @@ function ResumenCaja({ e }: { e: EstadoCaja }) {
       </div>
       <div className="flex flex-col gap-4">
         <div className="rounded-2xl bg-money-50 p-4 ring-1 ring-money-100">
-          <div className="text-xs font-medium uppercase tracking-wide text-money-700/70">Efectivo esperado en caja</div>
+          <div className="flex items-center gap-1 text-xs font-medium uppercase tracking-wide text-money-700/70">
+            Efectivo esperado en caja
+            <Tooltip texto="Base inicial + reposiciones + cobros en efectivo + anulaciones − desembolsos en efectivo − gastos. Las transferencias y el seguro no cuentan: no son dinero físico en tu mano.">
+              <span className="cursor-help rounded-full bg-money-100 px-1.5 text-[10px] normal-case">?</span>
+            </Tooltip>
+          </div>
           <div className="mt-1 font-display text-2xl font-bold text-money-700">{money(e.efectivo_esperado)}</div>
           <div className="mt-1 text-xs text-money-700/60">Solo dinero físico (excluye transferencias)</div>
         </div>

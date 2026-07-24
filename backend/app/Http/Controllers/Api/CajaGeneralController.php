@@ -301,4 +301,62 @@ class CajaGeneralController extends Controller
             ->get(['cg.*', 'u.nombre as administrador']);
         return response()->json(['data' => $filas]);
     }
+
+    /**
+     * PANEL DE CAJAS PENDIENTES (control operativo del administrador).
+     * Muestra, para hoy: quién NO ha abierto caja, quién abrió y aún no cierra,
+     * y los cierres que siguen pendientes de entrega a tesorería (incluidos
+     * los de días anteriores, que son los más urgentes).
+     */
+    public function pendientes(Request $request)
+    {
+        $this->soloAdmin($request);
+        $hoy = now()->toDateString();
+
+        // Cobradores/supervisores activos con su situación de hoy
+        $usuarios = DB::table('usuarios as u')
+            ->where('u.activo', true)
+            ->whereIn('u.rol', ['COBRADOR', 'SUPERVISOR'])
+            ->leftJoin('aperturas_caja as ap', fn ($j) => $j->on('ap.empleado_id', '=', 'u.id')->whereDate('ap.fecha', $hoy))
+            ->leftJoin('cierres_caja as cc', fn ($j) => $j->on('cc.cerrado_por', '=', 'u.id')->whereDate('cc.fecha', $hoy))
+            ->orderBy('u.nombre')
+            ->get([
+                'u.id', 'u.nombre', 'u.rol',
+                'ap.abierta_at', 'ap.base_inicial',
+                'cc.id as cierre_id', 'cc.estado as estado_cierre',
+                DB::raw('CAST(cc.efectivo_esperado AS FLOAT) as efectivo_esperado'),
+                DB::raw('CAST(cc.diferencia AS FLOAT) as diferencia'),
+            ]);
+
+        $sinAbrir = [];
+        $abiertas = [];
+        $cerradasHoy = [];
+        foreach ($usuarios as $x) {
+            if (! $x->abierta_at && ! $x->cierre_id) { $sinAbrir[] = $x; continue; }
+            if ($x->abierta_at && ! $x->cierre_id) { $abiertas[] = $x; continue; }
+            $cerradasHoy[] = $x;
+        }
+
+        // Cierres pendientes de entrega a tesorería (cualquier fecha; los viejos primero)
+        $pendientesEntrega = DB::table('cierres_caja as cc')
+            ->join('usuarios as u', 'u.id', '=', 'cc.cerrado_por')
+            ->whereIn('cc.estado', ['CERRADA', 'PENDIENTE_ENTREGA'])
+            ->orderBy('cc.fecha')
+            ->limit(60)
+            ->get([
+                'cc.id', 'cc.fecha', 'u.nombre',
+                DB::raw('CAST(cc.efectivo_esperado AS FLOAT) as efectivo_esperado'),
+                DB::raw('CAST(cc.diferencia AS FLOAT) as diferencia'),
+                'cc.estado',
+            ]);
+
+        return response()->json(['data' => [
+            'fecha'              => $hoy,
+            'sin_abrir'          => $sinAbrir,
+            'abiertas'           => $abiertas,
+            'cerradas_hoy'       => $cerradasHoy,
+            'pendientes_entrega' => $pendientesEntrega,
+        ]]);
+    }
+
 }

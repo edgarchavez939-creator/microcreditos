@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { EstadoBadge } from '@/components/ui/EstadoBadge';
 import { Icon } from '@/components/ui/icons';
 import { InputMoneda } from '@/components/ui/InputMoneda';
+import { Tooltip } from '@/components/ui/Tooltip';
 import { money } from '@/lib/format';
 import type { Solicitud } from '@/types';
 import { useToast } from '@/components/ui/Toast';
@@ -137,7 +138,9 @@ function TarjetaAprobacion({ s, onAprobado }: { s: Solicitud; onAprobado: (s: So
             <Item label="Seguro" value={money(valorSeguro)} />
             <Item label="Interés" value={money(interes)} />
             <Item label="Total a recaudar" value={money(totalRecaudar)} />
-            <Item label="Desembolso neto" value={money(desembolso)} />
+            <Tooltip texto="Lo que se entrega al cliente: capital aprobado menos el seguro. El interés se calcula sobre el capital completo.">
+              <div className="w-full"><Item label="Desembolso neto ⓘ" value={money(desembolso)} /></div>
+            </Tooltip>
             <Item label="Valor cuota" value={money(cuota)} />
           </div>
         </div>

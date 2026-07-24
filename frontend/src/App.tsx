@@ -6,6 +6,7 @@ import { useAuthStore } from '@/stores/auth';
 import { useReporteUbicacion } from '@/lib/useReporteUbicacion';
 import { ToggleTema } from '@/components/ui/ToggleTema';
 import { useNavStore } from '@/stores/nav';
+import { Breadcrumb } from '@/components/ui/Breadcrumb';
 import { BuscadorGlobal } from '@/components/ui/BuscadorGlobal';
 import { AccionesRapidas } from '@/components/ui/AccionesRapidas';
 import { LoginForm } from '@/features/auth/LoginForm';
@@ -225,6 +226,12 @@ function AppShell() {
 
       <main className="flex-1 lg:pl-64">
         <div className="mx-auto max-w-5xl px-4 py-6 lg:px-8 lg:py-8">
+          {activo !== 'inicio' && (
+            <Breadcrumb
+              modulo={MENU.find((m) => m.id === activo)?.label ?? activo}
+              onInicio={() => setActivo('inicio')}
+            />
+          )}
           <Pantalla id={activo} />
         </div>
       </main>

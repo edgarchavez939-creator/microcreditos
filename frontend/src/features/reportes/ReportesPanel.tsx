@@ -131,7 +131,19 @@ export function ReportesPanel() {
     },
   });
 
-  const filas = data?.data ?? [];
+  // Ordenamiento por columna (Fase 6 UX): clic en el encabezado alterna asc/desc
+  const [orden, setOrden] = useState<{ k: string; dir: 'asc' | 'desc' } | null>(null);
+  const filasBase = data?.data ?? [];
+  const filas = orden
+    ? [...filasBase].sort((a, b) => {
+        const va = a[orden.k]; const vb = b[orden.k];
+        const na = Number(va); const nb = Number(vb);
+        const cmp = !Number.isNaN(na) && !Number.isNaN(nb) && va !== '' && vb !== ''
+          ? na - nb
+          : String(va ?? '').localeCompare(String(vb ?? ''), 'es');
+        return orden.dir === 'asc' ? cmp : -cmp;
+      })
+    : filasBase;
   const cols = COLUMNAS[tipo];
 
   const exportar = () => {
@@ -215,14 +227,26 @@ export function ReportesPanel() {
               Total: <b>{money(data.total)}</b> · {filas.length} registro{filas.length === 1 ? '' : 's'}
             </p>
           )}
-          <div className="table-wrap">
+          <div className="table-wrap max-h-[65vh] overflow-auto">
             <table className="table-base">
-              <thead>
-                <tr>{cols.map((c) => <th key={c.k}>{c.t}</th>)}</tr>
+              <thead className="sticky top-0 z-10 bg-surface shadow-[0_1px_0_var(--border)]">
+                <tr>{cols.map((c) => (
+                  <th key={c.k}>
+                    <button onClick={() => setOrden(
+                        orden?.k === c.k && orden.dir === 'asc' ? { k: c.k, dir: 'desc' }
+                        : orden?.k === c.k && orden.dir === 'desc' ? null
+                        : { k: c.k, dir: 'asc' })}
+                      className="inline-flex items-center gap-1 hover:text-brand-700"
+                      title="Ordenar por esta columna">
+                      {c.t}
+                      <span className="text-[10px]">{orden?.k === c.k ? (orden.dir === 'asc' ? '▲' : '▼') : ''}</span>
+                    </button>
+                  </th>
+                ))}</tr>
               </thead>
               <tbody>
                 {filas.map((f, i) => (
-                  <tr key={i} className="border-t">
+                  <tr key={i} className="border-t odd:bg-surface-2/40">
                     {cols.map((c) => (
                       <td key={c.k} className={c.dinero ? 'whitespace-nowrap text-right' : ''}>
                         {c.dinero ? money(Number(f[c.k] ?? 0)) : c.fecha ? (fecha(f[c.k] as string) || '—') : String(f[c.k] ?? '—')}

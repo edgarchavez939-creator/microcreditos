@@ -18,7 +18,7 @@ use App\Http\Controllers\Api\OtpController;
 use App\Http\Controllers\Api\PermisoController;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/health', fn () => response()->json(['status' => 'ok', 'version' => 'v94-migracion-f3-completa', 'ts' => now()]));
+Route::get('/health', fn () => response()->json(['status' => 'ok', 'version' => 'v95-ux-f6-cajas-pendientes', 'ts' => now()]));
 
 // Marca pública (sin auth): nombre y color para aplicar en login y en toda la app.
 Route::get('/marca-publica', function () {
@@ -59,6 +59,7 @@ Route::middleware(['auth:api', 'mantenimiento'])->group(function () {
     // ===== Caja General (exclusivo administrador; validado en el controlador) =====
     Route::prefix('caja-general')->group(function () {
         Route::get('estado', [\App\Http\Controllers\Api\CajaGeneralController::class, 'estado']);
+        Route::get('pendientes', [\App\Http\Controllers\Api\CajaGeneralController::class, 'pendientes']);
         Route::post('recibir/{cierre}', [\App\Http\Controllers\Api\CajaGeneralController::class, 'recibir'])->middleware('accion:caja-general.recibir');
         Route::post('cerrar', [\App\Http\Controllers\Api\CajaGeneralController::class, 'cerrarGeneral'])->middleware('accion:caja-general.cerrar');
         Route::get('historial', [\App\Http\Controllers\Api\CajaGeneralController::class, 'historial']);

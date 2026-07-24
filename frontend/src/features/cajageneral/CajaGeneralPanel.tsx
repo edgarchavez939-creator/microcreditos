@@ -32,9 +32,22 @@ const ESTADO_INFO: Record<string, { txt: string; cls: string }> = {
   CONSOLIDADA: { txt: 'Consolidada', cls: 'bg-brand-50 text-brand-700' },
 };
 
+interface CajasPendientes {
+  fecha: string;
+  sin_abrir: { id: number; nombre: string; rol: string }[];
+  abiertas: { id: number; nombre: string; rol: string; abierta_at: string; base_inicial: string | number }[];
+  cerradas_hoy: { id: number; nombre: string; estado_cierre: string; efectivo_esperado: number | null; diferencia: number | null }[];
+  pendientes_entrega: { id: number; fecha: string; nombre: string; efectivo_esperado: number; diferencia: number; estado: string }[];
+}
+
 export function CajaGeneralPanel() {
   const qc = useQueryClient();
   const toast = useToast();
+  const { data: pend } = useQuery({
+    queryKey: ['cajas-pendientes'],
+    queryFn: async () => (await api.get<{ data: CajasPendientes }>('/caja-general/pendientes')).data.data,
+    refetchInterval: 60_000,   // control operativo: se refresca solo cada minuto
+  });
   const { data, isLoading } = useQuery({
     queryKey: ['caja-general'],
     queryFn: async () => (await api.get<{ data: EstadoGeneral }>('/caja-general/estado')).data.data,
@@ -71,6 +84,59 @@ export function CajaGeneralPanel() {
         </div>
         <button onClick={() => exportarExcel(data)} className="btn-outline btn-sm">Exportar Excel</button>
       </div>
+
+      {/* PANEL DE CAJAS PENDIENTES (control operativo del día) */}
+      {pend && (pend.sin_abrir.length > 0 || pend.abiertas.length > 0 || pend.pendientes_entrega.length > 0) && (
+        <div className="card card-pad mb-5">
+          <h3 className="mb-3 text-sm font-semibold text-content">Cajas pendientes · seguimiento del día</h3>
+          <div className="grid gap-4 lg:grid-cols-3">
+            <div>
+              <div className="mb-1.5 text-xs font-medium uppercase tracking-wide text-rose-600">
+                Sin abrir hoy ({pend.sin_abrir.length})
+              </div>
+              {pend.sin_abrir.length === 0
+                ? <p className="text-xs text-content-muted">Todos abrieron ✓</p>
+                : pend.sin_abrir.map((u) => (
+                    <div key={u.id} className="py-0.5 text-sm">{u.nombre} <span className="text-xs text-content-muted">({u.rol.toLowerCase()})</span></div>
+                  ))}
+            </div>
+            <div>
+              <div className="mb-1.5 text-xs font-medium uppercase tracking-wide text-amber-700">
+                Abiertas sin cerrar ({pend.abiertas.length})
+              </div>
+              {pend.abiertas.length === 0
+                ? <p className="text-xs text-content-muted">Ninguna ✓</p>
+                : pend.abiertas.map((u) => (
+                    <div key={u.id} className="py-0.5 text-sm">
+                      {u.nombre}
+                      <span className="ml-1.5 text-xs text-content-muted">
+                        base {money(Number(u.base_inicial ?? 0))} · abrió {new Date(u.abierta_at).toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })}
+                      </span>
+                    </div>
+                  ))}
+            </div>
+            <div>
+              <div className="mb-1.5 text-xs font-medium uppercase tracking-wide text-brand-700">
+                Pendientes de entrega ({pend.pendientes_entrega.length})
+              </div>
+              {pend.pendientes_entrega.length === 0
+                ? <p className="text-xs text-content-muted">Ninguna ✓</p>
+                : pend.pendientes_entrega.slice(0, 8).map((x) => (
+                    <div key={x.id} className="py-0.5 text-sm">
+                      {x.nombre}
+                      <span className="ml-1.5 text-xs text-content-muted">
+                        {fecha(x.fecha)} · {money(x.efectivo_esperado)}
+                        {Math.abs(x.diferencia ?? 0) >= 0.01 && <b className={x.diferencia < 0 ? ' text-rose-600' : ' text-amber-700'}> · dif {money(x.diferencia)}</b>}
+                      </span>
+                    </div>
+                  ))}
+              {pend.pendientes_entrega.length > 8 && (
+                <p className="mt-1 text-xs text-content-muted">…y {pend.pendientes_entrega.length - 8} más abajo, en el detalle.</p>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Conteo de cajas por estado */}
       <div className="mb-5 grid grid-cols-2 gap-3 sm:grid-cols-5">

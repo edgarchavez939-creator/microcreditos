@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api/client';
 import { money } from '@/lib/format';
 import { InputMoneda } from '@/components/ui/InputMoneda';
+import { Tooltip } from '@/components/ui/Tooltip';
 
 /**
  * CENTRO DE VALIDACIÓN DE MIGRACIONES (Fase 2).
@@ -93,7 +94,11 @@ export function ValidacionPanel() {
           <button key={e} onClick={() => setFiltroEstado(filtroEstado === e ? '' : e)}
             className={`rounded-xl p-3 text-center ring-1 transition ${filtroEstado === e ? 'ring-brand-400 bg-brand-50' : 'ring-border-token bg-surface'}`}>
             <div className="font-display text-xl font-bold">{conteos[e] ?? 0}</div>
-            <div className="text-xs text-content-muted">{ESTADOS[e].emoji} {ESTADOS[e].txt}</div>
+            <div className="text-xs text-content-muted">
+              {e === 'BLOQUEADO'
+                ? <Tooltip texto="Se bloquea automáticamente al primer movimiento financiero (pago, renovación). Sus datos dejan de ser editables."><span>{ESTADOS[e].emoji} {ESTADOS[e].txt}</span></Tooltip>
+                : <>{ESTADOS[e].emoji} {ESTADOS[e].txt}</>}
+            </div>
           </button>
         ))}
       </div>
