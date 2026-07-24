@@ -12,6 +12,7 @@ class OtpService
     /** Operaciones críticas que aceptan OTP. Escalable: añadir aquí nuevas operaciones. */
     public const OPERACIONES = [
         'ANULAR_PAGO'      => 'Anular un pago',
+        'ANULAR_DESEMBOLSO'=> 'Anular un desembolso',
         'ELIMINAR_CREDITO' => 'Eliminar un crédito',
     ];
 

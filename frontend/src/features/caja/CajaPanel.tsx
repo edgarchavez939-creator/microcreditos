@@ -11,6 +11,8 @@ import { useAuthStore } from '@/stores/auth';
 interface EstadoCaja {
   fecha: string;
   base_inicial: number;
+  reposiciones: number;
+  numero_reposiciones: number;
   cobros_efectivo: number;
   cobros_transferencia: number;
   total_cobros: number;
@@ -19,6 +21,8 @@ interface EstadoCaja {
   numero_seguros: number;
   total_desembolsos: number;
   desembolsos_efectivo: number;
+  desembolsos_transferencia: number;
+  anulaciones: number;
   total_gastos: number;
   gastos_efectivo: number;
   saldo_final: number;
@@ -100,6 +104,7 @@ export function CajaPanel() {
       {!e.ya_cerrada && e.esta_abierta && (
         <>
           <div className="grid gap-4 lg:grid-cols-2">
+            <RegistrarReposicion onOk={invalidar} toast={toast} />
             <RegistrarGasto tipos={e.tipos_gasto} onOk={invalidar} toast={toast} />
           </div>
         </>
@@ -119,7 +124,9 @@ export function CajaPanel() {
 
 interface CierreFila {
   id: number; fecha: string;
-  base_inicial?: number; cobros_efectivo?: number; cobros_transferencia?: number;
+  base_inicial?: number; reposiciones?: number; numero_reposiciones?: number;
+  cobros_efectivo?: number; cobros_transferencia?: number;
+  desembolsos_efectivo?: number; desembolsos_transferencia?: number;
   recaudo_seguros?: number; total_desembolsos?: number; total_gastos?: number;
   movimiento_total?: number; total_ingresos?: number; total_egresos?: number; saldo: number;
   efectivo_esperado?: number; efectivo_contado?: number | null; diferencia?: number;
@@ -272,13 +279,15 @@ function DetalleCierre({ c }: { c: CierreFila }) {
       <div>
         <div className="mb-1 text-xs font-semibold uppercase text-content-muted">Ingresos</div>
         {dato('Base inicial', money(c.base_inicial ?? 0))}
+        {dato('Reposiciones', money(c.reposiciones ?? 0))}
         {dato('Cobros efectivo', money(c.cobros_efectivo ?? 0))}
         {dato('Cobros transferencia', money(c.cobros_transferencia ?? 0))}
         {dato('Recaudo seguros', money(c.recaudo_seguros ?? 0))}
       </div>
       <div>
         <div className="mb-1 text-xs font-semibold uppercase text-content-muted">Egresos y arqueo</div>
-        {dato('Desembolsos', money(c.total_desembolsos ?? 0))}
+        {dato('Desembolsos efectivo', money(c.desembolsos_efectivo ?? c.total_desembolsos ?? 0))}
+        {dato('Desembolsos transferencia', money(c.desembolsos_transferencia ?? 0))}
         {dato('Gastos', money(c.total_gastos ?? 0))}
         {dato('Efectivo esperado', money(c.efectivo_esperado ?? 0))}
         {dato('Efectivo contado', c.efectivo_contado != null ? money(c.efectivo_contado) : '—')}
@@ -296,21 +305,34 @@ function DetalleCierre({ c }: { c: CierreFila }) {
 }
 
 function ResumenCaja({ e }: { e: EstadoCaja }) {
-  const filas: [string, number, 'in' | 'out' | 'net'][] = [
-    ['Base inicial', e.base_inicial, 'in'],
-    ['Cobros en efectivo', e.cobros_efectivo, 'in'],
-    ['Cobros por transferencia', e.cobros_transferencia, 'in'],
-    ['Desembolsos', e.total_desembolsos, 'out'],
-    ['Gastos', e.total_gastos, 'out'],
+  // Filas del resumen. 'efectivo' indica si la línea afecta el EFECTIVO FÍSICO
+  // que el cobrador debe tener en la mano al cerrar (base del arqueo).
+  const filas: [string, number, 'in' | 'out', boolean][] = [
+    ['Base inicial', e.base_inicial, 'in', true],
+    ['Reposiciones de efectivo', e.reposiciones ?? 0, 'in', true],
+    ['Cobros en efectivo', e.cobros_efectivo, 'in', true],
+    ['Cobros por transferencia', e.cobros_transferencia, 'in', false],
+    ['Recaudo por seguros', e.recaudo_seguros, 'in', false],
+    ['Desembolsos en efectivo', e.desembolsos_efectivo ?? 0, 'out', true],
+    ['Desembolsos por transferencia', e.desembolsos_transferencia ?? 0, 'out', false],
+    ['Gastos', e.total_gastos, 'out', true],
   ];
   return (
     <div className="grid gap-4 lg:grid-cols-3">
       <div className="card card-pad lg:col-span-2">
         <h3 className="mb-3 text-sm font-semibold text-content">Movimientos del día</h3>
         <dl className="divide-y divide-border-token">
-          {filas.map(([label, val, dir]) => (
+          {filas.map(([label, val, dir, esEfectivo]) => (
             <div key={label} className="flex items-center justify-between py-2 text-sm">
-              <dt className="text-slate-600">{label}{label === 'Cobros por transferencia' && e.numero_cobros > 0 ? '' : ''}</dt>
+              <dt className="flex items-center gap-1.5 text-slate-600">
+                {label}
+                {!esEfectivo && (
+                  <span className="rounded bg-surface-3 px-1.5 py-0.5 text-[10px] font-medium text-content-muted"
+                    title="No es efectivo físico: no cuenta para el arqueo">
+                    no es efectivo
+                  </span>
+                )}
+              </dt>
               <dd className={`font-semibold tabular-nums ${dir === 'out' ? 'text-rose-600' : 'text-content-strong'}`}>
                 {dir === 'out' ? '− ' : '+ '}{money(val)}
               </dd>
@@ -337,7 +359,7 @@ function ResumenCaja({ e }: { e: EstadoCaja }) {
           <div className="rounded-2xl bg-brand-50 p-4 ring-1 ring-brand-100">
             <div className="text-xs font-medium uppercase tracking-wide text-brand-700/70">Recaudo por seguros (comercial)</div>
             <div className="mt-1 font-display text-lg font-bold text-brand-700">{money(e.recaudo_seguros)}</div>
-            <div className="mt-1 text-xs text-brand-700/60">Tu gestión comercial de solicitudes creadas. No es efectivo en caja.</div>
+            <div className="mt-1 text-xs text-brand-700/60">De los créditos que desembolsaste hoy. No es efectivo en caja: la empresa te repone el neto.</div>
           </div>
         )}
       </div>
@@ -377,6 +399,43 @@ function AbrirCaja({ onOk, toast }: { onOk: () => void; toast: ToastApi }) {
         </div>
         <button onClick={() => m.mutate()} disabled={m.isPending || valor === null} className="btn-primary btn-sm">
           {m.isPending ? 'Abriendo…' : 'ABRIR CAJA'}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * REPOSICIÓN DE EFECTIVO: la empresa entrega más dinero al cobrador durante la
+ * jornada. Solo disponible con la caja abierta; incrementa el efectivo disponible.
+ */
+function RegistrarReposicion({ onOk, toast }: { onOk: () => void; toast: ToastApi }) {
+  const [valor, setValor] = useState<number | null>(null);
+  const [obs, setObs] = useState('');
+  const m = useMutation({
+    mutationFn: async () => (await api.post('/caja/reposicion', {
+      valor: valor ?? 0, observacion: obs || undefined,
+    })).data,
+    onSuccess: (r) => { toast.exito(r.message ?? 'Reposición registrada ✓'); setValor(null); setObs(''); onOk(); },
+    onError: (err) => toast.error((err as { response?: { data?: { message?: string } } })?.response?.data?.message ?? 'No se pudo registrar la reposición.'),
+  });
+  return (
+    <div className="card card-pad">
+      <h3 className="mb-2 text-sm font-semibold text-content">Reposición de efectivo</h3>
+      <p className="mb-3 text-xs text-content-muted">
+        Registra el dinero adicional que la empresa te entrega durante el día. Suma a tu efectivo disponible.
+      </p>
+      <div className="flex flex-wrap items-end gap-2">
+        <div className="flex-1 min-w-[140px]">
+          <label className="label">
+            Valor recibido{valor !== null && <span className="ml-1.5 font-normal text-content-muted">= ${valor.toLocaleString('es-CO')}</span>}
+          </label>
+          <InputMoneda valorPesos={valor} onChangePesos={setValor} mostrarEquivalencia={false} />
+        </div>
+        <input value={obs} onChange={(ev) => setObs(ev.target.value)}
+          className="input flex-1 min-w-[160px]" placeholder="Observación (quién entrega, motivo…)" />
+        <button onClick={() => m.mutate()} disabled={m.isPending || valor === null} className="btn-primary btn-sm">
+          {m.isPending ? 'Registrando…' : 'Registrar reposición'}
         </button>
       </div>
     </div>

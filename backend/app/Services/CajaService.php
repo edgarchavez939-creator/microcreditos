@@ -25,6 +25,15 @@ class CajaService
             ->whereDate('fecha', $fecha)->where('registrado_por', $usuarioId)
             ->where('referencia_tipo', 'BASE_INICIAL')->sum('valor');
 
+        // --- Reposiciones de efectivo entregadas durante la jornada ---
+        // La empresa puede entregar más efectivo al cobrador mientras la caja está
+        // abierta. Suman al efectivo disponible igual que la base inicial.
+        $reposicionesQ = DB::table('movimientos_caja')
+            ->whereDate('fecha', $fecha)->where('registrado_por', $usuarioId)
+            ->where('referencia_tipo', 'REPOSICION');
+        $reposiciones    = (float) (clone $reposicionesQ)->sum('valor');
+        $numReposiciones = (int) (clone $reposicionesQ)->count();
+
         // --- Cobros del día (pagos aplicados), discriminados por medio ---
         $cobros = DB::table('movimientos_caja')
             ->whereDate('fecha', $fecha)->where('registrado_por', $usuarioId)
@@ -34,17 +43,26 @@ class CajaService
         $cobrosTransfer = (float) (clone $cobros)->where('medio_pago', '!=', 'EFECTIVO')->sum('valor');
         $numCobros      = (clone $cobros)->count();
 
-        // --- Recaudo por seguros: suma del valor_seguro de los créditos DESEMBOLSADOS hoy.
-        // PROPIEDAD: pertenece a quien CREÓ la solicitud (gestión comercial), NO a quien
-        // aprueba ni a quien desembolsa. Por eso se filtra por s.created_by, no por
-        // d.registrado_por. El desembolso pudo hacerlo otro usuario, pero el seguro
-        // Se cruza con el MOVIMIENTO de caja del desembolso (fecha de hoy consistente),
-        // y el valor_seguro se atribuye a quien creó la solicitud (gestión comercial).
+        // --- Recaudo por seguros: valor_seguro de los créditos DESEMBOLSADOS hoy.
+        // ATRIBUCIÓN: pertenece a QUIEN REALIZA EL DESEMBOLSO y a la caja del día en que
+        // este ocurre (mc.registrado_por / mc.fecha), no a quien creó la solicitud ni a
+        // la fecha de aprobación. Un crédito aprobado el lunes y desembolsado el jueves
+        // recauda su seguro el jueves, en la caja de quien lo desembolsó.
+        // NOTA CONTABLE: es un indicador comercial, NO entra al efectivo esperado, porque
+        // el seguro se descuenta del monto entregado (la empresa repone el neto) y por
+        // tanto nunca pasa físicamente por las manos del cobrador.
         $seguros = DB::table('movimientos_caja as mc')
             ->join('solicitudes as s', 's.id', '=', 'mc.referencia_id')
             ->whereDate('mc.fecha', $fecha)
             ->where('mc.referencia_tipo', 'DESEMBOLSO')
-            ->where('s.created_by', $usuarioId)
+            ->where('mc.registrado_por', $usuarioId)
+            // REVERSIÓN AUTOMÁTICA: si el desembolso fue anulado, su seguro deja de
+            // recaudarse. Los cierres ya guardados conservan su fotografía original.
+            ->whereNotExists(function ($q) {
+                $q->select(DB::raw(1))->from('desembolsos as dd')
+                  ->whereColumn('dd.solicitud_id', 'mc.referencia_id')
+                  ->whereNotNull('dd.anulado_at');
+            })
             ->selectRaw('COALESCE(SUM(s.valor_seguro),0) as total, COUNT(*) as num')
             ->first();
         $recaudoSeguros = (float) ($seguros->total ?? 0);
@@ -60,6 +78,14 @@ class CajaService
             ->where('referencia_tipo', 'DESEMBOLSO');
         $totalDesembolsos    = (float) (clone $desembolsos)->sum('valor');
         $desembolsosEfectivo = (float) (clone $desembolsos)->where('medio_pago', 'EFECTIVO')->sum('valor');
+        $desembolsosTransfer = (float) (clone $desembolsos)->where('medio_pago', '!=', 'EFECTIVO')->sum('valor');
+
+        // --- Anulaciones de desembolso: devuelven el efectivo a la caja (movimiento inverso) ---
+        $anulacionesQ = DB::table('movimientos_caja')
+            ->whereDate('fecha', $fecha)->where('registrado_por', $usuarioId)
+            ->where('referencia_tipo', 'ANULACION_DESEMBOLSO');
+        $anulaciones         = (float) (clone $anulacionesQ)->sum('valor');
+        $anulacionesEfectivo = (float) (clone $anulacionesQ)->where('medio_pago', 'EFECTIVO')->sum('valor');
 
         // --- Gastos del día, por medio de pago ---
         $gastos = DB::table('movimientos_caja')
@@ -70,24 +96,32 @@ class CajaService
 
         // --- Saldo económico del día (incluye el recaudo comercial de seguros) ---
         $saldoFinal = round(
-            $baseInicial + $cobrosEfectivo + $cobrosTransfer + $recaudoSeguros
-            - $totalDesembolsos - $totalGastos, 2
+            $baseInicial + $reposiciones + $cobrosEfectivo + $cobrosTransfer + $recaudoSeguros
+            - $totalDesembolsos + $anulaciones - $totalGastos, 2
         );
 
-        // --- Efectivo esperado en caja (SOLO dinero físico que pasó por este usuario) ---
-        // Base + cobros EFECTIVO − desembolsos EFECTIVO − gastos EFECTIVO.
-        // NOTA: el recaudo por seguros NO entra aquí. El seguro se retiene dentro del
-        // desembolso (dinero que maneja quien desembolsa), mientras que su reconocimiento
-        // comercial pertenece a quien creó la solicitud —que puede ser otro usuario—.
-        // Mezclarlo distorsionaría el arqueo físico. Se reporta aparte como indicador.
+        // --- EFECTIVO ESPERADO: solo dinero FÍSICO que pasó por las manos del usuario ---
+        //   + Base inicial
+        //   + Reposiciones de efectivo recibidas durante el día
+        //   + Cobros en EFECTIVO
+        //   + Anulaciones de desembolso en efectivo (dinero que vuelve a la caja)
+        //   − Desembolsos en EFECTIVO
+        //   − Gastos en EFECTIVO
+        //
+        // NO se incluyen (decisión contable deliberada):
+        //   · Cobros por TRANSFERENCIA: el dinero va al banco, no a la mano del cobrador.
+        //     Sumarlos exigiría en el arqueo un efectivo que nunca recibió.
+        //   · Recaudo por SEGUROS: la empresa repone el NETO del desembolso, así que el
+        //     seguro nunca pasa por sus manos. Sumarlo generaría un sobrante falso.
+        // Ambos se muestran en el resumen del día como información, no como efectivo.
         $efectivoEsperado = round(
-            $baseInicial + $cobrosEfectivo
+            $baseInicial + $reposiciones + $cobrosEfectivo + $anulacionesEfectivo
             - $desembolsosEfectivo - $gastosEfectivo, 2
         );
 
         $movimientoTotal = round(
-            $baseInicial + $cobrosEfectivo + $cobrosTransfer + $recaudoSeguros
-            + $totalDesembolsos + $totalGastos, 2
+            $baseInicial + $reposiciones + $cobrosEfectivo + $cobrosTransfer + $recaudoSeguros
+            + $totalDesembolsos + $totalGastos + $anulaciones, 2
         );
 
         // Hora de apertura = primer movimiento del día; abierto_por = quien registró la base
@@ -104,6 +138,8 @@ class CajaService
         return [
             'fecha'                => $fecha,
             'base_inicial'         => $baseInicial,
+            'reposiciones'         => $reposiciones,
+            'numero_reposiciones'  => $numReposiciones,
             'cobros_efectivo'      => $cobrosEfectivo,
             'cobros_transferencia' => $cobrosTransfer,
             'total_cobros'         => round($cobrosEfectivo + $cobrosTransfer, 2),
@@ -112,6 +148,8 @@ class CajaService
             'numero_seguros'       => $numSeguros,
             'total_desembolsos'    => $totalDesembolsos,
             'desembolsos_efectivo' => $desembolsosEfectivo,
+            'desembolsos_transferencia' => $desembolsosTransfer,
+            'anulaciones'          => $anulaciones,
             'numero_desembolsos'   => $numDesembolsos,
             'total_gastos'         => $totalGastos,
             'gastos_efectivo'      => $gastosEfectivo,

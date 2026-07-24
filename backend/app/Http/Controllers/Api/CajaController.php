@@ -166,6 +166,57 @@ class CajaController extends Controller
         return response()->json(['message' => 'Gasto registrado.'], 201);
     }
 
+    /**
+     * REPOSICIÓN DE EFECTIVO.
+     * Durante la jornada la empresa puede entregar más efectivo al cobrador.
+     * Solo se admite con la caja ABIERTA y antes del cierre del día. Incrementa
+     * el efectivo disponible y queda en el historial de movimientos con la
+     * trazabilidad completa (quién entrega, quién registra, fecha y hora).
+     */
+    public function registrarReposicion(Request $request)
+    {
+        $u = $request->user();
+        $hoy = now()->toDateString();
+
+        $data = $request->validate([
+            'valor'         => ['required', 'numeric', 'gt:0'],
+            'entregado_por' => ['nullable', 'integer', 'exists:usuarios,id'],
+            'observacion'   => ['nullable', 'string', 'max:255'],
+        ]);
+
+        // Validaciones: no se registran movimientos sobre una caja cerrada…
+        abort_if(
+            CierreCaja::whereDate('fecha', $hoy)->where('cerrado_por', $u->id)->exists(),
+            422, 'La caja de hoy ya está cerrada; no se pueden registrar reposiciones.'
+        );
+        // …y todo movimiento exige una caja ABIERTA.
+        app(\App\Services\AperturaCajaService::class)->exigirAbierta($u->id);
+
+        $areaId = DB::table('usuario_area')->where('usuario_id', $u->id)->value('area_id');
+        $entregadoPor = $data['entregado_por'] ?? null;
+        $nombreEntrega = $entregadoPor
+            ? DB::table('usuarios')->where('id', $entregadoPor)->value('nombre')
+            : null;
+
+        $id = DB::table('movimientos_caja')->insertGetId([
+            'fecha'           => $hoy,
+            'tipo'            => 'INGRESO',
+            'concepto'        => 'Reposición de efectivo' . ($nombreEntrega ? " (entrega: {$nombreEntrega})" : ''),
+            'valor'           => $data['valor'],
+            'medio_pago'      => 'EFECTIVO',
+            'referencia_tipo' => 'REPOSICION',
+            'area_id'         => $areaId,
+            'observacion'     => $data['observacion'] ?? null,
+            'entregado_por'   => $entregadoPor,
+            'registrado_por'  => $u->id,
+            'created_at'      => now(),
+        ]);
+
+        $this->auditarCaja($request, 'CREATE', 'REPOSICION', $id, (float) $data['valor']);
+
+        return response()->json(['message' => 'Reposición registrada. Tu efectivo disponible aumentó.'], 201);
+    }
+
     /** Eliminar un gasto (solo si la caja no está cerrada y es del propio usuario). */
     public function eliminarGasto(Request $request, int $id)
     {
@@ -224,13 +275,18 @@ class CajaController extends Controller
             'rol_usuario'          => $u->rol,
             'abierto_por'          => $u->id,
             'base_inicial'         => $e['base_inicial'],
+            'reposiciones'         => $e['reposiciones'],
+            'numero_reposiciones'  => $e['numero_reposiciones'],
             'cobros_efectivo'      => $e['cobros_efectivo'],
             'cobros_transferencia' => $e['cobros_transferencia'],
             'recaudo_seguros'      => $e['recaudo_seguros'],
-            'total_desembolsos'    => $e['total_desembolsos'],
+            'total_desembolsos'         => $e['total_desembolsos'],
+            'desembolsos_efectivo'      => $e['desembolsos_efectivo'],
+            'desembolsos_transferencia' => $e['desembolsos_transferencia'],
             'total_gastos'         => $e['total_gastos'],
+            'gastos_efectivo'      => $e['gastos_efectivo'],
             'movimiento_total'     => $e['movimiento_total'],
-            'total_ingresos'       => round($e['base_inicial'] + $e['total_cobros'] + $e['recaudo_seguros'], 2),
+            'total_ingresos'       => round($e['base_inicial'] + $e['reposiciones'] + $e['total_cobros'] + $e['recaudo_seguros'], 2),
             'total_egresos'        => round($e['total_desembolsos'] + $e['total_gastos'], 2),
             'saldo'                => $e['saldo_final'],
             'efectivo_esperado'    => $e['efectivo_esperado'],

@@ -9,7 +9,9 @@ import { EscalaMoneda } from '@/components/ui/EscalaMoneda';
 
 interface CajaDia {
   id: number; estado: string; rol_usuario?: string; usuario?: string;
-  base_inicial: number; cobros_efectivo: number; cobros_transferencia: number;
+  base_inicial: number; reposiciones?: number; numero_reposiciones?: number;
+  cobros_efectivo: number; cobros_transferencia: number;
+  desembolsos_efectivo?: number; desembolsos_transferencia?: number; gastos_efectivo?: number;
   recaudo_seguros: number; total_desembolsos: number; total_gastos: number;
   movimiento_total: number; efectivo_esperado: number; efectivo_contado?: number;
   efectivo_entregado?: number; diferencia?: number; diferencia_entrega?: number;
@@ -91,9 +93,12 @@ export function CajaGeneralPanel() {
         <h3 className="mb-3 text-sm font-semibold text-content">Totales consolidados (desde cierres individuales)</h3>
         <div className="grid gap-x-8 gap-y-1.5 sm:grid-cols-2 lg:grid-cols-3">
           {[
-            ['Base inicial', t.base_inicial], ['Cobros efectivo', t.cobros_efectivo],
-            ['Cobros transferencia', t.cobros_transferencia], ['Recaudo seguros', t.recaudo_seguros],
-            ['Desembolsos', t.desembolsos], ['Gastos', t.gastos],
+            ['Base inicial', t.base_inicial], ['Reposiciones', t.reposiciones ?? 0],
+            ['Cobros efectivo', t.cobros_efectivo], ['Cobros transferencia', t.cobros_transferencia],
+            ['Recaudo seguros', t.recaudo_seguros],
+            ['Desembolsos efectivo', t.desembolsos_efectivo ?? t.desembolsos],
+            ['Desembolsos transferencia', t.desembolsos_transferencia ?? 0],
+            ['Gastos', t.gastos],
             ['Movimiento total', t.movimiento_total], ['Efectivo esperado', t.efectivo_esperado],
             ['Efectivo recibido', t.efectivo_recibido],
           ].map(([label, val]) => (
@@ -102,11 +107,24 @@ export function CajaGeneralPanel() {
               <span className="font-medium tabular-nums">{money(val as number)}</span>
             </div>
           ))}
-          <div className="flex justify-between py-1 text-sm sm:col-span-2 lg:col-span-3">
-            <span className="font-semibold text-content">Diferencia general</span>
-            <span className={`font-bold tabular-nums ${Math.abs(t.diferencia) >= 0.01 ? (t.diferencia < 0 ? 'text-rose-600' : 'text-amber-700') : 'text-money-700'}`}>
-              {money(t.diferencia)}
-            </span>
+          <div className="sm:col-span-2 lg:col-span-3 mt-1 space-y-1 border-t border-border-token pt-2">
+            <div className="flex justify-between py-1 text-sm">
+              <span className="font-semibold text-content">
+                Diferencias de arqueo declaradas
+                <span className="ml-1.5 font-normal text-content-muted">
+                  ({t.cajas_con_faltante ?? 0} faltante(s) · {t.cajas_con_sobrante ?? 0} sobrante(s))
+                </span>
+              </span>
+              <span className={`font-bold tabular-nums ${Math.abs(t.diferencias_arqueo ?? 0) >= 0.01 ? ((t.diferencias_arqueo ?? 0) < 0 ? 'text-rose-600' : 'text-amber-700') : 'text-money-700'}`}>
+                {money(t.diferencias_arqueo ?? 0)}
+              </span>
+            </div>
+            <div className="flex justify-between py-1 text-sm">
+              <span className="font-semibold text-content">Diferencia general (recibido vs esperado)</span>
+              <span className={`font-bold tabular-nums ${Math.abs(t.diferencia) >= 0.01 ? (t.diferencia < 0 ? 'text-rose-600' : 'text-amber-700') : 'text-money-700'}`}>
+                {money(t.diferencia)}
+              </span>
+            </div>
           </div>
         </div>
       </div>
@@ -199,12 +217,16 @@ function FilaCaja({ caja }: { caja: CajaDia }) {
               ['Apertura', caja.hora_apertura ? fechaHora(caja.hora_apertura) : '—'],
               ['Cierre', caja.hora_cierre ? fechaHora(caja.hora_cierre) : '—'],
               ['Base inicial', money(caja.base_inicial)],
+              ['Reposiciones', money(caja.reposiciones ?? 0)],
               ['Cobros efectivo', money(caja.cobros_efectivo)],
               ['Cobros transferencia', money(caja.cobros_transferencia)],
               ['Recaudo seguros', money(caja.recaudo_seguros)],
-              ['Desembolsos', money(caja.total_desembolsos)],
+              ['Desembolsos efectivo', money(caja.desembolsos_efectivo ?? caja.total_desembolsos)],
+              ['Desembolsos transferencia', money(caja.desembolsos_transferencia ?? 0)],
               ['Gastos', money(caja.total_gastos)],
               ['Efectivo esperado', money(caja.efectivo_esperado)],
+              ['Efectivo declarado', caja.efectivo_contado != null ? money(caja.efectivo_contado) : '—'],
+              ['Diferencia de arqueo', money(caja.diferencia ?? 0)],
             ].map(([l, v]) => (
               <div key={l as string} className="flex justify-between py-0.5 text-sm">
                 <span className="text-content-muted">{l as string}</span><span className="font-medium tabular-nums">{v as string}</span>

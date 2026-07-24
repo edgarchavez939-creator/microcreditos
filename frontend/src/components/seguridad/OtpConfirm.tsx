@@ -3,7 +3,7 @@ import { useMutation } from '@tanstack/react-query';
 import { api } from '@/lib/api/client';
 
 interface Props {
-  operacion: 'ANULAR_PAGO' | 'ELIMINAR_CREDITO';
+  operacion: 'ANULAR_PAGO' | 'ANULAR_DESEMBOLSO' | 'ELIMINAR_CREDITO';
   etiqueta: string;                       // texto del botón de confirmación
   onConfirmar: (otp: string) => void;     // se llama con el código digitado
   onCancelar: () => void;

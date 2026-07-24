@@ -249,6 +249,35 @@ class SolicitudController extends Controller
         return new SolicitudResource($solicitud);
     }
 
+    /**
+     * ANULAR EL DESEMBOLSO de un crédito (reversión completa).
+     * Requiere la misma autorización que desembolsar y clave OTP, por tratarse de
+     * una operación que revierte movimientos de dinero.
+     */
+    public function anularDesembolso(Request $request, Solicitud $solicitud, DesembolsoService $svc)
+    {
+        $this->authorize('disburse', $solicitud);
+        $data = $request->validate([
+            'motivo' => ['required', 'string', 'min:5', 'max:255'],
+            'otp'    => ['required', 'string', 'digits:6'],
+        ]);
+
+        if (! app(\App\Services\OtpService::class)->consumir($request->user(), 'ANULAR_DESEMBOLSO', $data['otp'])) {
+            return response()->json(['message' => 'Código de seguridad inválido o vencido.'], 422);
+        }
+
+        try {
+            $solicitud = $svc->anular($solicitud, $data['motivo'], $request->user());
+        } catch (\DomainException $e) {
+            return response()->json(['message' => $e->getMessage()], 422);
+        }
+
+        return response()->json([
+            'message' => 'Desembolso anulado. El efectivo volvió a la caja y el crédito quedó APROBADO.',
+            'data'    => new SolicitudResource($solicitud),
+        ]);
+    }
+
     public function generarCronograma(Solicitud $solicitud, LoanService $loans)
     {
         $this->authorize('disburse', $solicitud);

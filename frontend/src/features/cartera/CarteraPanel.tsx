@@ -5,7 +5,7 @@ import { money, fecha, fechaHora } from '@/lib/format';
 import { Icon } from '@/components/ui/icons';
 import type { Solicitud } from '@/types';
 import { OtpConfirm } from '@/components/seguridad/OtpConfirm';
-import { useAnularPago, useCreditoDetalle, useCreditos, useCuotasCredito, useDesembolsar, useEliminarCredito, useEventosCredito, useGenerarCronograma, useRegistrarPago } from './hooks';
+import { useAnularDesembolso, useAnularPago, useCreditoDetalle, useCreditos, useCuotasCredito, useDesembolsar, useEliminarCredito, useEventosCredito, useGenerarCronograma, useRegistrarPago } from './hooks';
 import { useAuthStore } from '@/stores/auth';
 import { useToast } from '@/components/ui/Toast';
 import { EvaluacionRenovacion } from './EvaluacionRenovacion';
@@ -79,6 +79,9 @@ export function CarteraPanel() {
 function CreditoCard({ c }: { c: Solicitud }) {
   const [abierto, setAbierto] = useState(false);
   const desembolsar = useDesembolsar();
+  const anularDesembolso = useAnularDesembolso();
+  const [anulandoDes, setAnulandoDes] = useState(false);
+  const [motivoAnulacion, setMotivoAnulacion] = useState('');
   const [metodo, setMetodo] = useState('EFECTIVO');
   const [fechaInicio, setFechaInicio] = useState(() => new Date().toISOString().slice(0, 10));
   const [error, setError] = useState<string | null>(null);
@@ -150,6 +153,41 @@ function CreditoCard({ c }: { c: Solicitud }) {
             {desembolsar.isPending && <span className="spinner" />}{desembolsar.isPending ? 'Desembolsando…' : 'Desembolsar y activar'}
           </button>
           <p className="w-full text-xs text-content-muted">La primera cuota vence un período después de esta fecha, según la modalidad.</p>
+        </div>
+      )}
+
+      {/* ANULAR DESEMBOLSO: revierte el movimiento de caja y devuelve el crédito a APROBADO */}
+      {esPagable && (
+        <div className="mt-3 border-t border-border-token pt-3">
+          {!anulandoDes ? (
+            <button onClick={() => setAnulandoDes(true)} className="text-xs text-rose-600 hover:underline">
+              Anular desembolso
+            </button>
+          ) : (
+            <div className="rounded-xl bg-rose-50 p-3 ring-1 ring-rose-100">
+              <p className="mb-2 text-xs text-rose-700">
+                El efectivo volverá a tu caja, se borrará el plan de pagos y el crédito quedará APROBADO.
+                Solo es posible si el crédito no tiene pagos registrados.
+              </p>
+              <input value={motivoAnulacion} onChange={(e) => setMotivoAnulacion(e.target.value)}
+                className="input mb-2 text-sm" placeholder="Motivo de la anulación (mín. 5 caracteres)" />
+              <div className="flex flex-wrap gap-2">
+                <OtpConfirm
+                  operacion="ANULAR_DESEMBOLSO"
+                  etiqueta={anularDesembolso.isPending ? 'Anulando…' : 'Confirmar anulación'}
+                  pendiente={anularDesembolso.isPending || motivoAnulacion.trim().length < 5}
+                  onConfirmar={(otp) => {
+                    setError(null);
+                    anularDesembolso.mutate({ id: c.id, motivo: motivoAnulacion, otp }, {
+                      onSuccess: () => { setAnulandoDes(false); setMotivoAnulacion(''); },
+                      onError: err,
+                    });
+                  }}
+                  onCancelar={() => { setAnulandoDes(false); setMotivoAnulacion(''); }}
+                />
+              </div>
+            </div>
+          )}
         </div>
       )}
 

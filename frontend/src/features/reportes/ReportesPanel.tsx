@@ -14,6 +14,7 @@ const REPORTES = [
   { id: 'pagos', t: 'Pagos' },
   { id: 'mora', t: 'Mora' },
   { id: 'caja', t: 'Caja' },
+  { id: 'cierres-caja', t: 'Cierres de caja' },
   { id: 'productividad', t: 'Productividad' },
 ] as const;
 type ReporteId = (typeof REPORTES)[number]['id'];
@@ -50,6 +51,25 @@ const COLUMNAS: Record<ReporteId, Array<{ k: string; t: string; dinero?: boolean
     { k: 'area', t: 'Área' },
     { k: 'registrado_por', t: 'Registrado por' },
   ],
+  'cierres-caja': [
+    { k: 'fecha', t: 'Fecha', fecha: true },
+    { k: 'usuario', t: 'Usuario' },
+    { k: 'area', t: 'Área' },
+    { k: 'base_inicial', t: 'Base inicial', dinero: true },
+    { k: 'reposiciones', t: 'Reposiciones', dinero: true },
+    { k: 'cobros_efectivo', t: 'Cobros efectivo', dinero: true },
+    { k: 'cobros_transferencia', t: 'Cobros transferencia', dinero: true },
+    { k: 'recaudo_seguros', t: 'Recaudo seguros', dinero: true },
+    { k: 'desembolsos_efectivo', t: 'Desembolsos efectivo', dinero: true },
+    { k: 'desembolsos_transferencia', t: 'Desembolsos transferencia', dinero: true },
+    { k: 'gastos', t: 'Gastos', dinero: true },
+    { k: 'efectivo_esperado', t: 'Efectivo esperado', dinero: true },
+    { k: 'efectivo_declarado', t: 'Efectivo declarado', dinero: true },
+    { k: 'diferencia', t: 'Diferencia de caja', dinero: true },
+    { k: 'efectivo_entregado', t: 'Entregado a tesorería', dinero: true },
+    { k: 'estado', t: 'Estado' },
+    { k: 'observacion', t: 'Observación' },
+  ],
   productividad: [
     { k: 'cobrador', t: 'Cobrador' },
     { k: 'clientes', t: 'Clientes' },
@@ -85,9 +105,9 @@ export function ReportesPanel() {
   const [hasta, setHasta] = useState(hoyISO());
 
   const { data, isLoading, isError, error } = useQuery({
-    queryKey: ['reporte', tipo, ['pagos','caja','productividad'].includes(tipo) ? desde : '', ['pagos','caja','productividad'].includes(tipo) ? hasta : ''],
+    queryKey: ['reporte', tipo, ['pagos','caja','cierres-caja','productividad'].includes(tipo) ? desde : '', ['pagos','caja','cierres-caja','productividad'].includes(tipo) ? hasta : ''],
     queryFn: async () => {
-      const params = ['pagos','caja','productividad'].includes(tipo) ? { params: { desde, hasta } } : undefined;
+      const params = ['pagos','caja','cierres-caja','productividad'].includes(tipo) ? { params: { desde, hasta } } : undefined;
       const r = await api.get<{ data: Fila[]; total?: number }>(`/reportes/${tipo}`, params);
       return r.data;
     },
@@ -115,7 +135,7 @@ export function ReportesPanel() {
     const wb = XLSX.utils.book_new();
     const nombreHoja = REPORTES.find((r) => r.id === tipo)?.t ?? 'Reporte';
     XLSX.utils.book_append_sheet(wb, ws, nombreHoja);
-    const sufijo = tipo === 'pagos' ? `_${desde}_a_${hasta}` : `_${hoyISO()}`;
+    const sufijo = ['pagos','caja','cierres-caja','productividad'].includes(tipo) ? `_${desde}_a_${hasta}` : `_${hoyISO()}`;
     XLSX.writeFile(wb, `reporte_${tipo}${sufijo}.xlsx`);
   };
 
@@ -136,7 +156,7 @@ export function ReportesPanel() {
           ))}
         </div>
 
-        {['pagos','caja','productividad'].includes(tipo) && (
+        {['pagos','caja','cierres-caja','productividad'].includes(tipo) && (
           <>
             <label className="text-sm">
               <span className="block text-content-muted">Desde</span>

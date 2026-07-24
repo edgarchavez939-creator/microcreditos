@@ -56,8 +56,11 @@ class CajaGeneralController extends Controller
             ->orderBy('cc.estado')->orderBy('u.nombre')
             ->get([
                 'cc.id', 'cc.estado', 'cc.rol_usuario',
-                'cc.base_inicial', 'cc.cobros_efectivo', 'cc.cobros_transferencia',
-                'cc.recaudo_seguros', 'cc.total_desembolsos', 'cc.total_gastos',
+                'cc.base_inicial', 'cc.reposiciones', 'cc.numero_reposiciones',
+                'cc.cobros_efectivo', 'cc.cobros_transferencia',
+                'cc.recaudo_seguros', 'cc.total_desembolsos',
+                'cc.desembolsos_efectivo', 'cc.desembolsos_transferencia',
+                'cc.total_gastos', 'cc.gastos_efectivo',
                 'cc.movimiento_total', 'cc.efectivo_esperado', 'cc.efectivo_contado',
                 'cc.efectivo_entregado', 'cc.diferencia', 'cc.diferencia_entrega',
                 'cc.observacion', 'cc.observacion_entrega',
@@ -70,20 +73,37 @@ class CajaGeneralController extends Controller
 
         // Totales consolidados (solo desde snapshots de cajas que ya cerraron)
         $t = [
-            'base_inicial' => 0, 'cobros_efectivo' => 0, 'cobros_transferencia' => 0,
-            'recaudo_seguros' => 0, 'desembolsos' => 0, 'gastos' => 0,
-            'movimiento_total' => 0, 'efectivo_esperado' => 0, 'efectivo_recibido' => 0, 'diferencia' => 0,
+            'base_inicial' => 0, 'reposiciones' => 0,
+            'cobros_efectivo' => 0, 'cobros_transferencia' => 0,
+            'recaudo_seguros' => 0, 'desembolsos' => 0,
+            'desembolsos_efectivo' => 0, 'desembolsos_transferencia' => 0,
+            'gastos' => 0,
+            'movimiento_total' => 0, 'efectivo_esperado' => 0, 'efectivo_recibido' => 0,
+            'diferencia' => 0,
+            // Diferencias de ARQUEO declaradas por los cobradores (faltantes/sobrantes
+            // que ellos mismos reportaron al cerrar). Antes no se consolidaban aquí.
+            'diferencias_arqueo' => 0,
+            'cajas_con_faltante' => 0, 'cajas_con_sobrante' => 0,
         ];
         foreach ($cajas as $c) {
-            $t['base_inicial']         += (float) $c->base_inicial;
-            $t['cobros_efectivo']      += (float) $c->cobros_efectivo;
-            $t['cobros_transferencia'] += (float) $c->cobros_transferencia;
-            $t['recaudo_seguros']      += (float) $c->recaudo_seguros;
-            $t['desembolsos']          += (float) $c->total_desembolsos;
-            $t['gastos']               += (float) $c->total_gastos;
-            $t['movimiento_total']     += (float) $c->movimiento_total;
-            $t['efectivo_esperado']    += (float) $c->efectivo_esperado;
-            $t['efectivo_recibido']    += (float) ($c->efectivo_entregado ?? 0);
+            $t['base_inicial']              += (float) $c->base_inicial;
+            $t['reposiciones']              += (float) ($c->reposiciones ?? 0);
+            $t['cobros_efectivo']           += (float) $c->cobros_efectivo;
+            $t['cobros_transferencia']      += (float) $c->cobros_transferencia;
+            $t['recaudo_seguros']           += (float) $c->recaudo_seguros;
+            $t['desembolsos']               += (float) $c->total_desembolsos;
+            $t['desembolsos_efectivo']      += (float) ($c->desembolsos_efectivo ?? 0);
+            $t['desembolsos_transferencia'] += (float) ($c->desembolsos_transferencia ?? 0);
+            $t['gastos']                    += (float) $c->total_gastos;
+            $t['movimiento_total']          += (float) $c->movimiento_total;
+            $t['efectivo_esperado']         += (float) $c->efectivo_esperado;
+            $t['efectivo_recibido']         += (float) ($c->efectivo_entregado ?? 0);
+
+            // Diferencia de arqueo declarada por el cobrador al cerrar su caja
+            $dif = (float) ($c->diferencia ?? 0);
+            $t['diferencias_arqueo'] += $dif;
+            if ($dif < -0.009) $t['cajas_con_faltante']++;
+            if ($dif > 0.009)  $t['cajas_con_sobrante']++;
         }
         $t['diferencia'] = round($t['efectivo_recibido'] - $t['efectivo_esperado'], 2);
         foreach ($t as $k => $v) $t[$k] = round($v, 2);
@@ -189,17 +209,22 @@ class CajaGeneralController extends Controller
 
         // Consolidación desde snapshots (nunca recalcula desde movimientos)
         $tot = [
-            'base' => 0, 'cef' => 0, 'ctr' => 0, 'seg' => 0, 'des_ef' => 0, 'des_tr' => 0,
-            'gas' => 0, 'mov' => 0, 'esp' => 0, 'rec' => 0,
+            'base' => 0, 'rep' => 0, 'cef' => 0, 'ctr' => 0, 'seg' => 0, 'des_ef' => 0, 'des_tr' => 0,
+            'gas' => 0, 'mov' => 0, 'esp' => 0, 'rec' => 0, 'dif_arqueo' => 0,
         ];
         $usuarios = [];
         foreach ($recibidas as $c) {
             $tot['base'] += (float) $c->base_inicial;
+            $tot['rep']  += (float) ($c->reposiciones ?? 0);
             $tot['cef']  += (float) $c->cobros_efectivo;
             $tot['ctr']  += (float) $c->cobros_transferencia;
             $tot['seg']  += (float) $c->recaudo_seguros;
-            $tot['des_ef'] += (float) $c->total_desembolsos; // desglose fino en detalle por caja
+            // Desglose real por medio (antes todo se sumaba como efectivo)
+            $tot['des_ef'] += (float) ($c->desembolsos_efectivo ?? $c->total_desembolsos);
+            $tot['des_tr'] += (float) ($c->desembolsos_transferencia ?? 0);
             $tot['gas']  += (float) $c->total_gastos;
+            // Diferencias de arqueo declaradas por cada cobrador
+            $tot['dif_arqueo'] += (float) ($c->diferencia ?? 0);
             $tot['mov']  += (float) $c->movimiento_total;
             $tot['esp']  += (float) $c->efectivo_esperado;
             $tot['rec']  += (float) ($c->efectivo_entregado ?? 0);
@@ -214,6 +239,7 @@ class CajaGeneralController extends Controller
                 'numero_cajas'                   => $recibidas->count(),
                 'usuarios_incluidos'             => implode(', ', array_filter($usuarios)),
                 'total_base_inicial'             => round($tot['base'], 2),
+                'total_reposiciones'             => round($tot['rep'], 2),
                 'total_cobros_efectivo'          => round($tot['cef'], 2),
                 'total_cobros_transferencia'     => round($tot['ctr'], 2),
                 'total_recaudo_seguros'          => round($tot['seg'], 2),
@@ -224,6 +250,7 @@ class CajaGeneralController extends Controller
                 'total_efectivo_esperado'        => round($tot['esp'], 2),
                 'total_efectivo_recibido'        => round($tot['rec'], 2),
                 'diferencia_general'             => $difGeneral,
+                'total_diferencias_arqueo'       => round($tot['dif_arqueo'], 2),
                 'observaciones'                  => $data['observaciones'] ?? null,
                 'estado'                         => 'CERRADO',
                 'ip'                             => $request->ip(),

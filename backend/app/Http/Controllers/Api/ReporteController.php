@@ -161,6 +161,69 @@ class ReporteController extends Controller
         ]);
     }
 
+    /**
+     * REPORTE DE CIERRES DE CAJA (arqueo por usuario y día).
+     * Usa la FOTOGRAFÍA guardada en el cierre, de modo que las cifras coinciden
+     * exactamente con lo que vio el cobrador al cerrar y con la Caja General.
+     */
+    public function cierresCaja(Request $request)
+    {
+        $data = $request->validate([
+            'desde' => ['required', 'date'],
+            'hasta' => ['required', 'date', 'after_or_equal:desde'],
+        ]);
+        $u = $request->user();
+
+        $q = DB::table('cierres_caja as cc')
+            ->leftJoin('usuarios as us', 'us.id', '=', 'cc.cerrado_por')
+            ->leftJoin('areas as a', 'a.id', '=', 'cc.area_id')
+            ->whereBetween('cc.fecha', [$data['desde'], $data['hasta']]);
+
+        if ($u->esCobrador()) {
+            $q->where('cc.cerrado_por', $u->id);
+        } elseif ($u->esSupervisor()) {
+            $areas = DB::table('usuario_area')->where('usuario_id', $u->id)->pluck('area_id');
+            $q->whereIn('cc.area_id', $areas);
+        }
+
+        $filas = $q->orderBy('cc.fecha')->orderBy('us.nombre')->get([
+            'cc.fecha',
+            'us.nombre as usuario',
+            'a.nombre as area',
+            DB::raw('CAST(cc.base_inicial AS FLOAT) as base_inicial'),
+            DB::raw('CAST(COALESCE(cc.reposiciones,0) AS FLOAT) as reposiciones'),
+            DB::raw('CAST(cc.cobros_efectivo AS FLOAT) as cobros_efectivo'),
+            DB::raw('CAST(cc.cobros_transferencia AS FLOAT) as cobros_transferencia'),
+            DB::raw('CAST(cc.recaudo_seguros AS FLOAT) as recaudo_seguros'),
+            DB::raw('CAST(COALESCE(cc.desembolsos_efectivo, cc.total_desembolsos) AS FLOAT) as desembolsos_efectivo'),
+            DB::raw('CAST(COALESCE(cc.desembolsos_transferencia,0) AS FLOAT) as desembolsos_transferencia'),
+            DB::raw('CAST(cc.total_gastos AS FLOAT) as gastos'),
+            DB::raw('CAST(cc.efectivo_esperado AS FLOAT) as efectivo_esperado'),
+            DB::raw('CAST(COALESCE(cc.efectivo_contado,0) AS FLOAT) as efectivo_declarado'),
+            DB::raw('CAST(cc.diferencia AS FLOAT) as diferencia'),
+            DB::raw('CAST(COALESCE(cc.efectivo_entregado,0) AS FLOAT) as efectivo_entregado'),
+            'cc.estado',
+            'cc.observacion',
+        ]);
+
+        return response()->json([
+            'data' => $filas,
+            'totales' => [
+                'base_inicial'         => round((float) $filas->sum('base_inicial'), 2),
+                'reposiciones'         => round((float) $filas->sum('reposiciones'), 2),
+                'cobros_efectivo'      => round((float) $filas->sum('cobros_efectivo'), 2),
+                'cobros_transferencia' => round((float) $filas->sum('cobros_transferencia'), 2),
+                'recaudo_seguros'      => round((float) $filas->sum('recaudo_seguros'), 2),
+                'desembolsos_efectivo' => round((float) $filas->sum('desembolsos_efectivo'), 2),
+                'desembolsos_transferencia' => round((float) $filas->sum('desembolsos_transferencia'), 2),
+                'gastos'               => round((float) $filas->sum('gastos'), 2),
+                'efectivo_esperado'    => round((float) $filas->sum('efectivo_esperado'), 2),
+                'efectivo_declarado'   => round((float) $filas->sum('efectivo_declarado'), 2),
+                'diferencia'           => round((float) $filas->sum('diferencia'), 2),
+            ],
+        ]);
+    }
+
     /** Productividad por cobrador: recaudo, clientes, creditos y % de mora de su cartera. */
     public function productividad(Request $request)
     {

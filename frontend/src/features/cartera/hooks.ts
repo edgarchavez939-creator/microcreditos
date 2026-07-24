@@ -30,6 +30,19 @@ export function useDesembolsar() {
   });
 }
 
+/** Anular el desembolso de un crédito (reversión completa, requiere OTP). */
+export function useAnularDesembolso() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, motivo, otp }: { id: number; motivo: string; otp: string }) =>
+      (await api.post(`/solicitudes/${id}/anular-desembolso`, { motivo, otp })).data,
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['cartera'] });
+      qc.invalidateQueries({ queryKey: ['caja'] });
+    },
+  });
+}
+
 export function useGenerarCronograma() {
   const qc = useQueryClient();
   return useMutation({
