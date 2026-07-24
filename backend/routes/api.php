@@ -18,7 +18,7 @@ use App\Http\Controllers\Api\OtpController;
 use App\Http\Controllers\Api\PermisoController;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/health', fn () => response()->json(['status' => 'ok', 'version' => 'v92-migracion-f1', 'ts' => now()]));
+Route::get('/health', fn () => response()->json(['status' => 'ok', 'version' => 'v93-migracion-f2-validacion', 'ts' => now()]));
 
 // Marca pública (sin auth): nombre y color para aplicar en login y en toda la app.
 Route::get('/marca-publica', function () {
@@ -112,6 +112,14 @@ Route::middleware(['auth:api', 'mantenimiento'])->group(function () {
         Route::post('{migracion}/importar', [\App\Http\Controllers\Api\MigracionController::class, 'importar']);
         Route::get('{migracion}/registros', [\App\Http\Controllers\Api\MigracionController::class, 'registros']);
         Route::get('/', [\App\Http\Controllers\Api\MigracionController::class, 'index']);
+    });
+
+    // --- CENTRO DE VALIDACIÓN DE MIGRACIONES (Fase 2) ---
+    Route::prefix('validacion-migrados')->middleware('modulo:migracion')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Api\ValidacionMigracionController::class, 'index']);
+        Route::get('opciones', [\App\Http\Controllers\Api\ValidacionMigracionController::class, 'opciones']);
+        Route::post('{id}/validar', [\App\Http\Controllers\Api\ValidacionMigracionController::class, 'validar'])->middleware('accion:migrados.validar');
+        Route::patch('{id}', [\App\Http\Controllers\Api\ValidacionMigracionController::class, 'editar'])->middleware('accion:migrados.editar');
     });
     Route::get('reportes/productividad', [ReporteController::class, 'productividad'])->middleware('modulo:reportes');
     Route::delete('pagos/{pago}', [PagoController::class, 'destroy'])->middleware('accion:pagos.anular');

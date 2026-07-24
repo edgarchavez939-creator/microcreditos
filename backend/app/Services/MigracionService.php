@@ -352,6 +352,32 @@ class MigracionService
         return $creados;
     }
 
+    /**
+     * BLOQUEO AUTOMÁTICO (Fase 2): al primer movimiento financiero de un crédito
+     * migrado (pago, renovación, refinanciación, abono), sus datos financieros
+     * dejan de ser editables. Se registra en auditoría con el evento que lo bloqueó.
+     * Estático para poder invocarse desde cualquier servicio sin acoplarlos.
+     */
+    public static function bloquearSiMigrado(int $solicitudId, ?int $usuarioId, string $evento): void
+    {
+        $s = DB::table('solicitudes')->where('id', $solicitudId)
+            ->whereNotNull('migracion_id')
+            ->where(fn ($q) => $q->whereNull('estado_validacion')->orWhere('estado_validacion', '!=', 'BLOQUEADO'))
+            ->first(['id', 'estado_validacion']);
+        if (! $s) return;
+
+        DB::table('solicitudes')->where('id', $solicitudId)->update(['estado_validacion' => 'BLOQUEADO']);
+        DB::table('auditoria')->insert([
+            'usuario_id'       => $usuarioId,
+            'accion'           => 'MIGRADO_BLOQUEADO',
+            'entidad'          => 'solicitud',
+            'entidad_id'       => $solicitudId,
+            'datos_anteriores' => json_encode(['estado_validacion' => $s->estado_validacion], JSON_UNESCAPED_UNICODE),
+            'datos_nuevos'     => json_encode(['estado_validacion' => 'BLOQUEADO', 'evento' => $evento], JSON_UNESCAPED_UNICODE),
+            'created_at'       => now(),
+        ]);
+    }
+
     // ---------- helpers ----------
 
     /** Convierte "1.234.567", "1.234.567,89", "$ 850.000", "1234567.89" o número a float. */

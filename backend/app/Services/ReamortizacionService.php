@@ -154,6 +154,7 @@ class ReamortizacionService
 
             // 3) Cerrar el crédito origen (sin tocar su historial)
             $origen->total_pagado = (float) Pago::where('solicitud_id', $origen->id)->sum('valor');
+            \App\Services\MigracionService::bloquearSiMigrado((int) $origen->id, $usuario->id ?? null, 'REAMORTIZACION');
             $origen->estado = EstadoSolicitud::REAMORTIZADO->value;
             $origen->save();
 

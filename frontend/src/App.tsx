@@ -55,7 +55,7 @@ const MENU: MenuItem[] = [
   { id: 'usuarios',       label: 'Usuarios',         icon: 'usuarios',       roles: ['ADMINISTRADOR'] },
   { id: 'parametros',     label: 'Parámetros',       icon: 'parametros',     roles: ['ADMINISTRADOR'] },
   { id: 'permisos',       label: 'Permisos',         icon: 'permisos',       roles: ['ADMINISTRADOR'] },
-  { id: 'migracion',      label: 'Migración',        icon: 'reportes',       roles: ['ADMINISTRADOR'] },
+  { id: 'migracion',      label: 'Migración',        icon: 'reportes',       roles: ['ADMINISTRADOR', 'SUPERVISOR'] },
   { id: 'admin-funcional', label: 'Administración',  icon: 'parametros',     roles: ['ADMIN_FUNCIONAL'] },
 ];
 

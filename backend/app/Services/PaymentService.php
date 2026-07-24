@@ -112,6 +112,8 @@ class PaymentService
             // ¿Crédito totalmente saldado? (solo cuenta pagos aplicados)
             if (! $esTransferencia) {
                 $this->cerrarSiSaldado($credito);
+                // Crédito migrado: su primer pago APLICADO bloquea la edición (Fase 2)
+                \App\Services\MigracionService::bloquearSiMigrado($credito->id, $usuario->id, 'PAGO');
             }
 
             return $pago;
@@ -256,6 +258,8 @@ class PaymentService
             }
 
             $credito = Solicitud::findOrFail($pago->solicitud_id);
+            // Crédito migrado: la transferencia aprobada es su primer movimiento aplicado
+            \App\Services\MigracionService::bloquearSiMigrado($credito->id, $validador->id, 'PAGO_TRANSFERENCIA');
 
             $this->aplicarACuotas($credito->id, (float) $pago->valor);
 

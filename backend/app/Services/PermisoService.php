@@ -51,6 +51,9 @@ class PermisoService
         // Clientes
         'clientes.crear'        => ['etiqueta' => 'Crear clientes',                'defecto' => ['ADMINISTRADOR', 'SUPERVISOR', 'COBRADOR']],
         'clientes.editar'       => ['etiqueta' => 'Editar clientes',               'defecto' => ['ADMINISTRADOR', 'SUPERVISOR', 'COBRADOR']],
+        // Créditos migrados (centro de validación)
+        'migrados.validar'      => ['etiqueta' => 'Validar créditos migrados',     'defecto' => ['ADMINISTRADOR']],
+        'migrados.editar'       => ['etiqueta' => 'Editar créditos migrados',      'defecto' => ['ADMINISTRADOR']],
         // Solicitudes / créditos
         'solicitudes.crear'     => ['etiqueta' => 'Crear solicitudes',             'defecto' => ['ADMINISTRADOR', 'SUPERVISOR', 'COBRADOR']],
         'solicitudes.aprobar'   => ['etiqueta' => 'Aprobar solicitudes',           'defecto' => ['ADMINISTRADOR', 'SUPERVISOR']],

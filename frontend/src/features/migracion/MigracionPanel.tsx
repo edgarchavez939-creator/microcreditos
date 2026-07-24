@@ -4,6 +4,8 @@ import * as XLSX from 'xlsx';
 import { api } from '@/lib/api/client';
 import { money, fecha } from '@/lib/format';
 import { EscalaMoneda } from '@/components/ui/EscalaMoneda';
+import { useAuthStore } from '@/stores/auth';
+import { ValidacionPanel } from './ValidacionPanel';
 
 /**
  * MIGRACIÓN DE CARTERA — Fase 1 (asistente de importación con simulador).
@@ -70,6 +72,32 @@ function sugerirCampo(columna: string, campos: string[]): string {
 }
 
 export function MigracionPanel() {
+  const rol = useAuthStore((st) => st.usuario?.rol);
+  const esAdmin = rol === 'ADMINISTRADOR' || rol === 'ADMIN_FUNCIONAL';
+  // El supervisor (con el módulo concedido) entra directo a la validación;
+  // la importación es exclusiva del administrador.
+  const [tab, setTab] = useState<'validacion' | 'importar'>(esAdmin ? 'importar' : 'validacion');
+  return (
+    <div>
+      <div className="flex items-center gap-3"><h2 className="page-title">Migración de cartera</h2><EscalaMoneda /></div>
+      <div className="mb-4 mt-2 flex rounded-xl bg-surface-3 p-1 w-fit">
+        {esAdmin && (
+          <button onClick={() => setTab('importar')}
+            className={`rounded-lg px-4 py-1.5 text-sm font-medium transition ${tab === 'importar' ? 'bg-surface text-ink shadow-card' : 'text-content-muted hover:text-ink'}`}>
+            Importar
+          </button>
+        )}
+        <button onClick={() => setTab('validacion')}
+          className={`rounded-lg px-4 py-1.5 text-sm font-medium transition ${tab === 'validacion' ? 'bg-surface text-ink shadow-card' : 'text-content-muted hover:text-ink'}`}>
+          Centro de validación
+        </button>
+      </div>
+      {tab === 'validacion' ? <ValidacionPanel /> : <AsistenteImportacion />}
+    </div>
+  );
+}
+
+function AsistenteImportacion() {
   const qc = useQueryClient();
   const [paso, setPaso] = useState(1);
   const [nombreArchivo, setNombreArchivo] = useState('');
@@ -206,7 +234,6 @@ export function MigracionPanel() {
 
   return (
     <div>
-      <div className="flex items-center gap-3"><h2 className="page-title">Migración de cartera</h2><EscalaMoneda /></div>
       <p className="mb-4 text-sm text-content-muted">
         Importa clientes y créditos desde otra plataforma. Nada se guarda sin pasar por la simulación.
       </p>
