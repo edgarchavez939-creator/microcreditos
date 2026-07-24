@@ -9,6 +9,7 @@ const estilos: Record<string, { wrap: string; dot: string }> = {
   RECHAZADO:               { wrap: 'bg-rose-50 text-rose-700 ring-1 ring-rose-200', dot: 'bg-rose-500' },
   DESEMBOLSADO:            { wrap: 'bg-indigo-50 text-indigo-700 ring-1 ring-indigo-200', dot: 'bg-indigo-500' },
   ACTIVO:                  { wrap: 'bg-money-50 text-money-700 ring-1 ring-money-100', dot: 'bg-money-500' },
+  MIGRADO:                 { wrap: 'bg-cyan-50 text-cyan-700 ring-1 ring-cyan-200', dot: 'bg-cyan-500' },
   EN_MORA:                 { wrap: 'bg-amber-50 text-amber-800 ring-1 ring-amber-200', dot: 'bg-amber-600' },
   PAGADO:                  { wrap: 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200', dot: 'bg-emerald-500' },
   FINALIZADO:              { wrap: 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200', dot: 'bg-emerald-500' },

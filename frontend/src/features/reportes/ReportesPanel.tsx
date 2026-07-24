@@ -15,6 +15,7 @@ const REPORTES = [
   { id: 'mora', t: 'Mora' },
   { id: 'caja', t: 'Caja' },
   { id: 'cierres-caja', t: 'Cierres de caja' },
+  { id: 'migrados', t: 'Migrados' },
   { id: 'productividad', t: 'Productividad' },
 ] as const;
 type ReporteId = (typeof REPORTES)[number]['id'];
@@ -69,6 +70,23 @@ const COLUMNAS: Record<ReporteId, Array<{ k: string; t: string; dinero?: boolean
     { k: 'efectivo_entregado', t: 'Entregado a tesorería', dinero: true },
     { k: 'estado', t: 'Estado' },
     { k: 'observacion', t: 'Observación' },
+  ],
+  migrados: [
+    { k: 'numero_credito', t: 'N° crédito' },
+    { k: 'cliente', t: 'Cliente' },
+    { k: 'documento', t: 'Documento' },
+    { k: 'producto', t: 'Producto' },
+    { k: 'area', t: 'Área' },
+    { k: 'cobrador', t: 'Cobrador' },
+    { k: 'saldo_migrado', t: 'Saldo migrado', dinero: true },
+    { k: 'saldo_actual', t: 'Saldo actual', dinero: true },
+    { k: 'pagado', t: 'Pagado', dinero: true },
+    { k: 'estado', t: 'Estado' },
+    { k: 'estado_validacion', t: 'Validación' },
+    { k: 'lote', t: 'Lote' },
+    { k: 'archivo', t: 'Archivo origen' },
+    { k: 'importador', t: 'Importado por' },
+    { k: 'importado_el', t: 'Importado el', fecha: true },
   ],
   productividad: [
     { k: 'cobrador', t: 'Cobrador' },

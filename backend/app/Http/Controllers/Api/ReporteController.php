@@ -35,7 +35,7 @@ class ReporteController extends Controller
             ->leftJoin('productos_financieros as pf', 'pf.id', '=', 's.producto_financiero_id')
             ->leftJoin('cuotas as q', 'q.solicitud_id', '=', 's.id')
             ->whereIn('s.id', $ids)
-            ->whereIn('s.estado', ['ACTIVO', 'DESEMBOLSADO', 'EN_MORA', 'FINALIZADO'])
+            ->whereIn('s.estado', ['ACTIVO', 'DESEMBOLSADO', 'EN_MORA', 'MIGRADO', 'FINALIZADO'])
             ->groupBy('s.id', 's.numero_credito', 'c.nombres', 'c.apellidos', 'c.numero_documento',
                 'u.nombre', 'a.nombre', 's.monto_aprobado', 's.total_recaudar', 's.estado', 's.modalidad',
                 'pf.nombre', 'pf.codigo', 's.producto_version')
@@ -224,6 +224,43 @@ class ReporteController extends Controller
         ]);
     }
 
+    /**
+     * REPORTE DE CRÉDITOS MIGRADOS (Fase 3): estado de validación, saldos y
+     * procedencia (lote, archivo, importador). Filtro opcional por estado.
+     */
+    public function migrados(Request $request)
+    {
+        $u = $request->user();
+        $areas = $u->areasVisibles();
+
+        $q = DB::table('solicitudes as s')
+            ->join('clientes as c', 'c.id', '=', 's.cliente_id')
+            ->leftJoin('areas as a', 'a.id', '=', 's.area_id')
+            ->leftJoin('usuarios as cob', 'cob.id', '=', 's.cobrador_id')
+            ->leftJoin('productos_financieros as pf', 'pf.id', '=', 's.producto_financiero_id')
+            ->leftJoin('migraciones as m', 'm.id', '=', 's.migracion_id')
+            ->leftJoin('usuarios as imp', 'imp.id', '=', 'm.importado_por')
+            ->whereNotNull('s.migracion_id');
+
+        if ($areas !== null) $q->whereIn('s.area_id', $areas);
+        if ($v = $request->query('estado_validacion')) $q->where('s.estado_validacion', $v);
+
+        $filas = $q->orderBy('s.estado_validacion')->orderByDesc('s.id')->get([
+            's.numero_credito',
+            DB::raw("c.nombres || ' ' || c.apellidos as cliente"),
+            'c.numero_documento as documento',
+            'pf.nombre as producto', 'a.nombre as area', 'cob.nombre as cobrador',
+            DB::raw('CAST(s.saldo_migrado AS FLOAT) as saldo_migrado'),
+            DB::raw('CAST(s.total_recaudar AS FLOAT) as saldo_actual'),
+            DB::raw('CAST(s.total_pagado AS FLOAT) as pagado'),
+            's.estado', 's.estado_validacion',
+            's.migracion_id as lote', 'm.nombre_archivo as archivo',
+            'imp.nombre as importador', 's.created_at as importado_el',
+        ]);
+
+        return response()->json(['data' => $filas]);
+    }
+
     /** Productividad por cobrador: recaudo, clientes, creditos y % de mora de su cartera. */
     public function productividad(Request $request)
     {
@@ -248,7 +285,7 @@ class ReporteController extends Controller
             // Creditos de su cartera
             $creditosIds = DB::table('solicitudes')
                 ->where('cobrador_id', $c->id)
-                ->whereIn('estado', ['ACTIVO', 'DESEMBOLSADO', 'EN_MORA', 'PAGADO'])
+                ->whereIn('estado', ['ACTIVO', 'DESEMBOLSADO', 'EN_MORA', 'MIGRADO', 'PAGADO'])
                 ->pluck('id')->all();
 
             $recaudado = (float) DB::table('pagos')

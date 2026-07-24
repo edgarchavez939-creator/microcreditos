@@ -192,7 +192,7 @@ class RenovacionService
         // Sin procesos abiertos: el cliente no debe tener otro crédito vigente
         $tieneVigente = DB::table('solicitudes')
             ->where('cliente_id', $credito->cliente_id)
-            ->whereIn('estado', ['ACTIVO', 'DESEMBOLSADO', 'EN_MORA', 'APROBADO', 'PENDIENTE_SUPERVISOR', 'PENDIENTE_ADMINISTRADOR'])
+            ->whereIn('estado', ['ACTIVO', 'DESEMBOLSADO', 'EN_MORA', 'MIGRADO', 'APROBADO', 'PENDIENTE_SUPERVISOR', 'PENDIENTE_ADMINISTRADOR'])
             ->exists();
         if ($tieneVigente) {
             return [

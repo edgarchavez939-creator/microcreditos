@@ -26,7 +26,7 @@ interface CreditoHistorial {
   renovado_por_numero?: string | null;
 }
 
-const VIGENTES = ['ACTIVO', 'DESEMBOLSADO', 'EN_MORA', 'APROBADO'];
+const VIGENTES = ['ACTIVO', 'DESEMBOLSADO', 'EN_MORA', 'MIGRADO', 'APROBADO'];
 
 function etiquetaEstado(c: CreditoHistorial): { txt: string; cls: string } {
   if (c.es_ultimo_pagado) return { txt: 'Último crédito cancelado', cls: 'bg-money-50 text-money-700 ring-money-100' };

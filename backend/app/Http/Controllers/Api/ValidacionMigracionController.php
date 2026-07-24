@@ -97,6 +97,46 @@ class ValidacionMigracionController extends Controller
         ]]);
     }
 
+    /**
+     * INDICADORES del proceso de validación (Fase 3):
+     * conteos por estado, errores encontrados en los lotes, tiempo promedio
+     * entre importación y validación, y ranking de validadores.
+     */
+    public function indicadores(Request $request)
+    {
+        $u = $request->user();
+        $areas = $u->areasVisibles();
+
+        $base = DB::table('solicitudes')->whereNotNull('migracion_id');
+        if ($areas !== null) $base->whereIn('area_id', $areas);
+
+        $porEstado = (clone $base)->selectRaw('estado_validacion, COUNT(*) as n')
+            ->groupBy('estado_validacion')->pluck('n', 'estado_validacion');
+
+        $erroresLotes = (int) DB::table('migraciones')->sum('con_errores');
+
+        // Tiempo promedio de validación: de la importación del crédito al evento de auditoría
+        $tiempo = DB::selectOne("
+            SELECT AVG(EXTRACT(EPOCH FROM (a.created_at - s.created_at)) / 3600.0) AS horas
+              FROM auditoria a
+              JOIN solicitudes s ON s.id = a.entidad_id
+             WHERE a.accion = 'MIGRADO_VALIDADO' AND a.entidad = 'solicitud'
+        ");
+
+        $topValidadores = DB::table('auditoria as a')
+            ->join('usuarios as u', 'u.id', '=', 'a.usuario_id')
+            ->where('a.accion', 'MIGRADO_VALIDADO')
+            ->selectRaw('u.nombre, COUNT(*) as n')
+            ->groupBy('u.nombre')->orderByDesc('n')->limit(5)->get();
+
+        return response()->json(['data' => [
+            'por_estado'          => $porEstado,
+            'errores_en_lotes'    => $erroresLotes,
+            'horas_promedio_validacion' => $tiempo?->horas !== null ? round((float) $tiempo->horas, 1) : null,
+            'top_validadores'     => $topValidadores,
+        ]]);
+    }
+
     /** Marcar VALIDADO (requiere 'migrados.validar'; la ruta ya lo exige). */
     public function validar(Request $request, int $id)
     {

@@ -87,7 +87,7 @@ function CreditoCard({ c }: { c: Solicitud }) {
   const [error, setError] = useState<string | null>(null);
 
   const esAprobado = c.estado === 'APROBADO';
-  const esPagable = ['ACTIVO', 'EN_MORA', 'DESEMBOLSADO'].includes(c.estado);
+  const esPagable = ['ACTIVO', 'EN_MORA', 'DESEMBOLSADO', 'MIGRADO'].includes(c.estado);
   const rolActual = useAuthStore((st) => st.usuario?.rol);
   const eliminar = useEliminarCredito();
   const [borrando, setBorrando] = useState(false);

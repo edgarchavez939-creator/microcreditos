@@ -18,7 +18,7 @@ use App\Http\Controllers\Api\OtpController;
 use App\Http\Controllers\Api\PermisoController;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/health', fn () => response()->json(['status' => 'ok', 'version' => 'v93-migracion-f2-validacion', 'ts' => now()]));
+Route::get('/health', fn () => response()->json(['status' => 'ok', 'version' => 'v94-migracion-f3-completa', 'ts' => now()]));
 
 // Marca pública (sin auth): nombre y color para aplicar en login y en toda la app.
 Route::get('/marca-publica', function () {
@@ -103,6 +103,7 @@ Route::middleware(['auth:api', 'mantenimiento'])->group(function () {
     Route::get('caja/cierres', [CajaController::class, 'cierres'])->middleware('modulo:caja');
     Route::get('reportes/caja', [ReporteController::class, 'caja'])->middleware('modulo:reportes');
     Route::get('reportes/cierres-caja', [ReporteController::class, 'cierresCaja'])->middleware('modulo:reportes');
+    Route::get('reportes/migrados', [ReporteController::class, 'migrados'])->middleware('modulo:reportes');
 
     // --- MIGRACIÓN DE CARTERA (módulo exclusivo de administración) ---
     Route::prefix('migraciones')->middleware('modulo:migracion')->group(function () {
@@ -118,6 +119,7 @@ Route::middleware(['auth:api', 'mantenimiento'])->group(function () {
     Route::prefix('validacion-migrados')->middleware('modulo:migracion')->group(function () {
         Route::get('/', [\App\Http\Controllers\Api\ValidacionMigracionController::class, 'index']);
         Route::get('opciones', [\App\Http\Controllers\Api\ValidacionMigracionController::class, 'opciones']);
+        Route::get('indicadores', [\App\Http\Controllers\Api\ValidacionMigracionController::class, 'indicadores']);
         Route::post('{id}/validar', [\App\Http\Controllers\Api\ValidacionMigracionController::class, 'validar'])->middleware('accion:migrados.validar');
         Route::patch('{id}', [\App\Http\Controllers\Api\ValidacionMigracionController::class, 'editar'])->middleware('accion:migrados.editar');
     });

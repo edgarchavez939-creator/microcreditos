@@ -7,7 +7,7 @@ export interface Usuario {
 
 export type EstadoSolicitud =
   | 'BORRADOR' | 'PENDIENTE_SUPERVISOR' | 'PENDIENTE_ADMINISTRADOR'
-  | 'APROBADO' | 'RECHAZADO' | 'DESEMBOLSADO' | 'ACTIVO' | 'FINALIZADO' | 'CASTIGADO'
+  | 'APROBADO' | 'RECHAZADO' | 'DESEMBOLSADO' | 'ACTIVO' | 'MIGRADO' | 'FINALIZADO' | 'CASTIGADO'
   | 'PAGADO' | 'EN_MORA' | 'REAMORTIZADO' | 'REFINANCIADO' | 'CANCELADO';
 
 export interface Cuota {

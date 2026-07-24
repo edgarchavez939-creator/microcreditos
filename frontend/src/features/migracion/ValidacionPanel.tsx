@@ -20,6 +20,12 @@ interface Migrado {
   area: string | null; cobrador: string | null; producto: string | null;
   importador: string | null; nombre_archivo: string | null;
 }
+interface Indicadores {
+  por_estado: Record<string, number>;
+  errores_en_lotes: number;
+  horas_promedio_validacion: number | null;
+  top_validadores: { nombre: string; n: number }[];
+}
 interface Opciones {
   areas: { id: number; nombre: string }[];
   cobradores: { id: number; nombre: string }[];
@@ -61,6 +67,10 @@ export function ValidacionPanel() {
     queryKey: ['validacion-opciones'],
     queryFn: async () => (await api.get<{ data: Opciones }>('/validacion-migrados/opciones')).data.data,
   });
+  const { data: ind } = useQuery({
+    queryKey: ['validacion-indicadores'],
+    queryFn: async () => (await api.get<{ data: Indicadores }>('/validacion-migrados/indicadores')).data.data,
+  });
 
   const invalidar = () => qc.invalidateQueries({ queryKey: ['validacion-migrados'] });
   const errorDe = (err: unknown) =>
@@ -87,6 +97,19 @@ export function ValidacionPanel() {
           </button>
         ))}
       </div>
+
+      {/* Indicadores del proceso (Fase 3) */}
+      {ind && (
+        <div className="mb-4 flex flex-wrap gap-x-6 gap-y-1 rounded-xl bg-surface-2 px-4 py-2.5 text-xs text-content-muted">
+          <span>Errores encontrados en lotes: <b className="text-content">{ind.errores_en_lotes}</b></span>
+          <span>Tiempo promedio de validación: <b className="text-content">
+            {ind.horas_promedio_validacion === null ? '—' : ind.horas_promedio_validacion < 48 ? `${ind.horas_promedio_validacion} h` : `${(ind.horas_promedio_validacion / 24).toFixed(1)} días`}
+          </b></span>
+          {ind.top_validadores.length > 0 && (
+            <span>Mayor validador: <b className="text-content">{ind.top_validadores[0].nombre}</b> ({ind.top_validadores[0].n})</span>
+          )}
+        </div>
+      )}
 
       {/* Filtros */}
       <div className="mb-4 flex flex-wrap items-center gap-2">

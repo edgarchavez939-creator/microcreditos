@@ -124,7 +124,7 @@ class ClienteController extends Controller
         });
 
         // Resumen financiero
-        $activos = $creditos->whereIn('estado', ['ACTIVO', 'DESEMBOLSADO', 'EN_MORA']);
+        $activos = $creditos->whereIn('estado', ['ACTIVO', 'DESEMBOLSADO', 'EN_MORA', 'MIGRADO']);
         $saldoTotal = $activos->sum(fn ($c) => $c->saldo);
         $prestadoHist = $creditos->sum(fn ($c) => (float) ($c->monto_aprobado ?? 0));
         $pagadoHist = $creditos->sum(fn ($c) => $c->total_pagado);

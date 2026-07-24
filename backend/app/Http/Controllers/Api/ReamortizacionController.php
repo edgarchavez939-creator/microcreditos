@@ -102,7 +102,7 @@ class ReamortizacionController extends Controller
         abort_unless($s, 404, 'No se encontró un crédito con ese número.');
         $this->authorize('reamortizar', $s);
 
-        abort_unless(in_array($s->estado, ['ACTIVO', 'EN_MORA', 'DESEMBOLSADO'], true), 422,
+        abort_unless(in_array($s->estado, ['ACTIVO', 'EN_MORA', 'DESEMBOLSADO', 'MIGRADO'], true), 422,
             "El crédito está en estado {$s->estado}; solo se reamortizan créditos vigentes.");
 
         $saldo = (float) \Illuminate\Support\Facades\DB::table('cuotas')

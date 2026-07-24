@@ -240,7 +240,7 @@ class PaymentService
     {
         $pendientes = Cuota::where('solicitud_id', $credito->id)
             ->where('estado', '!=', 'PAGADA')->count();
-        if ($pendientes === 0 && in_array($credito->estado, [EstadoSolicitud::ACTIVO->value, EstadoSolicitud::EN_MORA->value], true)) {
+        if ($pendientes === 0 && in_array($credito->estado, [EstadoSolicitud::ACTIVO->value, EstadoSolicitud::EN_MORA->value, 'MIGRADO'], true)) {
             $credito->total_pagado = (float) Pago::where('solicitud_id', $credito->id)
                 ->where('aplicado', true)->sum('valor');
             $credito->estado = EstadoSolicitud::PAGADO->value;

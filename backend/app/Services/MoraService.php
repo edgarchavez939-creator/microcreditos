@@ -34,7 +34,7 @@ class MoraService
         DB::statement("
             UPDATE solicitudes s
                SET estado = 'EN_MORA'
-             WHERE s.estado = 'ACTIVO'
+             WHERE s.estado IN ('ACTIVO', 'MIGRADO')
                AND EXISTS (
                     SELECT 1 FROM cuotas q
                      WHERE q.solicitud_id = s.id AND q.estado = 'VENCIDA'

@@ -111,11 +111,11 @@ class DashboardController extends Controller
         $ids = $solicitudes->pluck('id');
 
         $prestado = (float) Solicitud::whereIn('id', $ids)
-            ->whereIn('estado', ['ACTIVO', 'DESEMBOLSADO', 'FINALIZADO'])
+            ->whereIn('estado', ['ACTIVO', 'DESEMBOLSADO', 'MIGRADO', 'FINALIZADO'])
             ->sum('monto_aprobado');
 
         $porRecaudar = (float) Solicitud::whereIn('id', $ids)
-            ->whereIn('estado', ['ACTIVO', 'DESEMBOLSADO'])
+            ->whereIn('estado', ['ACTIVO', 'DESEMBOLSADO', 'MIGRADO'])
             ->sum('total_recaudar');
 
         $recuperado = (float) Pago::whereIn('solicitud_id', $ids)->where('aplicado', true)->sum('valor');
@@ -140,7 +140,7 @@ class DashboardController extends Controller
 
         $recaudadoHoy = (float) Pago::whereIn('solicitud_id', $ids)->where('aplicado', true)->whereDate('fecha', $hoy)->sum('valor');
 
-        $activos = (int) Solicitud::whereIn('id', $ids)->whereIn('estado', ['ACTIVO', 'DESEMBOLSADO'])->count();
+        $activos = (int) Solicitud::whereIn('id', $ids)->whereIn('estado', ['ACTIVO', 'DESEMBOLSADO', 'MIGRADO'])->count();
 
         $pendientes = (int) Solicitud::whereIn('id', $ids)
             ->whereIn('estado', ['PENDIENTE_SUPERVISOR', 'PENDIENTE_ADMINISTRADOR'])
@@ -165,7 +165,7 @@ class DashboardController extends Controller
 
         // Tasa de recuperación: recaudado / total a recaudar de créditos colocados
         $totalColocado = (float) Solicitud::whereIn('id', $ids)
-            ->whereIn('estado', ['ACTIVO', 'DESEMBOLSADO', 'PAGADO'])
+            ->whereIn('estado', ['ACTIVO', 'DESEMBOLSADO', 'MIGRADO', 'PAGADO'])
             ->sum('total_recaudar');
         $tasaRecuperacion = $totalColocado > 0 ? round($recuperado / $totalColocado * 100, 1) : 0.0;
 
