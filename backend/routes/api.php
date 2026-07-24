@@ -18,7 +18,7 @@ use App\Http\Controllers\Api\OtpController;
 use App\Http\Controllers\Api\PermisoController;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/health', fn () => response()->json(['status' => 'ok', 'version' => 'v91-caja-integral', 'ts' => now()]));
+Route::get('/health', fn () => response()->json(['status' => 'ok', 'version' => 'v92-migracion-f1', 'ts' => now()]));
 
 // Marca pública (sin auth): nombre y color para aplicar en login y en toda la app.
 Route::get('/marca-publica', function () {
@@ -103,6 +103,16 @@ Route::middleware(['auth:api', 'mantenimiento'])->group(function () {
     Route::get('caja/cierres', [CajaController::class, 'cierres'])->middleware('modulo:caja');
     Route::get('reportes/caja', [ReporteController::class, 'caja'])->middleware('modulo:reportes');
     Route::get('reportes/cierres-caja', [ReporteController::class, 'cierresCaja'])->middleware('modulo:reportes');
+
+    // --- MIGRACIÓN DE CARTERA (módulo exclusivo de administración) ---
+    Route::prefix('migraciones')->middleware('modulo:migracion')->group(function () {
+        Route::get('opciones', [\App\Http\Controllers\Api\MigracionController::class, 'opciones']);
+        Route::post('plantillas', [\App\Http\Controllers\Api\MigracionController::class, 'guardarPlantilla']);
+        Route::post('simular', [\App\Http\Controllers\Api\MigracionController::class, 'simular']);
+        Route::post('{migracion}/importar', [\App\Http\Controllers\Api\MigracionController::class, 'importar']);
+        Route::get('{migracion}/registros', [\App\Http\Controllers\Api\MigracionController::class, 'registros']);
+        Route::get('/', [\App\Http\Controllers\Api\MigracionController::class, 'index']);
+    });
     Route::get('reportes/productividad', [ReporteController::class, 'productividad'])->middleware('modulo:reportes');
     Route::delete('pagos/{pago}', [PagoController::class, 'destroy'])->middleware('accion:pagos.anular');
     Route::post('otp/generar', [OtpController::class, 'generar']);

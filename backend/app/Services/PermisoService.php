@@ -32,6 +32,7 @@ class PermisoService
         'usuarios'       => ['etiqueta' => 'Usuarios y áreas',           'defecto' => ['ADMINISTRADOR']],
         'parametros'     => ['etiqueta' => 'Parámetros',                 'defecto' => ['ADMINISTRADOR']],
         'permisos'       => ['etiqueta' => 'Permisos',                   'defecto' => ['ADMINISTRADOR']],
+        'migracion'      => ['etiqueta' => 'Migración de cartera',       'defecto' => ['ADMINISTRADOR']],
         'admin-funcional' => ['etiqueta' => 'Administración de plataforma', 'defecto' => ['ADMIN_FUNCIONAL']],
     ];
 

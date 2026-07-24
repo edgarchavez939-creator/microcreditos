@@ -14,6 +14,7 @@ import { ClientesPanel } from '@/features/clientes/ClientesPanel';
 import { AprobacionesPanel } from '@/features/aprobaciones/AprobacionesPanel';
 import { CarteraPanel } from '@/features/cartera/CarteraPanel';
 import { DashboardPanel } from '@/features/dashboard/DashboardPanel';
+import { MigracionPanel } from '@/features/migracion/MigracionPanel';
 import { InboxPanel } from '@/features/inbox/InboxPanel';
 import { UsuariosPanel } from '@/features/usuarios/UsuariosPanel';
 import { ReportesPanel } from '@/features/reportes/ReportesPanel';
@@ -54,6 +55,7 @@ const MENU: MenuItem[] = [
   { id: 'usuarios',       label: 'Usuarios',         icon: 'usuarios',       roles: ['ADMINISTRADOR'] },
   { id: 'parametros',     label: 'Parámetros',       icon: 'parametros',     roles: ['ADMINISTRADOR'] },
   { id: 'permisos',       label: 'Permisos',         icon: 'permisos',       roles: ['ADMINISTRADOR'] },
+  { id: 'migracion',      label: 'Migración',        icon: 'reportes',       roles: ['ADMINISTRADOR'] },
   { id: 'admin-funcional', label: 'Administración',  icon: 'parametros',     roles: ['ADMIN_FUNCIONAL'] },
 ];
 
@@ -67,7 +69,7 @@ const ROL_LABEL: Record<Rol, string> = {
 const MODULOS_CATALOGADOS = new Set<string>([
   'inicio', 'inbox', 'ruta', 'caja', 'caja-general', 'estado-cuenta', 'solicitud',
   'aprobaciones', 'pagos', 'reamortizacion', 'transferencias', 'clientes', 'mapa',
-  'reportes', 'usuarios', 'parametros', 'permisos', 'admin-funcional',
+  'reportes', 'usuarios', 'parametros', 'permisos', 'migracion', 'admin-funcional',
 ]);
 
 function iniciales(nombre: string) {
@@ -237,6 +239,7 @@ function Pantalla({ id }: { id: string }) {
   switch (id) {
     case 'inicio':         return <DashboardPanel />;
     case 'inbox':          return <InboxPanel />;
+    case 'migracion':      return <MigracionPanel />;
     case 'ruta':           return <RutaPanel />;
     case 'caja':           return <CajaPanel />;
     case 'caja-general':   return <CajaGeneralPanel />;
