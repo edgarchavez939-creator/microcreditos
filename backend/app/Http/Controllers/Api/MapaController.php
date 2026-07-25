@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Services\SeguimientoService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -13,7 +14,7 @@ class MapaController extends Controller
      * La reporta el propio cobrador/supervisor; se guarda el historial del día
      * para dibujar el recorrido.
      */
-    public function reportarUbicacion(Request $request)
+    public function reportarUbicacion(Request $request, SeguimientoService $seguimiento)
     {
         $data = $request->validate([
             'latitud'     => ['required', 'numeric', 'between:-90,90'],
@@ -27,9 +28,14 @@ class MapaController extends Controller
             return response()->json(['message' => 'ok'], 200);
         }
 
-        // Anti-ruido: máximo un punto cada 45 segundos por empleado
-        $ultimo = DB::table('ubicaciones_empleado')->where('empleado_id', $u->id)->max('reportada_at');
-        if ($ultimo && now()->diffInSeconds($ultimo) < 45) {
+        // Último punto registrado (una sola consulta: usa idx_ubicacion_empleado_dia)
+        $ultimo = DB::table('ubicaciones_empleado')
+            ->where('empleado_id', $u->id)
+            ->orderByDesc('reportada_at')
+            ->first(['latitud', 'longitud', 'reportada_at']);
+
+        // Filtros anti-ruido (intervalo mínimo y reposo sin desplazamiento)
+        if (! $seguimiento->debeRegistrar($ultimo, (float) $data['latitud'], (float) $data['longitud'])) {
             return response()->json(['message' => 'ok'], 200);
         }
 
@@ -41,6 +47,9 @@ class MapaController extends Controller
             'reportada_at'=> now(),
         ]);
 
+        // Retención: depuración oportunista, una sola vez al día (ver servicio).
+        $seguimiento->depurarUnaVezAlDia();
+
         return response()->json(['message' => 'ok'], 201);
     }
 
@@ -49,7 +58,7 @@ class MapaController extends Controller
      * operativo de las áreas visibles (modelo territorial). Admin ve todos;
      * supervisor, los de sus áreas.
      */
-    public function cobradoresEnVivo(Request $request)
+    public function cobradoresEnVivo(Request $request, SeguimientoService $seguimiento)
     {
         $u = $request->user();
         abort_unless($u->esAdministrador() || $u->esSupervisor(), 403, 'Sin acceso a la ubicación del equipo.');
@@ -65,17 +74,28 @@ class MapaController extends Controller
             })
             ->get(['e.id', 'e.nombre', 'e.rol']);
 
-        $hoy = now()->toDateString();
+        if ($empleados->isEmpty()) {
+            return response()->json(['data' => []]);
+        }
+
+        // UNA sola consulta para todos los empleados (antes: una por cada uno).
+        // Se filtra por RANGO de fecha, no con whereDate(): aplicar una función sobre
+        // la columna impide que PostgreSQL use idx_ubicacion_empleado_dia.
+        $desde = now()->startOfDay();
+        $puntos = DB::table('ubicaciones_empleado')
+            ->whereIn('empleado_id', $empleados->pluck('id'))
+            ->where('reportada_at', '>=', $desde)
+            ->orderBy('empleado_id')->orderBy('reportada_at')
+            ->get(['empleado_id', 'latitud', 'longitud', 'reportada_at'])
+            ->groupBy('empleado_id');
+
+        $ahora = now()->timestamp;
         $resultado = [];
         foreach ($empleados as $e) {
-            $puntos = DB::table('ubicaciones_empleado')
-                ->where('empleado_id', $e->id)
-                ->whereDate('reportada_at', $hoy)
-                ->orderBy('reportada_at')
-                ->get(['latitud', 'longitud', 'reportada_at']);
-            if ($puntos->isEmpty()) continue;
+            $ruta = $puntos->get($e->id);
+            if (! $ruta || $ruta->isEmpty()) continue;
 
-            $ultimo = $puntos->last();
+            $ultimo = $ruta->last();
             $resultado[] = [
                 'empleado_id' => $e->id,
                 'nombre'      => $e->nombre,
@@ -83,9 +103,14 @@ class MapaController extends Controller
                 'ultima'      => [
                     'latitud'  => (float) $ultimo->latitud,
                     'longitud' => (float) $ultimo->longitud,
-                    'hace_seg' => (int) now()->diffInSeconds($ultimo->reportada_at),
+                    // Cálculo explícito por marca de tiempo: siempre positivo.
+                    'hace_seg' => max(0, $ahora - \Illuminate\Support\Carbon::parse($ultimo->reportada_at)->timestamp),
                 ],
-                'recorrido'   => $puntos->map(fn ($p) => [(float) $p->latitud, (float) $p->longitud])->values(),
+                'puntos_totales' => $ruta->count(),
+                // El recorrido se envía SIMPLIFICADO: una jornada puede acumular
+                // cientos de puntos y el trazo se ve igual con ~120. Reduce el peso
+                // de la respuesta y el trabajo de dibujado en el móvil.
+                'recorrido'   => $seguimiento->simplificarRecorrido($ruta),
             ];
         }
 
@@ -120,7 +145,7 @@ class MapaController extends Controller
               AND q.fecha_vencimiento < CURRENT_DATE)";
 
         $activosSub = "(SELECT COUNT(*) FROM solicitudes s
-            WHERE s.cliente_id = c.id AND s.estado IN ('ACTIVO','DESEMBOLSADO','EN_MORA'))";
+            WHERE s.cliente_id = c.id AND s.estado IN ('ACTIVO','DESEMBOLSADO','EN_MORA','MIGRADO'))";
 
         $filas = $q->orderBy('c.nombres')->get([
             'c.id',

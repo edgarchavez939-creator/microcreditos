@@ -12,6 +12,7 @@ interface CobradorVivo {
   nombre: string;
   rol: string;
   ultima: { latitud: number; longitud: number; hace_seg: number };
+  puntos_totales?: number;          // puntos reales del día (el recorrido va simplificado)
   recorrido: [number, number][];
 }
 
@@ -168,6 +169,7 @@ export function MapaPanel() {
           <b>${c.nombre}</b><br/>
           ${c.rol === 'SUPERVISOR' ? 'Supervisor' : 'Cobrador'}<br/>
           Última señal: hace ${haceMin < 1 ? 'menos de 1 min' : haceMin + ' min'}<br/>
+          ${c.puntos_totales ? `Recorrido de hoy: ${c.puntos_totales} punto(s)<br/>` : ''}
           <span style="color:#64748b;font-size:12px">La ubicación se actualiza mientras tenga la app abierta.</span>
         </div>
       `);
