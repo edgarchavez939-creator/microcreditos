@@ -101,6 +101,7 @@ class ReporteController extends Controller
             ->join('clientes as c', 'c.id', '=', 's.cliente_id')
             ->leftJoin('usuarios as u', 'u.id', '=', 's.cobrador_id')
             ->leftJoin('areas as a', 'a.id', '=', 's.area_id')
+            ->leftJoin('productos_financieros as pf', 'pf.id', '=', 's.producto_financiero_id')
             ->whereIn('q.solicitud_id', $ids)
             ->whereDate('q.fecha_vencimiento', '<', now()->toDateString())
             ->whereIn('q.estado', ['PENDIENTE', 'PARCIAL', 'VENCIDA'])
