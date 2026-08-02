@@ -9,6 +9,7 @@ interface AuthState {
   accessToken: string | null;
   refreshToken: string | null;
   login: (email: string, password: string, otp?: string) => Promise<void>;
+  loginGoogle: (idToken: string, otp?: string) => Promise<void>;
   refresh: () => Promise<string | null>;
   logout: () => void;
 }
@@ -22,6 +23,17 @@ export const useAuthStore = create<AuthState>()(
 
       async login(email, password, otp) {
         const { data } = await axios.post(`${API_BASE}/auth/login`, { email, password, otp });
+        set({
+          usuario: data.usuario,
+          accessToken: data.access_token,
+          refreshToken: data.refresh_token,
+        });
+      },
+
+      // Ingreso con Google: el navegador ya obtuvo el id_token; el backend lo
+      // valida y devuelve exactamente la misma sesión que el login normal.
+      async loginGoogle(idToken, otp) {
+        const { data } = await axios.post(`${API_BASE}/auth/login/google`, { id_token: idToken, otp });
         set({
           usuario: data.usuario,
           accessToken: data.access_token,

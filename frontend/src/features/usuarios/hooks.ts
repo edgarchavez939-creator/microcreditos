@@ -18,6 +18,9 @@ export interface UsuarioAdmin {
   salario_base?: number | null;
   banco?: string | null;
   numero_cuenta?: string | null;
+  google_email?: string | null;
+  google_vinculado?: boolean;
+  google_vinculado_at?: string | null;
   activo: boolean;
   areas: Array<{ id: number; nombre: string }>;
   ultimo_login_at?: string | null;
@@ -40,6 +43,7 @@ export interface UsuarioPayload {
   salario_base?: number;
   banco?: string;
   numero_cuenta?: string;
+  google_email?: string | null;
   areas: number[];
   activo?: boolean;
 }

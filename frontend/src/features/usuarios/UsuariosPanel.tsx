@@ -156,6 +156,7 @@ function UsuarioForm({ usuario, onCerrar }: { usuario: UsuarioAdmin | null; onCe
   const [salario, setSalario] = useState(usuario?.salario_base != null ? String(usuario.salario_base) : '');
   const [banco, setBanco] = useState(usuario?.banco ?? '');
   const [numeroCuenta, setNumeroCuenta] = useState(usuario?.numero_cuenta ?? '');
+  const [googleEmail, setGoogleEmail] = useState(usuario?.google_email ?? '');
   const [activo, setActivo] = useState(usuario?.activo ?? true);
   const [areasSel, setAreasSel] = useState<number[]>(usuario?.areas.map((a) => a.id) ?? []);
   const [error, setError] = useState<string | null>(null);
@@ -191,6 +192,8 @@ function UsuarioForm({ usuario, onCerrar }: { usuario: UsuarioAdmin | null; onCe
       salario_base: salario ? Number(salario) : undefined,
       banco: banco || undefined,
       numero_cuenta: numeroCuenta || undefined,
+      // Se envía aunque esté vacío: vaciarlo desvincula la cuenta de Google.
+      google_email: googleEmail.trim() ? googleEmail.trim().toLowerCase() : null,
       areas: areasSel,
     };
 
@@ -291,6 +294,25 @@ function UsuarioForm({ usuario, onCerrar }: { usuario: UsuarioAdmin | null; onCe
       <div>
         <label className="label">Número de cuenta (opcional)</label>
         <input value={numeroCuenta} onChange={(e) => setNumeroCuenta(e.target.value)} className="input" />
+      </div>
+
+      <p className="text-xs font-semibold uppercase tracking-wide text-content-muted">Ingreso con Google</p>
+      <div>
+        <label className="label">Correo de Google autorizado (opcional)</label>
+        <input value={googleEmail} onChange={(e) => setGoogleEmail(e.target.value)}
+          className="input" placeholder="nombre@gmail.com" inputMode="email" />
+        <p className="mt-1 text-xs text-content-muted">
+          Gmail con el que esta persona podrá entrar pulsando "Continuar con Google". Puede ser
+          distinto del correo del sistema. Déjalo vacío si solo debe entrar con contraseña.
+          {usuario?.google_vinculado && (
+            <span className="ml-1 font-medium text-money-700">· Cuenta ya vinculada</span>
+          )}
+        </p>
+        {usuario?.google_vinculado && (
+          <p className="mt-0.5 text-xs text-content-muted">
+            Si cambias o borras este correo, la vinculación se anula y deberá autorizarse de nuevo.
+          </p>
+        )}
       </div>
 
       <p className="text-xs font-semibold uppercase tracking-wide text-content-muted">Asignación</p>

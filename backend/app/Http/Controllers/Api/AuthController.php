@@ -33,6 +33,27 @@ class AuthController extends Controller
         ]);
     }
 
+    /**
+     * Ingreso con Google. Recibe el id_token que emite el navegador y, si la
+     * cuenta está autorizada, devuelve la misma sesión que el login normal.
+     */
+    public function loginGoogle(Request $request, \App\Services\GoogleAuthService $google)
+    {
+        $data = $request->validate([
+            'id_token' => ['required', 'string', 'max:4096'],
+            'otp'      => ['nullable', 'string'],
+        ]);
+
+        $tokens = $google->login(
+            $data['id_token'],
+            $request->ip(),
+            substr((string) $request->userAgent(), 0, 255),
+            $data['otp'] ?? null,
+        );
+
+        return response()->json($tokens);
+    }
+
     public function refresh(Request $request)
     {
         $data = $request->validate(['refresh_token' => ['required','string']]);

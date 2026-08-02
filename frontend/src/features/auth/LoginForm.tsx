@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
+import { BotonGoogle } from './BotonGoogle';
 import { useAuthStore } from '@/stores/auth';
 
 const schema = z.object({
@@ -21,6 +22,8 @@ const DEMO = [
 
 export function LoginForm() {
   const login = useAuthStore((s) => s.login);
+  const loginGoogle = useAuthStore((s) => s.loginGoogle);
+  const [entrandoGoogle, setEntrandoGoogle] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [show2fa, setShow2fa] = useState(false);
   const { register, handleSubmit, setValue, formState: { errors, isSubmitting } } =
@@ -39,6 +42,27 @@ export function LoginForm() {
       else if (msg.toLowerCase().includes('2fa')) { setShow2fa(true); setError('Esta cuenta requiere código 2FA.'); }
       else if (status === 401) setError('Correo o contraseña incorrectos.');
       else setError('No se pudo iniciar sesión. Si el servidor estaba inactivo, espera unos segundos y reintenta.');
+    }
+  };
+
+  // Ingreso con Google: el mismo destino que el login normal, distinto camino.
+  const onGoogle = async (idToken: string) => {
+    setError(null);
+    setEntrandoGoogle(true);
+    try {
+      await loginGoogle(idToken);
+    } catch (e) {
+      const err = e as { response?: { status?: number; data?: { message?: string } } };
+      const status = err?.response?.status;
+      const msg = err?.response?.data?.message ?? '';
+      if (status === 403) setError(msg || 'Esta cuenta de Google no está autorizada. Pide al administrador que la vincule a tu usuario.');
+      else if (status === 423) setError('Cuenta bloqueada temporalmente. Espera unos minutos.');
+      else if (status === 429) setError('Demasiados intentos. Espera un minuto e inténtalo de nuevo.');
+      else if (status === 503) setError(msg || 'El ingreso con Google no está disponible. Usa tu correo y contraseña.');
+      else if (msg.toLowerCase().includes('2fa')) setError('Esta cuenta requiere código 2FA: entra con tu correo y contraseña.');
+      else setError(msg || 'No se pudo iniciar sesión con Google. Usa tu correo y contraseña.');
+    } finally {
+      setEntrandoGoogle(false);
     }
   };
 
@@ -98,10 +122,13 @@ export function LoginForm() {
                 </div>
               )}
               {error && <p className="alert-error">{error}</p>}
-              <button type="submit" disabled={isSubmitting} className="btn-primary w-full">
+              <button type="submit" disabled={isSubmitting || entrandoGoogle} className="btn-primary w-full">
                 {isSubmitting ? 'Ingresando…' : 'Iniciar sesión'}
               </button>
             </form>
+
+            <BotonGoogle onCredencial={onGoogle} deshabilitado={isSubmitting || entrandoGoogle} />
+            {entrandoGoogle && <p className="mt-2 text-center text-xs text-content-muted">Verificando con Google…</p>}
 
             <div className="mt-6 border-t border-slate-100 pt-4">
               <p className="mb-2 text-xs text-content-muted">Cuentas de prueba (rellenan el formulario):</p>

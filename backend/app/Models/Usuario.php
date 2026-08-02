@@ -13,6 +13,7 @@ class Usuario extends Authenticatable implements JWTSubject
         'email','password','rol','telefono','activo',
         'direccion','fecha_nacimiento','contacto_emergencia_nombre','contacto_emergencia_telefono',
         'salario_base','banco','numero_cuenta',
+        'google_id','google_email','google_vinculado_at',
         'twofa_secret','twofa_enabled','intentos_fallidos','bloqueado_hasta',
         'ultimo_login_at','ultimo_login_ip',
     ];

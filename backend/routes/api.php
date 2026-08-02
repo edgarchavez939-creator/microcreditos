@@ -18,7 +18,7 @@ use App\Http\Controllers\Api\OtpController;
 use App\Http\Controllers\Api\PermisoController;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/health', fn () => response()->json(['status' => 'ok', 'version' => 'v97-fix-reporte-mora', 'ts' => now()]));
+Route::get('/health', fn () => response()->json(['status' => 'ok', 'version' => 'v99-design-system-f1', 'ts' => now()]));
 
 // Marca pública (sin auth): nombre y color para aplicar en login y en toda la app.
 Route::get('/marca-publica', function () {
@@ -35,6 +35,7 @@ Route::get('solicitudes/{solicitud}/extracto.pdf', [SolicitudController::class, 
 // --- Auth (público con rate limiting) ---
 Route::prefix('auth')->group(function () {
     Route::post('login', [AuthController::class, 'login'])->middleware('throttle:login');
+    Route::post('login/google', [AuthController::class, 'loginGoogle'])->middleware('throttle:login');
     Route::post('refresh', [AuthController::class, 'refresh'])->middleware('throttle:30,1');
 });
 

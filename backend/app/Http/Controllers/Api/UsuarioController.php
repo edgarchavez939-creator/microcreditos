@@ -111,6 +111,10 @@ class UsuarioController extends Controller
             'salario_base'  => ['sometimes', 'nullable', 'numeric', 'gte:0'],
             'banco'         => ['sometimes', 'nullable', 'string', 'max:80'],
             'numero_cuenta' => ['sometimes', 'nullable', 'string', 'max:40'],
+            // Correo de Google autorizado para entrar (puede diferir del corporativo).
+            // Vaciarlo desvincula la cuenta y obliga a volver a autorizarla.
+            'google_email'  => ['sometimes', 'nullable', 'email', 'max:255',
+                                Rule::unique('usuarios', 'google_email')->ignore($usuario->id)],
             'activo'   => ['sometimes', 'boolean'],
             'areas'    => ['sometimes', 'array', 'min:1'],
             'areas.*'  => ['integer', 'exists:areas,id'],
@@ -126,6 +130,18 @@ class UsuarioController extends Controller
         }
 
         if (isset($data['email']))    $data['email'] = strtolower($data['email']);
+
+        // Vinculación con Google: al cambiar o borrar el correo autorizado se limpia
+        // el identificador grabado, de modo que la próxima cuenta deba autorizarse
+        // de nuevo. Evita que una vinculación antigua siga dando acceso.
+        if (array_key_exists('google_email', $data)) {
+            $nuevo = $data['google_email'] ? strtolower($data['google_email']) : null;
+            if ($nuevo !== ($usuario->google_email ? strtolower($usuario->google_email) : null)) {
+                $data['google_id'] = null;
+                $data['google_vinculado_at'] = null;
+            }
+            $data['google_email'] = $nuevo;
+        }
         if (! empty($data['password'])) {
             $data['password'] = Hash::make($data['password']);
         } else {
@@ -184,6 +200,9 @@ class UsuarioController extends Controller
             'tipo_documento'   => $u->tipo_documento,
             'numero_documento' => $u->numero_documento,
             'email'    => $u->email,
+            'google_email'        => $u->google_email,
+            'google_vinculado'    => (bool) $u->google_id,
+            'google_vinculado_at' => $u->google_vinculado_at,
             'rol'      => $u->rol,
             'telefono' => $u->telefono,
             'direccion'        => $u->direccion,

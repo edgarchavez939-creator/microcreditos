@@ -77,7 +77,12 @@ class AuthService
         JWTAuth::invalidate(JWTAuth::getToken());
     }
 
-    private function emitirTokens(Usuario $usuario, string $ip, ?string $ua): array
+    /**
+     * Emite el par de tokens del sistema. Público porque el ingreso con Google
+     * (GoogleAuthService) desemboca aquí tras validar la identidad: así ambos
+     * caminos producen exactamente la misma sesión.
+     */
+    public function emitirTokens(Usuario $usuario, string $ip, ?string $ua): array
     {
         $access = JWTAuth::fromUser($usuario);
         $plain  = Str::random(80);
