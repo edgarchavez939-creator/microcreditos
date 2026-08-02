@@ -29,12 +29,32 @@ export default defineConfig({
       workbox: {
         navigateFallback: '/index.html',
         cleanupOutdatedCaches: true,
-        // La API NUNCA se cachea: siempre red. (El caché 'NetworkFirst' anterior
-        // servía respuestas viejas cuando Render tardaba >5s en arrancar en frío.)
+
+        // El service worker nuevo toma el control de inmediato, sin esperar a que
+        // se cierren todas las pestañas. Sin esto, tras un despliegue el worker
+        // viejo seguía sirviendo un index.html cacheado que apuntaba a archivos
+        // .css/.js con hash antiguo (ya inexistentes): la app cargaba SIN ESTILOS
+        // hasta que el usuario cerraba todas las ventanas.
+        skipWaiting: true,
+        clientsClaim: true,
+
         runtimeCaching: [
           {
+            // La API NUNCA se cachea: siempre red. (El caché 'NetworkFirst' anterior
+            // servía respuestas viejas cuando Render tardaba >5s en arrancar en frío.)
             urlPattern: ({ url }) => url.pathname.startsWith('/api/'),
             handler: 'NetworkOnly',
+          },
+          {
+            // El documento se pide primero a la red, para que tras un despliegue
+            // siempre se reciba el index.html que apunta a los assets vigentes.
+            // Si no hay conexión, se cae al precache y la app sigue abriendo.
+            urlPattern: ({ request }) => request.mode === 'navigate',
+            handler: 'NetworkFirst',
+            options: {
+              cacheName: 'documento',
+              networkTimeoutSeconds: 5,
+            },
           },
         ],
       },
