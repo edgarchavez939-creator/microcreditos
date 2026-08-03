@@ -83,12 +83,12 @@ export function MigracionPanel() {
       <div className="mb-4 mt-2 flex rounded-xl bg-surface-3 p-1 w-fit">
         {esAdmin && (
           <button onClick={() => setTab('importar')}
-            className={`rounded-lg px-4 py-1.5 text-sm font-medium transition ${tab === 'importar' ? 'bg-surface text-ink shadow-card' : 'text-content-muted hover:text-ink'}`}>
+            className={`rounded-lg px-4 py-1.5 text-sm font-medium transition ${tab === 'importar' ? 'bg-surface text-ink shadow-[0_1px_2px_rgb(24_28_48/0.04)]' : 'text-content-muted hover:text-ink'}`}>
             Importar
           </button>
         )}
         <button onClick={() => setTab('validacion')}
-          className={`rounded-lg px-4 py-1.5 text-sm font-medium transition ${tab === 'validacion' ? 'bg-surface text-ink shadow-card' : 'text-content-muted hover:text-ink'}`}>
+          className={`rounded-lg px-4 py-1.5 text-sm font-medium transition ${tab === 'validacion' ? 'bg-surface text-ink shadow-[0_1px_2px_rgb(24_28_48/0.04)]' : 'text-content-muted hover:text-ink'}`}>
           Centro de validación
         </button>
       </div>

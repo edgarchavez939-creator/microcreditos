@@ -148,7 +148,7 @@ function ResumenCard({ titulo, valor, detalle, tono }:
     neutro: 'bg-surface ring-border-token text-content-strong',
   };
   return (
-    <div className={`rounded-2xl p-4 shadow-card ring-1 ${cls[tono] ?? cls.neutro}`}>
+    <div className={`rounded-2xl p-4 shadow-[0_1px_2px_rgb(24_28_48/0.04)] ring-1 ${cls[tono] ?? cls.neutro}`}>
       <div className="text-xs font-medium uppercase tracking-wide text-content-muted">{titulo}</div>
       <div className="mt-1 font-display text-lg font-bold tabular-nums">{valor}</div>
       <div className="mt-0.5 text-xs text-content-muted">{detalle}</div>

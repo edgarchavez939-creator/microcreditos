@@ -14,7 +14,7 @@ export function EstadoVacio({ icono, titulo, descripcion, accion }: Props) {
       <div className="relative mb-4">
         {/* Halo decorativo detrás del ícono */}
         <div className="absolute inset-0 -z-10 animate-pulse rounded-full bg-brand-100/40 blur-xl" />
-        <div className="grid h-16 w-16 place-items-center rounded-2xl bg-surface text-brand-400 shadow-card ring-1 ring-border-token">
+        <div className="grid h-16 w-16 place-items-center rounded-2xl bg-surface text-brand-400 shadow-[0_1px_2px_rgb(24_28_48/0.04)] ring-1 ring-border-token">
           {icono ?? <IconoDefecto />}
         </div>
       </div>

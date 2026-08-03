@@ -22,11 +22,11 @@ export function PermisosPanel() {
 
       <div className="mb-4 flex rounded-xl bg-surface-3 p-1 w-fit">
         <button onClick={() => setVista('roles')}
-          className={`rounded-lg px-4 py-1.5 text-sm font-medium transition ${vista === 'roles' ? 'bg-surface text-ink shadow-card' : 'text-content-muted hover:text-ink'}`}>
+          className={`rounded-lg px-4 py-1.5 text-sm font-medium transition ${vista === 'roles' ? 'bg-surface text-ink shadow-[0_1px_2px_rgb(24_28_48/0.04)]' : 'text-content-muted hover:text-ink'}`}>
           Por rol
         </button>
         <button onClick={() => setVista('usuario')}
-          className={`rounded-lg px-4 py-1.5 text-sm font-medium transition ${vista === 'usuario' ? 'bg-surface text-ink shadow-card' : 'text-content-muted hover:text-ink'}`}>
+          className={`rounded-lg px-4 py-1.5 text-sm font-medium transition ${vista === 'usuario' ? 'bg-surface text-ink shadow-[0_1px_2px_rgb(24_28_48/0.04)]' : 'text-content-muted hover:text-ink'}`}>
           Por usuario
         </button>
       </div>

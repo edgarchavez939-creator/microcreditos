@@ -215,7 +215,7 @@ function CreditoCard({ c }: { c: Solicitud }) {
             className={`inline-flex items-center gap-1.5 rounded-lg px-3.5 py-2 text-sm font-medium transition ${
               abierto
                 ? 'bg-surface-3 text-content-muted hover:bg-slate-200'
-                : 'bg-brand-500 text-white shadow-card hover:bg-brand-600'
+                : 'bg-brand-500 text-white shadow-[0_1px_2px_rgb(24_28_48/0.04)] hover:bg-brand-600'
             }`}>
             {abierto ? (
               <>Ocultar ficha</>
@@ -611,7 +611,7 @@ function ExtractoPdf({ credito }: { credito: Solicitud }) {
       <h4 className="mb-2 text-sm font-semibold text-content">Extracto del crédito</h4>
       <div className="flex flex-wrap items-center gap-2">
         <button onClick={enviarWhatsApp} disabled={cargando}
-          className="inline-flex items-center gap-1.5 rounded-lg px-3.5 py-2 text-sm font-medium text-white shadow-card disabled:opacity-50"
+          className="inline-flex items-center gap-1.5 rounded-lg px-3.5 py-2 text-sm font-medium text-white shadow-[0_1px_2px_rgb(24_28_48/0.04)] disabled:opacity-50"
           style={{ backgroundColor: '#16a34a' }}
           onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#15803d')}
           onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#16a34a')}>

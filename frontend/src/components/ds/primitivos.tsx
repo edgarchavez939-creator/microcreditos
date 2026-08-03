@@ -16,10 +16,10 @@ type Tono = 'primario' | 'secundario' | 'dinero' | 'peligro' | 'fantasma';
 type Talla = 'sm' | 'md' | 'lg';
 
 const TONOS: Record<Tono, string> = {
-  primario:   'bg-brand-600 text-white hover:bg-brand-700 active:bg-brand-700 shadow-card',
+  primario:   'bg-brand-600 text-white hover:bg-brand-700 active:bg-brand-700 shadow-[0_1px_2px_rgb(24_28_48/0.04)]',
   secundario: 'bg-surface text-content ring-1 ring-border-token hover:bg-surface-3',
-  dinero:     'bg-money-600 text-white hover:bg-money-700 active:bg-money-700 shadow-card',
-  peligro:    'bg-estado-mora text-white hover:brightness-95 active:brightness-90 shadow-card',
+  dinero:     'bg-money-600 text-white hover:bg-money-700 active:bg-money-700 shadow-[0_1px_2px_rgb(24_28_48/0.04)]',
+  peligro:    'bg-estado-mora text-white hover:brightness-95 active:brightness-90 shadow-[0_1px_2px_rgb(24_28_48/0.04)]',
   fantasma:   'bg-transparent text-content hover:bg-surface-3',
 };
 
@@ -85,7 +85,7 @@ export function AppCard({
       className={`w-full rounded-2xl bg-surface text-left ring-1 ring-border-token
         ${plano ? '' : 'shadow-[0_1px_2px_rgb(24_28_48/0.04)]'}
         ${estado ? bandas[estado] : ''}
-        ${onClick ? 'transition-shadow duration-rapido hover:shadow-soft focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand-500' : ''}
+        ${onClick ? 'transition-shadow duration-rapido hover:shadow-[0_6px_18px_rgb(24_28_48/0.08)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand-500' : ''}
         ${className}`}
     >
       {(titulo || acciones) && (

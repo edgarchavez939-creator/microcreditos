@@ -157,7 +157,7 @@ export function AppTabs({ pestanas, activa, onCambiar }: {
             className={`inline-flex shrink-0 items-center gap-1.5 rounded-lg px-3.5 py-1.5 text-sm font-medium
               transition-colors duration-rapido
               focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand-500
-              ${on ? 'bg-surface text-content-strong shadow-card' : 'text-content-muted hover:text-content'}`}>
+              ${on ? 'bg-surface text-content-strong shadow-[0_1px_2px_rgb(24_28_48/0.04)]' : 'text-content-muted hover:text-content'}`}>
             {p.titulo}
             {p.badge !== undefined && p.badge > 0 && (
               <span className={`rounded-full px-1.5 text-[10px] font-semibold tabular-nums

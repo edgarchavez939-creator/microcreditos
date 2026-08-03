@@ -179,7 +179,7 @@ export function ReportesPanel() {
           {REPORTES.map((r) => (
             <button key={r.id} onClick={() => setTipo(r.id)}
               className={`rounded-lg px-4 py-1.5 text-sm font-medium transition ${
-                tipo === r.id ? 'bg-surface text-ink shadow-card' : 'text-content-muted hover:text-ink'
+                tipo === r.id ? 'bg-surface text-ink shadow-[0_1px_2px_rgb(24_28_48/0.04)]' : 'text-content-muted hover:text-ink'
               }`}>
               {r.t}
             </button>

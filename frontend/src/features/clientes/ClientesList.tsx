@@ -62,20 +62,30 @@ export function ClientesList({ onNuevo, onVerPerfil }: { onNuevo: () => void; on
           <div className="space-y-2.5 sm:hidden">
             {clientes.map((c) => (
               <button key={c.id} onClick={() => onVerPerfil(c.id)}
-                className="block w-full rounded-xl bg-surface p-3.5 text-left shadow-card ring-1 ring-border-token transition active:scale-[0.99]">
+                className="flex w-full items-center gap-3 rounded-2xl bg-surface p-3.5 text-left
+                  ring-1 ring-border-token shadow-[0_1px_2px_rgb(24_28_48/0.04)]
+                  transition-transform duration-rapido active:scale-[0.99]">
+                {/* Iniciales: da rostro a la lista y ayuda a reconocer al cliente
+                    de un vistazo, sin leer el nombre completo. */}
+                <span className="grid h-11 w-11 shrink-0 place-items-center rounded-full
+                  bg-estado-info-bg text-sm font-bold text-estado-info">
+                  {`${c.nombres?.[0] ?? ''}${c.apellidos?.[0] ?? ''}`.toUpperCase() || '?'}
+                </span>
+                <div className="min-w-0 flex-1">
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0">
-                    <div className="truncate font-semibold text-ink">{c.nombres} {c.apellidos}</div>
+                    <div className="truncate text-[15px] font-semibold text-content-strong">{c.nombres} {c.apellidos}</div>
                     <div className="mt-0.5 text-xs text-content-muted">{c.tipo_documento} {c.numero_documento}</div>
                   </div>
-                  <span className="shrink-0 rounded-full bg-surface-3 px-2 py-0.5 text-xs text-content-muted">{c.area ?? 'Sin área'}</span>
+                  <span className="shrink-0 rounded-full bg-estado-inactivo-bg px-2 py-0.5 text-[11px] font-medium text-estado-inactivo">{c.area ?? 'Sin área'}</span>
                 </div>
                 <div className="mt-2 flex items-center justify-between text-sm">
                   <span className="text-content-muted">{c.telefono_principal ?? 'Sin teléfono'}</span>
                   {c.latitud && c.longitud && (
-                    <a onClick={(e) => e.stopPropagation()} className="font-medium text-brand" target="_blank" rel="noreferrer"
+                    <a onClick={(e) => e.stopPropagation()} className="font-medium text-estado-info" target="_blank" rel="noreferrer"
                       href={`https://www.google.com/maps?q=${c.latitud},${c.longitud}`}>Ver en mapa</a>
                   )}
+                </div>
                 </div>
               </button>
             ))}

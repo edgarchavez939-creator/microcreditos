@@ -123,16 +123,33 @@ export function RutaPanel() {
         <p className="alert-error">No se pudo cargar la ruta del día.</p>
       ) : (
         <div className="space-y-6">
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div className="rounded-2xl bg-estado-info-bg p-4 ring-1 ring-estado-info/20">
-              <div className="text-xs font-medium uppercase tracking-wide text-brand-700/70">Cobros de hoy</div>
-              <div className="mt-1 font-display text-2xl font-bold text-brand-700">{money(data.resumen.cobros_hoy.total)}</div>
-              <div className="text-xs text-brand-700/70">{data.resumen.cobros_hoy.cantidad} crédito{data.resumen.cobros_hoy.cantidad === 1 ? '' : 's'}</div>
+          {/* OBJETIVO DE LA JORNADA. Una sola cifra grande: lo que hay por cobrar
+              hoy. La mora va aparte porque es una tarea distinta, no una suma. */}
+          <div className="overflow-hidden rounded-3xl bg-ink text-white shadow-[0_8px_28px_rgb(24_28_48/0.18)]">
+            <div className="px-5 pt-5 sm:px-6">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-white/40">
+                Por cobrar hoy
+              </p>
+              <div className="mt-1 flex flex-wrap items-baseline gap-x-3">
+                <span className="font-display text-dato-2xl font-bold tabular-nums tracking-tight">
+                  {money(data.resumen.cobros_hoy.total)}
+                </span>
+                <span className="text-sm text-white/45">
+                  {data.resumen.cobros_hoy.cantidad} crédito{data.resumen.cobros_hoy.cantidad === 1 ? '' : 's'}
+                </span>
+              </div>
             </div>
-            <div className="rounded-2xl bg-estado-pendiente-bg p-4 ring-1 ring-estado-pendiente/20">
-              <div className="text-xs font-medium uppercase tracking-wide text-estado-pendiente/70">Mora por recuperar</div>
-              <div className="mt-1 font-display text-2xl font-bold text-estado-pendiente">{money(data.resumen.en_mora.total)}</div>
-              <div className="text-xs text-estado-pendiente/70">{data.resumen.en_mora.cantidad} crédito{data.resumen.en_mora.cantidad === 1 ? '' : 's'} en mora</div>
+            <div className="mt-4 flex items-center justify-between gap-3 border-t border-white/[0.08] px-5 py-3.5 sm:px-6">
+              <div className="flex items-center gap-2">
+                <span className="h-2 w-2 rounded-full bg-estado-mora" aria-hidden />
+                <span className="text-sm text-white/70">Mora por recuperar</span>
+              </div>
+              <div className="text-right">
+                <div className="font-display text-dato font-bold tabular-nums">{money(data.resumen.en_mora.total)}</div>
+                <div className="text-[11px] text-white/40">
+                  {data.resumen.en_mora.cantidad} crédito{data.resumen.en_mora.cantidad === 1 ? '' : 's'}
+                </div>
+              </div>
             </div>
           </div>
 
@@ -181,15 +198,17 @@ function Parada({ p, orden, tramo }: { p: ParadaRuta; orden: number; tramo?: { k
   const wa = tel ? `https://wa.me/${tel.length === 10 ? `57${tel}` : tel}` : null;
 
   return (
-    <div className="card card-pad flex flex-wrap items-center justify-between gap-3">
+    <div className={`card card-pad flex flex-wrap items-center justify-between gap-3 border-l-4
+      ${p.estado === 'VENCIDA' ? 'border-l-estado-mora' : 'border-l-estado-info'}`}>
       <div className="flex min-w-0 items-start gap-3">
-        <div className="mt-0.5 grid h-7 w-7 shrink-0 place-items-center rounded-full bg-brand-500 text-xs font-bold text-white">
+        {/* El número de parada es la brújula del recorrido: se lee primero. */}
+        <div className={`mt-0.5 grid h-8 w-8 shrink-0 place-items-center rounded-xl text-sm font-bold
+          ${p.estado === 'VENCIDA' ? 'bg-estado-mora-bg text-estado-mora' : 'bg-estado-info-bg text-estado-info'}`}>
           {orden}
         </div>
         <div className="min-w-0">
-          <div className="font-semibold">
-            {p.cliente} <span className="font-normal text-content-muted">· {p.numero_credito ?? `#${p.solicitud_id}`}</span>
-          </div>
+          <div className="text-[15px] font-semibold text-content-strong">{p.cliente}</div>
+          <div className="text-xs text-content-muted">{p.numero_credito ?? `#${p.solicitud_id}`}</div>
           <div className="text-sm text-content-muted">
             {p.direccion ?? 'Sin dirección'}{p.barrio ? ` · ${p.barrio}` : ''}
           </div>
@@ -206,8 +225,13 @@ function Parada({ p, orden, tramo }: { p: ParadaRuta; orden: number; tramo?: { k
       </div>
       <div className="flex items-center gap-2">
         <div className="text-right">
-          <div className="font-display text-lg font-bold">{money(p.valor_pendiente)}</div>
-          <div className="text-xs text-content-muted">en mora</div>
+          <div className={`font-display text-dato-lg font-bold tabular-nums
+            ${p.estado === 'VENCIDA' ? 'text-estado-mora' : 'text-content-strong'}`}>
+            {money(p.valor_pendiente)}
+          </div>
+          <div className="text-[11px] text-content-muted">
+            {p.estado === 'VENCIDA' ? 'en mora' : 'por cobrar'}
+          </div>
         </div>
         <div className="flex flex-wrap justify-end gap-1.5">
           {wa && <a href={wa} target="_blank" rel="noreferrer" className="btn-outline btn-sm">WhatsApp</a>}

@@ -346,15 +346,24 @@ function ResumenCaja({ e }: { e: EstadoCaja }) {
         </dl>
       </div>
       <div className="flex flex-col gap-4">
-        <div className="rounded-2xl bg-estado-activo-bg p-4 ring-1 ring-estado-activo/20">
-          <div className="flex items-center gap-1 text-xs font-medium uppercase tracking-wide text-estado-activo/70">
-            Efectivo esperado en caja
+        {/* La cifra que el cobrador debe tener en la mano. Es la conclusión de
+            toda la pantalla, así que se presenta como tal: fondo oscuro, cifra
+            grande, y la fórmula a un toque de distancia. */}
+        <div className="overflow-hidden rounded-3xl bg-ink px-5 py-5 text-white shadow-[0_8px_28px_rgb(24_28_48/0.18)]">
+          <div className="flex items-center gap-1.5">
+            <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-white/40">
+              Efectivo esperado en caja
+            </span>
             <Tooltip texto="Base inicial + reposiciones + cobros en efectivo + anulaciones − desembolsos en efectivo − gastos. Las transferencias y el seguro no cuentan: no son dinero físico en tu mano.">
-              <span className="cursor-help rounded-full bg-money-100 px-1.5 text-[10px] normal-case">?</span>
+              <span className="grid h-4 w-4 cursor-help place-items-center rounded-full bg-white/15 text-[10px] font-bold">?</span>
             </Tooltip>
           </div>
-          <div className="mt-1 font-display text-2xl font-bold text-estado-activo">{money(e.efectivo_esperado)}</div>
-          <div className="mt-1 text-xs text-estado-activo/60">Solo dinero físico (excluye transferencias)</div>
+          <div className="mt-1.5 font-display text-dato-2xl font-bold tabular-nums tracking-tight">
+            {money(e.efectivo_esperado)}
+          </div>
+          <div className="mt-1.5 text-xs text-white/40">
+            Solo dinero físico · las transferencias y el seguro no cuentan
+          </div>
         </div>
         <div className="rounded-2xl bg-surface-2 p-4 ring-1 ring-border-token">
           <div className="text-xs text-content-muted">Movimiento total del día</div>

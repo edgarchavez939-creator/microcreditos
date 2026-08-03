@@ -31,7 +31,7 @@ export function SkeletonTarjetas({ cantidad = 3 }: { cantidad?: number }) {
   return (
     <div className="space-y-3">
       {Array.from({ length: cantidad }).map((_, i) => (
-        <div key={i} className="rounded-2xl bg-surface p-4 shadow-card ring-1 ring-border-token">
+        <div key={i} className="rounded-2xl bg-surface p-4 shadow-[0_1px_2px_rgb(24_28_48/0.04)] ring-1 ring-border-token">
           <div className="flex items-center justify-between">
             <Skeleton className="h-4 w-48" />
             <Skeleton className="h-6 w-20 rounded-full" />
@@ -55,7 +55,7 @@ export function SkeletonIndicadores({ cantidad = 6 }: { cantidad?: number }) {
   return (
     <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
       {Array.from({ length: cantidad }).map((_, i) => (
-        <div key={i} className="rounded-2xl bg-surface p-4 shadow-card ring-1 ring-border-token">
+        <div key={i} className="rounded-2xl bg-surface p-4 shadow-[0_1px_2px_rgb(24_28_48/0.04)] ring-1 ring-border-token">
           <Skeleton className="h-3 w-20" />
           <Skeleton className="mt-3 h-7 w-28" />
           <Skeleton className="mt-2 h-2.5 w-16" />
