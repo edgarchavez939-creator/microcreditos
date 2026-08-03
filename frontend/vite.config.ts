@@ -13,11 +13,11 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.ico', 'robots.txt'],
       manifest: {
-        name: 'Microcréditos',
-        short_name: 'Microcréditos',
+        name: 'KRYPTA Business Suite',
+        short_name: 'KRYPTA',
         description: 'Gestión de microcréditos, ventas financiadas y cobranza territorial',
-        theme_color: '#0f172a',
-        background_color: '#ffffff',
+        theme_color: '#1A2B5F',
+        background_color: '#0F172A',
         display: 'standalone',
         start_url: '/',
         icons: [

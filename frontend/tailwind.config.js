@@ -6,14 +6,25 @@ export default {
     extend: {
       colors: {
         // Navegación / superficies profundas
-        ink: { DEFAULT: '#0B1120', 700: '#131C33', 600: '#1B2542', 500: '#26314F' },
+        // Fondo oscuro corporativo: sidebar, header y paneles de cabecera.
+        ink: { DEFAULT: '#0F172A', 700: '#152037', 600: '#1C2842', 500: '#26314F' },
         // Primario de acción (índigo de confianza). DEFAULT mantiene compat con bg-brand.
-        brand: {
-          DEFAULT: '#4F46E5', 50: '#EEF0FF', 100: '#E0E3FF', 200: '#C4C9FF',
-          300: '#A1A8FB', 400: '#7C84F4', 500: '#4F46E5', 600: '#4338CA', 700: '#3730A3',
+        // ============ IDENTIDAD KRYPTA BUSINESS SUITE ============
+        // Primario: azul profundo. Sidebar, header, botones principales, marca.
+        // Es el color del producto en reposo: serio, estable, de confianza.
+        krypta: {
+          DEFAULT: '#1A2B5F', 50: '#F1F4FA', 100: '#DDE4F2', 200: '#B9C6E3',
+          300: '#8DA1CE', 400: '#5C77B4', 500: '#334E92', 600: '#1A2B5F',
+          700: '#152449', 800: '#101B37', 900: '#0B1226',
         },
-        // Dinero / positivo
-        money: { DEFAULT: '#059669', 50: '#ECFDF5', 100: '#D1FAE5', 400: '#34D399', 500: '#10B981', 600: '#059669', 700: '#047857' },
+        // Secundario: azul eléctrico. Acción, foco, enlaces, estados activos.
+        // Es el color del producto en movimiento.
+        brand: {
+          DEFAULT: '#2563EB', 50: '#EFF6FF', 100: '#DBEAFE', 200: '#BFDBFE',
+          300: '#93C5FD', 400: '#60A5FA', 500: '#3B82F6', 600: '#2563EB', 700: '#1D4ED8',
+        },
+        // Éxito. Nunca como color principal (así lo define la marca).
+        money: { DEFAULT: '#10B981', 50: '#ECFDF5', 100: '#D1FAE5', 400: '#34D399', 500: '#10B981', 600: '#059669', 700: '#047857' },
 
         // --- TOKENS SEMÁNTICOS (Design System) ---
         // Cambian de valor entre modo claro y oscuro vía variables CSS. Úsalos en vez
@@ -22,6 +33,8 @@ export default {
         'surface-2': 'rgb(var(--surface-2) / <alpha-value>)',  // fondo de la app / zonas hundidas
         'surface-3': 'rgb(var(--surface-3) / <alpha-value>)',  // hover / franjas
         'border-token': 'rgb(var(--border) / <alpha-value>)',
+        'divider': 'rgb(var(--divider) / <alpha-value>)',
+        'selected': 'rgb(var(--selected) / <alpha-value>)',
         'content-strong': 'rgb(var(--content-strong) / <alpha-value>)', // títulos
         'content': 'rgb(var(--content) / <alpha-value>)',      // texto normal
         'content-muted': 'rgb(var(--content-muted) / <alpha-value>)',   // secundario
@@ -57,6 +70,14 @@ export default {
         soft: '0 4px 20px -4px rgba(16,24,40,.10), 0 2px 8px -4px rgba(16,24,40,.06)',
         lift: '0 12px 32px -8px rgba(16,24,40,.18)',
       },
+      // GRADIENTE CORPORATIVO KRYPTA: profundo → eléctrico → éxito.
+      // Representa los tres pilares del isotipo (flujo, conexión, crecimiento).
+      // Reservado a login, splash y piezas institucionales; nunca como fondo de trabajo.
+      backgroundImage: {
+        'krypta': 'linear-gradient(135deg, #1A2B5F 0%, #2563EB 55%, #10B981 100%)',
+        'krypta-suave': 'linear-gradient(135deg, #1A2B5F 0%, #2563EB 100%)',
+      },
+
       borderRadius: { xl: '0.875rem', '2xl': '1.125rem', '3xl': '1.5rem' },
 
       // ESCALA TIPOGRÁFICA. Los tamaños de dato llevan interlineado ajustado

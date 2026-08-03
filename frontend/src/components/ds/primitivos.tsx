@@ -41,7 +41,7 @@ export function AppButton({
       disabled={disabled || cargando}
       className={`inline-flex items-center justify-center font-medium
         transition-colors duration-rapido
-        focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500
+        focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-600
         disabled:cursor-not-allowed disabled:opacity-50
         ${TONOS[tono]} ${TALLAS[talla]} ${ancho ? 'w-full' : ''} ${className}`}
       {...props}
@@ -85,7 +85,7 @@ export function AppCard({
       className={`w-full rounded-2xl bg-surface text-left ring-1 ring-border-token
         ${plano ? '' : 'shadow-[0_1px_2px_rgb(24_28_48/0.04)]'}
         ${estado ? bandas[estado] : ''}
-        ${onClick ? 'transition-shadow duration-rapido hover:shadow-[0_6px_18px_rgb(24_28_48/0.08)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand-500' : ''}
+        ${onClick ? 'transition-shadow duration-rapido hover:shadow-[0_6px_18px_rgb(24_28_48/0.08)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand-600' : ''}
         ${className}`}
     >
       {(titulo || acciones) && (
@@ -142,7 +142,7 @@ export function AppAvatar({ nombre, talla = 'md', color }: {
       title={nombre}
       className={`inline-flex shrink-0 items-center justify-center rounded-full
         font-semibold text-white ${tallas[talla]}`}
-      style={{ backgroundColor: color ?? 'rgb(79 70 229)' }}
+      style={{ backgroundColor: color ?? '#1A2B5F' }}
     >
       {iniciales || '?'}
     </span>

@@ -125,7 +125,7 @@ export function RutaPanel() {
         <div className="space-y-6">
           {/* OBJETIVO DE LA JORNADA. Una sola cifra grande: lo que hay por cobrar
               hoy. La mora va aparte porque es una tarea distinta, no una suma. */}
-          <div className="overflow-hidden rounded-3xl bg-ink text-white shadow-[0_8px_28px_rgb(24_28_48/0.18)]">
+          <div className="overflow-hidden rounded-3xl bg-krypta-600 text-white shadow-[0_8px_28px_rgb(24_28_48/0.18)]">
             <div className="px-5 pt-5 sm:px-6">
               <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-white/40">
                 Por cobrar hoy

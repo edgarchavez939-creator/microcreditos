@@ -69,35 +69,47 @@ export function LoginForm() {
   return (
     <div className="min-h-screen bg-surface-2 lg:grid lg:grid-cols-2">
       {/* Hero */}
-      <div className="relative hidden overflow-hidden bg-ink lg:flex lg:flex-col lg:justify-between p-12">
-        <div className="absolute -right-24 -top-24 h-96 w-96 rounded-full bg-brand-500/20 blur-3xl" />
-        <div className="absolute -bottom-32 -left-16 h-96 w-96 rounded-full bg-money-600/10 blur-3xl" />
+      {/* Gradiente corporativo KRYPTA: profundo → eléctrico → éxito. Es el único
+          lugar de la aplicación donde aparece completo, junto al splash. */}
+      <div className="relative hidden overflow-hidden bg-krypta lg:flex lg:flex-col lg:justify-between p-12">
+        {/* Halos de luz: dan la sensación de flujo del isotipo sin dibujarlo */}
+        <div className="absolute -right-32 -top-32 h-[28rem] w-[28rem] rounded-full bg-white/10 blur-3xl" />
+        <div className="absolute -bottom-40 -left-24 h-[26rem] w-[26rem] rounded-full bg-money-400/15 blur-3xl" />
+
         <div className="relative flex items-center gap-3">
-          <Logo size={44} className="shadow-lift" />
-          <span className="font-display text-lg font-bold text-white" data-marca-nombre>Microcréditos</span>
+          <Logo size={44} className="rounded-xl shadow-[0_4px_16px_rgb(0_0_0/0.25)]" />
+          <div className="leading-tight">
+            <div className="font-display text-lg font-bold tracking-[-0.02em] text-white" data-marca-nombre>KRYPTA</div>
+            <div className="text-[10px] font-medium uppercase tracking-[0.18em] text-white/60">Business Suite</div>
+          </div>
         </div>
+
         <div className="relative">
-          <h1 className="font-display text-4xl font-extrabold leading-tight text-white">
-            El control de tu cartera,<br /><span className="text-brand-300">en un solo lugar.</span>
+          <h1 className="font-display text-[2.75rem] font-extrabold leading-[1.08] tracking-tight text-white">
+            El control de tu cartera,<br />
+            <span className="text-white/70">en un solo lugar.</span>
           </h1>
-          <p className="mt-4 max-w-md text-slate-300">
-            Microcrédito, ventas financiadas y cobranza territorial. Desde la solicitud hasta el último pago, con trazabilidad completa.
+          <p className="mt-5 max-w-md text-[15px] leading-relaxed text-white/70">
+            Microcrédito, ventas financiadas y cobranza territorial. Desde la solicitud
+            hasta el último pago, con trazabilidad completa.
           </p>
-          <ul className="mt-8 space-y-2 text-sm text-slate-300">
-            <li className="flex items-center gap-2"><Dot /> Roles para cobrador, supervisor y administrador</li>
-            <li className="flex items-center gap-2"><Dot /> Pagos en cascada y cartera al día</li>
-            <li className="flex items-center gap-2"><Dot /> Funciona sin conexión en la calle</li>
+          <ul className="mt-9 space-y-2.5 text-sm text-white/75">
+            <li className="flex items-center gap-2.5"><Dot /> Roles para cobrador, supervisor y administrador</li>
+            <li className="flex items-center gap-2.5"><Dot /> Pagos en cascada y cartera al día</li>
+            <li className="flex items-center gap-2.5"><Dot /> Funciona sin conexión en la calle</li>
           </ul>
         </div>
-        <div className="relative text-xs text-content-muted">Gestión territorial de crédito y cobranza</div>
+
+        <div className="relative text-xs text-white/45">Gestión territorial de crédito y cobranza</div>
       </div>
 
       {/* Formulario */}
       <div className="flex min-h-screen items-center justify-center p-6 lg:min-h-0">
         <div className="w-full max-w-sm">
           <div className="mb-6 flex flex-col items-center lg:hidden">
-            <Logo size={56} className="shadow-lift" />
-            <h1 className="mt-3 font-display text-lg font-bold" data-marca-nombre>Microcréditos</h1>
+            <Logo size={56} className="rounded-2xl shadow-[0_4px_16px_rgb(15_23_42/0.15)]" />
+            <h1 className="mt-3 font-display text-xl font-bold tracking-[-0.02em]" data-marca-nombre>KRYPTA</h1>
+            <p className="text-[10px] font-medium uppercase tracking-[0.18em] text-content-muted">Business Suite</p>
           </div>
 
           <div className="card card-pad">

@@ -84,7 +84,7 @@ function DashboardAdmin() {
 
       {/* Pulso del negocio: la cifra que resume el día, antes del detalle. */}
       {d && (
-        <div className="mb-4 overflow-hidden rounded-3xl bg-ink px-5 py-5 text-white
+        <div className="mb-4 overflow-hidden rounded-3xl bg-krypta-600 px-5 py-5 text-white
           shadow-[0_8px_28px_rgb(24_28_48/0.18)] sm:px-6">
           <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-white/40">
             Recaudado hoy
@@ -245,7 +245,7 @@ function DashboardCobrador() {
 
       {/* PANEL DE JORNADA. Una sola pieza responde lo que el cobrador pregunta al
           abrir la app: cuánto llevo, cuánto falta, y qué hago ahora. */}
-      <div className="mb-4 overflow-hidden rounded-3xl bg-ink text-white shadow-[0_8px_28px_rgb(24_28_48/0.18)]">
+      <div className="mb-4 overflow-hidden rounded-3xl bg-krypta-600 text-white shadow-[0_8px_28px_rgb(24_28_48/0.18)]">
         <div className="px-5 pt-5 sm:px-6">
           <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-white/40">
             Recaudado hoy

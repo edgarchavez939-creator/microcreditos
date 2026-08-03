@@ -174,7 +174,7 @@ function Marca() {
       <div>
         <label className="label">Color primario</label>
         <div className="flex items-center gap-2">
-          <input type="color" value={marca.color_primario ?? '#4F46E5'} onChange={(e) => set('color_primario', e.target.value)} className="h-10 w-16 rounded" />
+          <input type="color" value={marca.color_primario ?? '#1A2B5F'} onChange={(e) => set('color_primario', e.target.value)} className="h-10 w-16 rounded" />
           <input value={marca.color_primario ?? ''} onChange={(e) => set('color_primario', e.target.value)} className="input flex-1" />
         </div>
       </div>

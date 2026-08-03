@@ -141,8 +141,8 @@ function AppShell() {
     <div className="flex items-center gap-3 px-2">
       <Logo size={36} className="rounded-xl shadow-[0_2px_8px_rgb(0_0_0/0.35)]" />
       <div className="leading-tight">
-        <div className="font-display text-[15px] font-bold tracking-tight text-white" data-marca-nombre>Microcréditos</div>
-        <div className="text-[10px] font-medium uppercase tracking-[0.1em] text-white/35">Gestión territorial</div>
+        <div className="font-display text-[15px] font-bold tracking-[-0.02em] text-white" data-marca-nombre>KRYPTA</div>
+        <div className="text-[10px] font-medium uppercase tracking-[0.16em] text-white/40">Business Suite</div>
       </div>
     </div>
   );
@@ -205,8 +205,7 @@ function AppShell() {
 
   const userFooter = (
     <div className="flex items-center gap-3 rounded-xl bg-white/[0.06] p-2.5 ring-1 ring-white/[0.06]">
-      <div className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-gradient-to-br
-        from-brand-400 to-brand-600 text-sm font-bold text-white shadow-[0_2px_6px_rgb(0_0_0/0.3)]">
+      <div className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-krypta-suave text-sm font-bold text-white shadow-[0_2px_6px_rgb(0_0_0/0.3)]">
         {iniciales(usuario.nombre)}
       </div>
       <div className="min-w-0 flex-1 leading-tight">
@@ -222,7 +221,7 @@ function AppShell() {
 
   return (
     <div className="min-h-screen bg-surface-2 lg:flex">
-      <aside className="fixed inset-y-0 hidden w-[15.5rem] flex-col bg-ink p-3
+      <aside className="fixed inset-y-0 hidden w-[15.5rem] flex-col bg-krypta-600 p-3
         shadow-[1px_0_0_rgb(255_255_255/0.06)] lg:flex">
         <div className="py-3">{brand}</div>
         <button onClick={() => setBuscador(true)}
@@ -246,7 +245,7 @@ function AppShell() {
       </aside>
 
       <header className="sticky top-0 z-sticky flex items-center justify-between gap-2
-        bg-ink/95 px-4 py-3 backdrop-blur-md
+        bg-krypta-600/95 px-4 py-3 backdrop-blur-md
         shadow-[0_1px_0_rgb(255_255_255/0.07)] lg:hidden">
         {brand}
         <div className="flex items-center gap-0.5">
@@ -261,7 +260,7 @@ function AppShell() {
             <Icon.menu />
             {/* Aviso de tareas pendientes también en móvil, donde el menú está oculto */}
             {!!badges?.inbox && (
-              <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-brand-400 ring-2 ring-ink" aria-hidden />
+              <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-brand-400 ring-2 ring-krypta-600" aria-hidden />
             )}
           </button>
         </div>
@@ -269,8 +268,8 @@ function AppShell() {
 
       {drawer && (
         <div className="fixed inset-0 z-40 lg:hidden">
-          <div className="absolute inset-0 bg-ink/60 backdrop-blur-sm" onClick={() => setDrawer(false)} />
-          <div className="absolute inset-y-0 left-0 flex w-[17rem] animate-slide-in-right flex-col bg-ink p-3">
+          <div className="absolute inset-0 bg-krypta-900/60 backdrop-blur-sm" onClick={() => setDrawer(false)} />
+          <div className="absolute inset-y-0 left-0 flex w-[17rem] animate-slide-in-right flex-col bg-krypta-600 p-3">
             <div className="flex items-center justify-between py-2">
               {brand}
               <button onClick={() => setDrawer(false)} className="rounded-lg p-2 text-slate-300 hover:bg-white/10"><Icon.close /></button>

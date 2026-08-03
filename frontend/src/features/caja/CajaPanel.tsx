@@ -349,7 +349,7 @@ function ResumenCaja({ e }: { e: EstadoCaja }) {
         {/* La cifra que el cobrador debe tener en la mano. Es la conclusión de
             toda la pantalla, así que se presenta como tal: fondo oscuro, cifra
             grande, y la fórmula a un toque de distancia. */}
-        <div className="overflow-hidden rounded-3xl bg-ink px-5 py-5 text-white shadow-[0_8px_28px_rgb(24_28_48/0.18)]">
+        <div className="overflow-hidden rounded-3xl bg-krypta-600 px-5 py-5 text-white shadow-[0_8px_28px_rgb(24_28_48/0.18)]">
           <div className="flex items-center gap-1.5">
             <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-white/40">
               Efectivo esperado en caja

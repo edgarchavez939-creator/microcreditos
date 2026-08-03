@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api/client';
 import { money, fecha } from '@/lib/format';
+import { PALETA_PRODUCTOS, COLOR_PRODUCTO_DEFECTO } from '@/components/ui/BadgeProducto';
 import { InputMoneda } from '@/components/ui/InputMoneda';
 import { useToast } from '@/components/ui/Toast';
 import type { ProductoFinanciero } from '@/features/solicitudes/schema';
@@ -66,7 +67,7 @@ export function ProductosFinancieros() {
             <div key={p.id} className="card card-pad">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <div className="flex items-center gap-2">
-                  <span className="inline-block h-3 w-3 rounded-full" style={{ background: p.color ?? '#4F46E5' }} />
+                  <span className="inline-block h-3 w-3 rounded-full" style={{ background: p.color ?? COLOR_PRODUCTO_DEFECTO }} />
                   <span className="font-semibold text-content-strong">{p.nombre}</span>
                   <span className="rounded bg-surface-3 px-1.5 py-0.5 text-xs text-content-muted">{p.codigo}</span>
                   <span className="rounded bg-surface-3 px-1.5 py-0.5 text-xs text-content-muted">v{p.version_actual}</span>
@@ -136,7 +137,7 @@ function FormProducto({ producto, onCerrar }: { producto: ProductoFinanciero | n
     codigo: producto?.codigo ?? '',
     nombre: producto?.nombre ?? '',
     descripcion: producto?.descripcion ?? '',
-    color: producto?.color ?? '#4F46E5',
+    color: producto?.color ?? COLOR_PRODUCTO_DEFECTO,
     orden: producto?.orden ?? 0,
     usa_tasa: producto?.usa_tasa ?? true,
     tasa_defecto: producto ? Number(producto.tasa_defecto) * 100 : 10,
@@ -209,7 +210,19 @@ function FormProducto({ producto, onCerrar }: { producto: ProductoFinanciero | n
         <div><label className="label">Nombre</label>
           <input value={f.nombre} onChange={(e) => set('nombre', e.target.value)} className="input" /></div>
         <div><label className="label">Color</label>
-          <input type="color" value={f.color ?? '#4F46E5'} onChange={(e) => set('color', e.target.value)} className="input h-10" /></div>
+          <div className="mt-1 flex flex-wrap items-center gap-2">
+            {PALETA_PRODUCTOS.map((c) => (
+              <button key={c.valor} type="button" title={c.nombre}
+                onClick={() => set('color', c.valor as never)}
+                className={`h-7 w-7 rounded-full ring-2 ring-offset-2 transition
+                  ${f.color === c.valor ? 'ring-content-strong' : 'ring-transparent hover:ring-border-token'}`}
+                style={{ backgroundColor: c.valor }} />
+            ))}
+            <input type="color" value={f.color ?? COLOR_PRODUCTO_DEFECTO}
+              onChange={(e) => set('color', e.target.value)}
+              className="h-7 w-10 cursor-pointer rounded border border-border-token bg-surface"
+              title="Color personalizado" />
+          </div></div>
         <div><label className="label">Orden</label>
           <input type="number" value={f.orden} onChange={(e) => set('orden', Number(e.target.value))} className="input" /></div>
       </div>

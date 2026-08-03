@@ -108,7 +108,7 @@ export function AppTable<T extends Record<string, unknown>>({
                   className={`whitespace-nowrap px-3 py-2.5 text-xs font-semibold uppercase tracking-wide text-content-muted ${alinea(c.alinear)}`}>
                   {c.ordenable ? (
                     <button onClick={() => alternarOrden(c)}
-                      className="inline-flex items-center gap-1 hover:text-brand-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand-500"
+                      className="inline-flex items-center gap-1 hover:text-brand-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand-600"
                       aria-label={`Ordenar por ${c.titulo}`}>
                       {c.titulo}
                       <span className="text-[10px]" aria-hidden>
@@ -156,7 +156,7 @@ export function AppTabs({ pestanas, activa, onCambiar }: {
             onClick={() => onCambiar(p.id)}
             className={`inline-flex shrink-0 items-center gap-1.5 rounded-lg px-3.5 py-1.5 text-sm font-medium
               transition-colors duration-rapido
-              focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand-500
+              focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand-600
               ${on ? 'bg-surface text-content-strong shadow-[0_1px_2px_rgb(24_28_48/0.04)]' : 'text-content-muted hover:text-content'}`}>
             {p.titulo}
             {p.badge !== undefined && p.badge > 0 && (
@@ -240,7 +240,7 @@ export function AppAccordion({ secciones, abiertaInicial }: {
               onClick={() => setAbierta(on ? null : s.id)}
               aria-expanded={on}
               className="flex min-h-touch w-full items-center justify-between gap-3 px-4 py-3 text-left
-                hover:bg-surface-3 focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand-500"
+                hover:bg-surface-3 focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand-600"
             >
               <span className="min-w-0">
                 <span className="block text-sm font-medium text-content-strong">{s.titulo}</span>

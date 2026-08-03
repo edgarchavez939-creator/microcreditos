@@ -115,7 +115,7 @@ export function AppStatCard({
     <Elemento
       onClick={onClick}
       className={`rounded-2xl bg-surface p-4 text-left ring-1 ring-border-token shadow-[0_1px_2px_rgb(24_28_48/0.04)]
-        ${onClick ? 'w-full transition-shadow duration-rapido hover:shadow-[0_6px_18px_rgb(24_28_48/0.08)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand-500' : ''}`}
+        ${onClick ? 'w-full transition-shadow duration-rapido hover:shadow-[0_6px_18px_rgb(24_28_48/0.08)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand-600' : ''}`}
     >
       <div className="flex items-start justify-between gap-2">
         <p className="text-xs font-medium text-content-muted">{etiqueta}</p>

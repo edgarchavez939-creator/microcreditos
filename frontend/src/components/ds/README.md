@@ -1,4 +1,4 @@
-# Design System
+# KRYPTA Business Suite · Design System
 
 Infraestructura visual de la plataforma. Toda pantalla nueva debe construirse con
 estas piezas; ninguna debe definir colores, sombras o radios por su cuenta.
@@ -17,15 +17,31 @@ compite con la magnitud.
 **El color comunica, no decora.** Cada color tiene un significado fijo en toda la
 plataforma. Si un elemento es ámbar, está pendiente. Siempre.
 
+### Marca
+
+| Token | Valor | Uso |
+|---|---|---|
+| `krypta-600` | `#1A2B5F` | Primario. Sidebar, header, botón principal, marca |
+| `brand-600` | `#2563EB` | Secundario. Acción, foco, enlaces, estados activos |
+| `money-500` | `#10B981` | Éxito. Nunca como color principal |
+| `bg-krypta` | gradiente | Login, splash, piezas institucionales. Nunca de fondo de trabajo |
+
+### Estados
+
 | Token | Color | Significado |
 |---|---|---|
-| `estado-activo` | verde | Al día, operación exitosa |
-| `estado-info` | azul | Información neutra |
-| `estado-pendiente` | ámbar | Requiere acción, en espera |
-| `estado-mora` | rojo | Vencido, faltante, error |
-| `estado-validacion` | morado | En proceso de validación |
-| `estado-inactivo` | gris | Deshabilitado, sin actividad |
-| `estado-bloqueado` | negro | Cerrado a cambios |
+| `estado-activo` | `#10B981` | Aprobado, al día, caja cuadrada |
+| `estado-info` | `#2563EB` | Información neutra |
+| `estado-pendiente` | `#F59E0B` | Requiere acción, en espera |
+| `estado-mora` | `#EF4444` | Rechazado, vencido, faltante |
+| `estado-validacion` | índigo | En proceso de validación |
+| `estado-inactivo` | `#64748B` | Cancelado, deshabilitado |
+| `estado-bloqueado` | azul profundo | Cerrado a cambios, mora severa |
+
+### Neutros
+
+Fondo `#F8FAFC` · Tarjetas `#FFFFFF` · Texto `#0F172A` · Secundario `#64748B`
+Bordes `#E2E8F0` · Separadores `#CBD5E1` · Hover `#EFF6FF` · Seleccionado `#DBEAFE`
 
 **Legible sin leer.** `AppCard` con la propiedad `estado` pinta una banda lateral de
 color. Un cobrador que recorre 40 clientes distingue mora de al-día por el borde,

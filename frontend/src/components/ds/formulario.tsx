@@ -33,7 +33,7 @@ function Envoltura({ id, etiqueta, ayuda, error, requerido, children }: {
 const BASE = `w-full rounded-xl bg-surface px-3 text-sm text-content
   ring-1 ring-border-token transition-shadow duration-rapido
   placeholder:text-content-muted/70
-  focus:outline-none focus:ring-2 focus:ring-brand-500
+  focus:outline-none focus:ring-2 focus:ring-brand-600
   disabled:cursor-not-allowed disabled:bg-surface-3 disabled:opacity-70`;
 
 // ─────────────────────────────────────────── AppInput
@@ -139,7 +139,7 @@ export function AppFilter({ children, onLimpiar, activos }: {
       {onLimpiar && !!activos && (
         <button onClick={onLimpiar}
           className="min-h-touch text-xs font-medium text-brand-700 hover:underline
-            focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand-500">
+            focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand-600">
           Quitar filtros ({activos})
         </button>
       )}

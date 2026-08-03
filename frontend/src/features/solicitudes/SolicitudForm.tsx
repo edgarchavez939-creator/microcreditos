@@ -130,7 +130,7 @@ export function SolicitudForm({ clienteId, areaId, creditoOrigenId, onCreada }:
                 className={`rounded-xl border-2 p-3 text-left transition ${p.id === productoId ? 'border-brand-500 bg-brand-50' : 'border-border-token hover:border-slate-300'}`}
                 style={p.id === productoId && p.color ? { borderColor: p.color } : undefined}>
                 <div className="flex items-center gap-2">
-                  <span className="inline-block h-2.5 w-2.5 rounded-full" style={{ background: p.color ?? '#4F46E5' }} />
+                  <span className="inline-block h-2.5 w-2.5 rounded-full" style={{ background: p.color ?? '#2563EB' }} />
                   <span className="text-sm font-semibold text-content-strong">{p.nombre}</span>
                 </div>
                 {p.descripcion && <p className="mt-1 text-xs text-content-muted line-clamp-2">{p.descripcion}</p>}

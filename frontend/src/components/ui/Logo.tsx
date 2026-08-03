@@ -5,7 +5,7 @@ export function Logo({ size = 36, className = '' }: { size?: number; className?:
       <defs>
         <linearGradient id="logoGrad" x1="0" y1="0" x2="48" y2="48" gradientUnits="userSpaceOnUse">
           <stop stopColor="#7C84F4" />
-          <stop offset="1" stopColor="#4338CA" />
+          <stop offset="1" stopColor="#2563EB" />
         </linearGradient>
       </defs>
       <rect width="48" height="48" rx="12" fill="url(#logoGrad)" />
