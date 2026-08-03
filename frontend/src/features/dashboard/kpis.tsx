@@ -45,18 +45,22 @@ export function AccionRapida({ titulo, detalle, icon, tono = 'brand', onClick, b
   const t = TONOS[tono] ?? TONOS.brand;
   return (
     <button onClick={onClick}
-      className="flex w-full items-center gap-3 rounded-2xl bg-surface p-4 text-left shadow-card ring-1 ring-border-token transition hover:shadow-soft hover:-translate-y-0.5">
-      <span className={`grid h-11 w-11 shrink-0 place-items-center rounded-xl ${t.icon}`}>{icon}</span>
+      className="group flex w-full items-center gap-3.5 rounded-2xl bg-surface p-4 text-left
+        ring-1 ring-border-token shadow-[0_1px_2px_rgb(24_28_48/0.04)]
+        transition-all duration-rapido hover:shadow-[0_6px_18px_rgb(24_28_48/0.08)] hover:ring-brand-200
+        focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand-500">
+      <span className={`grid h-11 w-11 shrink-0 place-items-center rounded-2xl ${t.icon}`}>{icon}</span>
       <div className="min-w-0 flex-1">
-        <div className="font-semibold text-content-strong">{titulo}</div>
-        {detalle && <div className="text-xs text-content-muted">{detalle}</div>}
+        <div className="text-[15px] font-semibold text-content-strong">{titulo}</div>
+        {detalle && <div className="mt-0.5 text-xs text-content-muted">{detalle}</div>}
       </div>
       {badge !== undefined && badge > 0 && (
-        <span className="grid min-w-[1.5rem] place-items-center rounded-full bg-estado-mora px-2 py-0.5 text-xs font-bold text-white">
+        <span className="grid min-w-[1.5rem] place-items-center rounded-full bg-estado-info-bg
+          px-2 py-0.5 text-xs font-bold text-estado-info">
           {badge > 99 ? '99+' : badge}
         </span>
       )}
-      <span className="text-content-muted">→</span>
+      <span className="text-content-muted transition-transform duration-rapido group-hover:translate-x-0.5" aria-hidden>→</span>
     </button>
   );
 }

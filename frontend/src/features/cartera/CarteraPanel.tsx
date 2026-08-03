@@ -97,14 +97,28 @@ function CreditoCard({ c }: { c: Solicitud }) {
     setError(x?.response?.data?.message ?? 'No se pudo completar la acción.');
   };
 
+  // Banda lateral según el estado: en una lista larga se distingue el crédito
+  // en mora del que está al día sin leer una sola palabra.
+  const banda =
+    c.estado === 'EN_MORA' ? 'border-l-estado-mora'
+    : c.estado === 'ACTIVO' || c.estado === 'PAGADO' || c.estado === 'FINALIZADO' ? 'border-l-estado-activo'
+    : c.estado === 'MIGRADO' || c.estado === 'REAMORTIZADO' || c.estado === 'REFINANCIADO' ? 'border-l-estado-validacion'
+    : c.estado === 'APROBADO' || c.estado === 'DESEMBOLSADO' ? 'border-l-estado-info'
+    : c.estado === 'RECHAZADO' || c.estado === 'CASTIGADO' ? 'border-l-estado-bloqueado'
+    : 'border-l-estado-pendiente';
+
   return (
-    <div className="card card-pad">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <div>
-          <div className="font-semibold">
-            {c.numero_credito ?? `Crédito #${c.id}`} · {c.cliente ?? `Cliente ${c.cliente_id}`}
+    <div className={`card card-pad border-l-4 ${banda}`}>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className="min-w-0">
+          {/* El nombre del cliente manda: es lo que el cobrador busca. */}
+          <div className="text-[15px] font-semibold text-content-strong">
+            {c.cliente ?? `Cliente ${c.cliente_id}`}
           </div>
-          <div className="flex items-center gap-2">
+          <div className="mt-0.5 text-xs text-content-muted">
+            {c.numero_credito ?? `Crédito #${c.id}`}
+          </div>
+          <div className="mt-2 flex flex-wrap items-center gap-1.5">
             <EstadoBadge estado={c.estado} />
             {c.credito_origen && (
               <span className="rounded-full bg-estado-validacion-bg px-2 py-0.5 text-xs text-estado-validacion">
@@ -113,9 +127,13 @@ function CreditoCard({ c }: { c: Solicitud }) {
             )}
           </div>
         </div>
-        <div className="text-right text-sm">
-          <div className="text-content-muted">Saldo pendiente</div>
-          <div className="font-semibold">{money(c.saldo_pendiente ?? c.total_recaudar)}</div>
+        <div className="shrink-0 text-right">
+          <div className="text-[11px] font-medium uppercase tracking-wide text-content-muted">
+            Saldo pendiente
+          </div>
+          <div className="font-display text-dato-lg font-bold tabular-nums text-content-strong">
+            {money(c.saldo_pendiente ?? c.total_recaudar)}
+          </div>
         </div>
       </div>
 

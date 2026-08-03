@@ -82,6 +82,31 @@ function DashboardAdmin() {
     <div>
       <Cabecera subtitulo="Panorama estratégico de toda la operación." />
 
+      {/* Pulso del negocio: la cifra que resume el día, antes del detalle. */}
+      {d && (
+        <div className="mb-4 overflow-hidden rounded-3xl bg-ink px-5 py-5 text-white
+          shadow-[0_8px_28px_rgb(24_28_48/0.18)] sm:px-6">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-white/40">
+            Recaudado hoy
+          </p>
+          <p className="mt-1 font-display text-dato-2xl font-bold tabular-nums tracking-tight">
+            {money(d.recaudado_hoy)}
+          </p>
+          <div className="mt-4 grid grid-cols-3 gap-3 border-t border-white/[0.08] pt-4">
+            {[
+              ['Saldo en calle', money(d.saldo_en_calle)],
+              ['En mora', `${d.mora.cantidad}`],
+              ['Cobros hoy', `${d.cobros_hoy.cantidad}`],
+            ].map(([t, v]) => (
+              <div key={t}>
+                <p className="font-display text-dato font-bold tabular-nums">{v}</p>
+                <p className="text-[11px] text-white/45">{t}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       <div className="mb-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <KpiCard titulo="Recaudado hoy" valor={money(d.recaudado_hoy)} detalle="Pagos del día" tono="money" icon={<KpiIcon.money />} />
         <KpiCard titulo="Desembolsos hoy" valor={money(g?.desembolsos_hoy.total ?? 0)}
@@ -209,11 +234,65 @@ function DashboardCobrador() {
   const cajaAbierta = caja?.esta_abierta;
   const cajaCerrada = caja?.ya_cerrada;
 
+  // Progreso de la jornada: cuánto se ha cobrado de lo que vencía hoy.
+  const meta = d?.cobros_hoy.total ?? 0;
+  const logrado = d?.recaudado_hoy ?? 0;
+  const avance = meta > 0 ? Math.min(100, Math.round((logrado / meta) * 100)) : 0;
+
   return (
     <div>
       <Cabecera subtitulo="Tu jornada de hoy." />
 
-      <div className="mb-5 space-y-3">
+      {/* PANEL DE JORNADA. Una sola pieza responde lo que el cobrador pregunta al
+          abrir la app: cuánto llevo, cuánto falta, y qué hago ahora. */}
+      <div className="mb-4 overflow-hidden rounded-3xl bg-ink text-white shadow-[0_8px_28px_rgb(24_28_48/0.18)]">
+        <div className="px-5 pt-5 sm:px-6">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-white/40">
+            Recaudado hoy
+          </p>
+          <div className="mt-1 flex flex-wrap items-baseline gap-x-3 gap-y-1">
+            <span className="font-display text-dato-2xl font-bold tabular-nums tracking-tight">
+              {money(logrado)}
+            </span>
+            {meta > 0 && (
+              <span className="text-sm text-white/45">
+                de {money(meta)} previstos
+              </span>
+            )}
+          </div>
+
+          {meta > 0 && (
+            <div className="mt-4">
+              <div className="h-1.5 overflow-hidden rounded-full bg-white/10">
+                <div className="h-full rounded-full bg-gradient-to-r from-brand-400 to-money-400
+                  transition-[width] duration-pausado ease-salida"
+                  style={{ width: `${avance}%` }} />
+              </div>
+              <p className="mt-1.5 text-[11px] text-white/40">
+                {avance}% de la meta del día
+              </p>
+            </div>
+          )}
+        </div>
+
+        {/* Cifras de apoyo, dentro del mismo panel para no fragmentar la lectura */}
+        <div className="mt-5 grid grid-cols-3 divide-x divide-white/[0.08] border-t border-white/[0.08]">
+          {[
+            ['Por cobrar', `${d?.cobros_hoy.cantidad ?? 0}`, 'clientes hoy'],
+            ['En mora', `${d?.mora.cantidad ?? 0}`, 'por gestionar'],
+            ['Promesas', `${d?.kpis?.promesas_vigentes ?? 0}`, 'vigentes'],
+          ].map(([t, v, sub]) => (
+            <div key={t} className="px-3 py-3.5 text-center sm:px-4">
+              <p className="font-display text-dato-lg font-bold tabular-nums">{v}</p>
+              <p className="text-[11px] font-medium text-white/55">{t}</p>
+              <p className="text-[10px] text-white/30">{sub}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* SIGUIENTE PASO. Solo una acción a la vez: la que toca ahora. */}
+      <div className="space-y-2.5">
         {!cajaCerrada && !cajaAbierta && (
           <AccionRapida titulo="Abrir caja" detalle="Inicia tu jornada registrando la base"
             icon={<KpiIcon.wallet />} tono="brand" onClick={() => irA('caja')} />
@@ -226,15 +305,7 @@ function DashboardCobrador() {
         )}
       </div>
 
-      {isLoading || !d ? <SkeletonIndicadores cantidad={4} /> : (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <KpiCard titulo="Cobros de hoy" valor={`${d.cobros_hoy.cantidad}`} detalle="Cuotas que vencen hoy" tono="brand" icon={<KpiIcon.clock />} />
-          <KpiCard titulo="Recaudado hoy" valor={money(d.recaudado_hoy)} detalle="Lo que llevas cobrado" tono="money" icon={<KpiIcon.money />} />
-          <KpiCard titulo="En mora" valor={`${d.mora.cantidad}`} detalle="Cuotas vencidas por gestionar"
-            tono={d.mora.cantidad > 0 ? 'alerta' : 'positivo'} icon={<KpiIcon.alert />} />
-          <KpiCard titulo="Promesas vigentes" valor={`${d.kpis?.promesas_vigentes ?? 0}`} detalle="Acuerdos con clientes" icon={<KpiIcon.check />} />
-        </div>
-      )}
+      {isLoading && !d && <div className="mt-4"><SkeletonIndicadores cantidad={3} /></div>}
     </div>
   );
 }

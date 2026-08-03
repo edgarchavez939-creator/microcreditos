@@ -67,6 +67,19 @@ const ROL_LABEL: Record<Rol, string> = {
 // Módulos que el backend gobierna por permisos dinámicos. Un módulo del MENÚ que NO
 // esté aquí se rige solo por el filtro de rol (evita que un módulo nuevo del frontend
 // desaparezca porque el catálogo de permisos del backend todavía no lo liste).
+/**
+ * SECCIONES DEL MENÚ. Dieciocho módulos en una lista plana obligan a leerla
+ * entera cada vez; agrupados por momento de uso, el ojo va directo al bloque.
+ * El orden refleja la jornada real: primero lo que se usa en la calle.
+ */
+const SECCIONES: { titulo: string; modulos: string[] }[] = [
+  { titulo: 'Mi día',        modulos: ['inicio', 'inbox', 'ruta', 'caja'] },
+  { titulo: 'Cartera',       modulos: ['clientes', 'solicitud', 'pagos', 'aprobaciones', 'reamortizacion'] },
+  { titulo: 'Territorio',    modulos: ['mapa', 'transferencias', 'caja-general', 'estado-cuenta'] },
+  { titulo: 'Análisis',      modulos: ['reportes'] },
+  { titulo: 'Administración',modulos: ['usuarios', 'permisos', 'parametros', 'migracion', 'admin-funcional'] },
+];
+
 const MODULOS_CATALOGADOS = new Set<string>([
   'inicio', 'inbox', 'ruta', 'caja', 'caja-general', 'estado-cuenta', 'solicitud',
   'aprobaciones', 'pagos', 'reamortizacion', 'transferencias', 'clientes', 'mapa',
@@ -125,11 +138,11 @@ function AppShell() {
   }, [visibles, activo]);
 
   const brand = (
-    <div className="flex items-center gap-2.5 px-2">
-      <Logo size={38} className="shadow-lift rounded-xl" />
+    <div className="flex items-center gap-3 px-2">
+      <Logo size={36} className="rounded-xl shadow-[0_2px_8px_rgb(0_0_0/0.35)]" />
       <div className="leading-tight">
-        <div className="font-display text-sm font-bold text-white" data-marca-nombre>Microcréditos</div>
-        <div className="text-[11px] text-slate-400">Gestión territorial</div>
+        <div className="font-display text-[15px] font-bold tracking-tight text-white" data-marca-nombre>Microcréditos</div>
+        <div className="text-[10px] font-medium uppercase tracking-[0.1em] text-white/35">Gestión territorial</div>
       </div>
     </div>
   );
@@ -146,76 +159,123 @@ function AppShell() {
     : badgesRaw;
 
   const nav = (
-    <nav className="flex flex-col gap-1">
-      {visibles.map((m) => {
-        const I = Icon[m.icon];
-        const on = activo === m.id;
-        const pendientes = badges?.[m.id] ?? 0;
+    <nav className="flex flex-col gap-5">
+      {SECCIONES.map((sec) => {
+        const items = sec.modulos
+          .map((id) => visibles.find((m) => m.id === id))
+          .filter(Boolean) as typeof visibles;
+        if (items.length === 0) return null;
+
         return (
-          <button key={m.id} onClick={() => { setActivo(m.id); setDrawer(false); }}
-            className={`group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition ${
-              on ? 'bg-white/10 text-white' : 'text-slate-300 hover:bg-white/5 hover:text-white'}`}>
-            <span className={on ? 'text-brand-300' : 'text-slate-400 group-hover:text-slate-200'}><I /></span>
-            {m.label}
-            {pendientes > 0 && (
-              <span className="ml-auto grid min-w-[1.25rem] place-items-center rounded-full bg-rose-500 px-1.5 py-0.5 text-[11px] font-bold leading-none text-white">
-                {pendientes > 99 ? '99+' : pendientes}
-              </span>
-            )}
-          </button>
+          <div key={sec.titulo}>
+            <p className="mb-1.5 px-3 text-[10px] font-semibold uppercase tracking-[0.12em] text-white/35">
+              {sec.titulo}
+            </p>
+            <div className="flex flex-col gap-0.5">
+              {items.map((m) => {
+                const I = Icon[m.icon];
+                const on = activo === m.id;
+                const pendientes = badges?.[m.id] ?? 0;
+                return (
+                  <button key={m.id} onClick={() => { setActivo(m.id); setDrawer(false); }}
+                    aria-current={on ? 'page' : undefined}
+                    className={`group relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm
+                      transition-colors duration-rapido
+                      ${on ? 'bg-white/[0.09] font-semibold text-white' : 'font-medium text-white/60 hover:bg-white/[0.05] hover:text-white/90'}`}>
+                    {/* Marca de módulo activo: una barra vertical, no un bloque de color */}
+                    <span className={`absolute left-0 top-1/2 h-5 w-[3px] -translate-y-1/2 rounded-r-full
+                      bg-brand-400 transition-opacity duration-rapido ${on ? 'opacity-100' : 'opacity-0'}`} aria-hidden />
+                    <span className={on ? 'text-brand-300' : 'text-white/45 group-hover:text-white/70'}><I /></span>
+                    <span className="flex-1 text-left">{m.label}</span>
+                    {pendientes > 0 && (
+                      <span className="grid min-w-[1.3rem] place-items-center rounded-full bg-brand-500
+                        px-1.5 py-0.5 text-[10px] font-bold leading-none text-white">
+                        {pendientes > 99 ? '99+' : pendientes}
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
         );
       })}
     </nav>
   );
 
   const userFooter = (
-    <div className="flex items-center gap-3 rounded-xl bg-white/5 p-2.5">
-      <div className="grid h-9 w-9 place-items-center rounded-full bg-brand-500 text-sm font-semibold text-white">{iniciales(usuario.nombre)}</div>
-      <div className="min-w-0 flex-1 leading-tight">
-        <div className="truncate text-sm font-medium text-white">{usuario.nombre}</div>
-        <div className="text-[11px] text-slate-400">{ROL_LABEL[usuario.rol]} · {APP_VERSION}</div>
+    <div className="flex items-center gap-3 rounded-xl bg-white/[0.06] p-2.5 ring-1 ring-white/[0.06]">
+      <div className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-gradient-to-br
+        from-brand-400 to-brand-600 text-sm font-bold text-white shadow-[0_2px_6px_rgb(0_0_0/0.3)]">
+        {iniciales(usuario.nombre)}
       </div>
-      <button onClick={logout} title="Cerrar sesión"
-        className="rounded-lg p-1.5 text-slate-400 transition hover:bg-white/10 hover:text-white"><Icon.logout /></button>
+      <div className="min-w-0 flex-1 leading-tight">
+        <div className="truncate text-sm font-semibold text-white">{usuario.nombre}</div>
+        <div className="truncate text-[11px] text-white/40">{ROL_LABEL[usuario.rol]}</div>
+      </div>
+      <button onClick={logout} title="Cerrar sesión" aria-label="Cerrar sesión"
+        className="rounded-lg p-2 text-white/40 transition-colors duration-rapido hover:bg-white/10 hover:text-white">
+        <Icon.logout />
+      </button>
     </div>
   );
 
   return (
     <div className="min-h-screen bg-surface-2 lg:flex">
-      <aside className="fixed inset-y-0 hidden w-64 flex-col bg-ink p-3 lg:flex">
+      <aside className="fixed inset-y-0 hidden w-[15.5rem] flex-col bg-ink p-3
+        shadow-[1px_0_0_rgb(255_255_255/0.06)] lg:flex">
         <div className="py-3">{brand}</div>
         <button onClick={() => setBuscador(true)}
-          className="mt-2 flex items-center gap-2 rounded-xl bg-white/5 px-3 py-2 text-sm text-slate-300 transition hover:bg-white/10 hover:text-white">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8" /><path d="m21 21-4.3-4.3" /></svg>
-          <span className="flex-1 text-left">Buscar…</span>
-          <kbd className="rounded bg-white/10 px-1.5 py-0.5 text-[10px]">⌘K</kbd>
+          className="mt-4 flex w-full items-center gap-2.5 rounded-xl bg-white/[0.06] px-3 py-2.5
+            text-sm text-white/50 ring-1 ring-white/[0.06] transition-colors duration-rapido
+            hover:bg-white/[0.1] hover:text-white/80">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><circle cx="11" cy="11" r="8" /><path d="m21 21-4.3-4.3" /></svg>
+          <span className="flex-1 text-left">Buscar cliente, crédito…</span>
+          <kbd className="rounded border border-white/10 bg-white/[0.06] px-1.5 py-0.5 text-[10px] font-medium">⌘K</kbd>
         </button>
-        <div className="mt-3 flex-1 overflow-y-auto">{nav}</div>
-        <div className="pt-3 space-y-2">
+        <div className="mt-5 flex-1 overflow-y-auto pb-2
+          [scrollbar-width:thin] [&::-webkit-scrollbar]:w-1
+          [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-white/10">
+          {nav}
+        </div>
+        <div className="space-y-2 border-t border-white/[0.07] pt-3">
           <div className="px-1"><ToggleTema /></div>
           {userFooter}
+          <p className="px-1 text-center text-[10px] text-white/25">{APP_VERSION}</p>
         </div>
       </aside>
 
-      <header className="sticky top-0 z-30 flex items-center justify-between bg-ink px-4 py-3 lg:hidden">
+      <header className="sticky top-0 z-sticky flex items-center justify-between gap-2
+        bg-ink/95 px-4 py-3 backdrop-blur-md
+        shadow-[0_1px_0_rgb(255_255_255/0.07)] lg:hidden">
         {brand}
-        <div className="flex items-center gap-1">
-          <button onClick={() => setBuscador(true)} aria-label="Buscar" className="rounded-lg p-2 text-slate-200 hover:bg-white/10">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8" /><path d="m21 21-4.3-4.3" /></svg>
+        <div className="flex items-center gap-0.5">
+          <button onClick={() => setBuscador(true)} aria-label="Buscar"
+            className="grid h-touch w-touch place-items-center rounded-xl text-white/70
+              transition-colors duration-rapido active:bg-white/10">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><circle cx="11" cy="11" r="8" /><path d="m21 21-4.3-4.3" /></svg>
           </button>
-          <button onClick={() => setDrawer(true)} className="rounded-lg p-2 text-slate-200 hover:bg-white/10"><Icon.menu /></button>
+          <button onClick={() => setDrawer(true)} aria-label="Abrir menú"
+            className="relative grid h-touch w-touch place-items-center rounded-xl text-white/70
+              transition-colors duration-rapido active:bg-white/10">
+            <Icon.menu />
+            {/* Aviso de tareas pendientes también en móvil, donde el menú está oculto */}
+            {!!badges?.inbox && (
+              <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-brand-400 ring-2 ring-ink" aria-hidden />
+            )}
+          </button>
         </div>
       </header>
 
       {drawer && (
         <div className="fixed inset-0 z-40 lg:hidden">
           <div className="absolute inset-0 bg-ink/60 backdrop-blur-sm" onClick={() => setDrawer(false)} />
-          <div className="absolute inset-y-0 left-0 flex w-72 flex-col bg-ink p-3">
+          <div className="absolute inset-y-0 left-0 flex w-[17rem] animate-slide-in-right flex-col bg-ink p-3">
             <div className="flex items-center justify-between py-2">
               {brand}
               <button onClick={() => setDrawer(false)} className="rounded-lg p-2 text-slate-300 hover:bg-white/10"><Icon.close /></button>
             </div>
-            <div className="mt-3 flex-1 overflow-y-auto">{nav}</div>
+            <div className="mt-5 flex-1 overflow-y-auto pb-2">{nav}</div>
             <div className="pt-3 space-y-2">
               <div className="px-1"><ToggleTema /></div>
               {userFooter}
@@ -224,7 +284,7 @@ function AppShell() {
         </div>
       )}
 
-      <main className="flex-1 lg:pl-64">
+      <main className="flex-1 lg:pl-[15.5rem]">
         <div className="mx-auto max-w-5xl px-4 py-6 lg:px-8 lg:py-8">
           {activo !== 'inicio' && (
             <Breadcrumb
