@@ -33,7 +33,7 @@ export function PermisosPanel() {
 
       <div className="mb-3 flex items-center gap-4 text-xs text-content-muted">
         <span className="flex items-center gap-1.5"><span className="h-4 w-7 rounded-full bg-money-500" /> Permitido</span>
-        <span className="flex items-center gap-1.5"><span className="h-4 w-7 rounded-full bg-rose-500" /> Restringido</span>
+        <span className="flex items-center gap-1.5"><span className="h-4 w-7 rounded-full bg-estado-mora" /> Restringido</span>
       </div>
 
       {vista === 'roles' ? <MatrizRoles data={data} fijar={fijar} /> : <MatrizUsuario data={data} fijar={fijar} />}
@@ -114,7 +114,7 @@ function MatrizUsuario({ data, fijar }: { data: NonNullable<ReturnType<typeof us
   return (
     <div>
       <label className="mb-4 block text-sm">
-        <span className="mb-1 block text-slate-600">Usuario</span>
+        <span className="mb-1 block text-content-muted">Usuario</span>
         <select value={usuarioId ?? ''} onChange={(e) => setUsuarioId(e.target.value ? Number(e.target.value) : null)}
           className="input max-w-sm">
           <option value="">Selecciona un usuario…</option>
@@ -189,7 +189,7 @@ function Interruptor({ activo, onChange, deshabilitado }: { activo: boolean; onC
       onClick={() => onChange(!activo)}
       disabled={deshabilitado}
       title={activo ? 'Permitido — clic para desactivar' : 'Restringido — clic para activar'}
-      className={`relative inline-flex h-6 w-11 items-center rounded-full transition disabled:opacity-40 ${activo ? 'bg-money-500' : 'bg-rose-500'}`}
+      className={`relative inline-flex h-6 w-11 items-center rounded-full transition disabled:opacity-40 ${activo ? 'bg-money-500' : 'bg-estado-mora'}`}
       aria-pressed={activo}
     >
       <span className={`inline-block h-5 w-5 transform rounded-full bg-surface shadow transition ${activo ? 'translate-x-5' : 'translate-x-0.5'}`} />

@@ -244,7 +244,7 @@ export function ClienteForm({ onCreado, onCancelar, cliente }:
             {archivos.map((f, i) => (
               <li key={`${f.name}-${i}`} className="flex items-center justify-between rounded-lg bg-surface-2 px-3 py-2 text-sm ring-1 ring-border-token">
                 <span className="truncate">{f.name} <span className="text-content-muted">· {(f.size / 1024).toFixed(0)} KB</span></span>
-                <button type="button" onClick={() => quitarArchivo(i)} className="text-rose-600 hover:underline">Quitar</button>
+                <button type="button" onClick={() => quitarArchivo(i)} className="text-estado-mora hover:underline">Quitar</button>
               </li>
             ))}
           </ul>
@@ -284,7 +284,7 @@ function Seccion({ titulo, children }: { titulo: string; children: React.ReactNo
 function Campo({ label, req, error, children }: { label: string; req?: boolean; error?: string; children: React.ReactNode }) {
   return (
     <label className="block text-sm">
-      <span className="font-medium">{label}{req && <span className="text-rose-500"> *</span>}</span>
+      <span className="font-medium">{label}{req && <span className="text-estado-mora"> *</span>}</span>
       {children}
       {error && <span className="field-error">{error}</span>}
     </label>

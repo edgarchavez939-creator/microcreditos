@@ -48,8 +48,8 @@ export function AprobacionesPanel() {
       <p className="mb-5 text-sm text-content-muted">Revisa y resuelve las solicitudes que esperan tu decisión.</p>
 
       {aprobado && (
-        <div className="mb-5 flex flex-wrap items-center justify-between gap-3 rounded-xl bg-money-50 p-4 ring-1 ring-money-100">
-          <div className="text-sm text-money-700">
+        <div className="mb-5 flex flex-wrap items-center justify-between gap-3 rounded-xl bg-estado-activo-bg p-4 ring-1 ring-estado-activo/20">
+          <div className="text-sm text-estado-activo">
             <b>{aprobado.numero_credito ?? `Crédito #${aprobado.id}`}</b> aprobado. Envía las condiciones al cliente.
           </div>
           <div className="flex items-center gap-2">
@@ -111,7 +111,7 @@ function TarjetaAprobacion({ s, onAprobado }: { s: Solicitud; onAprobado: (s: So
           <div className="font-semibold">{s.numero_credito ?? `Crédito #${s.id}`} · {s.cliente ?? `Cliente ${s.cliente_id}`}</div>
           <EstadoBadge estado={s.estado} />
           {s.seguro_exonerado && (
-            <span className="ml-2 rounded-full bg-orange-100 px-2 py-0.5 text-xs text-orange-800">
+            <span className="ml-2 rounded-full bg-estado-pendiente-bg px-2 py-0.5 text-xs text-estado-pendiente">
               Seguro exonerado · requiere administrador
             </span>
           )}
@@ -129,7 +129,7 @@ function TarjetaAprobacion({ s, onAprobado }: { s: Solicitud; onAprobado: (s: So
       </dl>
 
       {!rechazando && (
-        <div className="mt-4 rounded-xl bg-brand-50 p-4 ring-1 ring-brand-100">
+        <div className="mt-4 rounded-xl bg-estado-info-bg p-4 ring-1 ring-estado-info/20">
           <label className="label">Capital a aprobar</label>
           <div className="max-w-xs">
             <InputMoneda valorPesos={montoAprobado} onChangePesos={(v) => setMontoAprobado(v ?? 0)} />
@@ -179,7 +179,7 @@ function TarjetaAprobacion({ s, onAprobado }: { s: Solicitud; onAprobado: (s: So
             <button
               onClick={() => { setError(null); rechazar.mutate({ id: s.id, motivo }, { onSuccess: () => toast.info('Solicitud rechazada.'), onError: err }); }}
               disabled={rechazar.isPending || motivo.trim().length < 5}
-              className="btn btn-sm bg-rose-600 text-white hover:bg-rose-700 disabled:opacity-50">
+              className="btn btn-sm bg-estado-mora text-white hover:bg-estado-mora disabled:opacity-50">
               {rechazar.isPending ? 'Rechazando…' : 'Confirmar rechazo'}
             </button>
             <button onClick={() => setRechazando(false)} className="btn-outline btn-sm">Cancelar</button>

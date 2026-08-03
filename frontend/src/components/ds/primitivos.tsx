@@ -83,7 +83,7 @@ export function AppCard({
     <Elemento
       onClick={onClick}
       className={`w-full rounded-2xl bg-surface text-left ring-1 ring-border-token
-        ${plano ? '' : 'shadow-card'}
+        ${plano ? '' : 'shadow-[0_1px_2px_rgb(24_28_48/0.04)]'}
         ${estado ? bandas[estado] : ''}
         ${onClick ? 'transition-shadow duration-rapido hover:shadow-soft focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand-500' : ''}
         ${className}`}
@@ -105,13 +105,13 @@ export function AppCard({
 // ─────────────────────────────────────────── AppChip / AppStatus
 
 const ESTADO_CHIP: Record<string, { cls: string; punto: string }> = {
-  activo:     { cls: 'bg-money-50 text-money-700 ring-money-100',           punto: 'bg-estado-activo' },
-  info:       { cls: 'bg-brand-50 text-brand-700 ring-brand-100',           punto: 'bg-estado-info' },
-  pendiente:  { cls: 'bg-amber-50 text-amber-800 ring-amber-200',           punto: 'bg-estado-pendiente' },
-  mora:       { cls: 'bg-rose-50 text-rose-700 ring-rose-200',              punto: 'bg-estado-mora' },
-  validacion: { cls: 'bg-violet-50 text-violet-700 ring-violet-200',        punto: 'bg-estado-validacion' },
-  inactivo:   { cls: 'bg-surface-3 text-content-muted ring-border-token',   punto: 'bg-estado-inactivo' },
-  bloqueado:  { cls: 'bg-slate-800 text-white ring-slate-700',              punto: 'bg-white/70' },
+  activo:     { cls: 'bg-estado-activo-bg text-estado-activo',         punto: 'bg-estado-activo' },
+  info:       { cls: 'bg-estado-info-bg text-estado-info',             punto: 'bg-estado-info' },
+  pendiente:  { cls: 'bg-estado-pendiente-bg text-estado-pendiente',   punto: 'bg-estado-pendiente' },
+  mora:       { cls: 'bg-estado-mora-bg text-estado-mora',             punto: 'bg-estado-mora' },
+  validacion: { cls: 'bg-estado-validacion-bg text-estado-validacion', punto: 'bg-estado-validacion' },
+  inactivo:   { cls: 'bg-estado-inactivo-bg text-estado-inactivo',     punto: 'bg-estado-inactivo' },
+  bloqueado:  { cls: 'bg-estado-bloqueado-bg text-estado-bloqueado',   punto: 'bg-estado-bloqueado' },
 };
 
 export type TonoEstado = keyof typeof ESTADO_CHIP;
@@ -123,7 +123,7 @@ export function AppChip({ children, tono = 'inactivo', punto = true, className =
   const e = ESTADO_CHIP[tono] ?? ESTADO_CHIP.inactivo;
   return (
     <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5
-      text-xs font-medium ring-1 ${e.cls} ${className}`}>
+      text-xs font-medium ${e.cls} ${className}`}>
       {punto && <span className={`h-1.5 w-1.5 rounded-full ${e.punto}`} aria-hidden />}
       {children}
     </span>
@@ -155,14 +155,14 @@ export function AppAlert({ children, tono = 'info', titulo, onCerrar }: {
   children: ReactNode; tono?: 'info' | 'activo' | 'pendiente' | 'mora'; titulo?: string; onCerrar?: () => void;
 }) {
   const tonos = {
-    info:      'bg-brand-50 text-brand-700 ring-brand-100',
-    activo:    'bg-money-50 text-money-700 ring-money-100',
-    pendiente: 'bg-amber-50 text-amber-900 ring-amber-200',
-    mora:      'bg-rose-50 text-rose-700 ring-rose-200',
+    info:      'bg-estado-info-bg text-estado-info',
+    activo:    'bg-estado-activo-bg text-estado-activo',
+    pendiente: 'bg-estado-pendiente-bg text-estado-pendiente',
+    mora:      'bg-estado-mora-bg text-estado-mora',
   };
   return (
     <div role={tono === 'mora' ? 'alert' : 'status'}
-      className={`flex items-start gap-3 rounded-xl px-4 py-3 text-sm ring-1 ${tonos[tono]}`}>
+      className={`flex items-start gap-3 rounded-xl px-4 py-3 text-sm ${tonos[tono]}`}>
       <div className="min-w-0 flex-1">
         {titulo && <p className="font-semibold">{titulo}</p>}
         <div className={titulo ? 'mt-0.5' : ''}>{children}</div>

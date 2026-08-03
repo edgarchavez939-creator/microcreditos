@@ -82,7 +82,7 @@ export function BuscadorClienteSolicitud() {
             <button onClick={reset} className="btn-ghost btn-sm">Cambiar</button>
           </div>
           {!cliente.activo && (
-            <p className="mt-2 rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-800 ring-1 ring-amber-100">
+            <p className="mt-2 rounded-lg bg-estado-pendiente-bg px-3 py-2 text-xs text-estado-pendiente ring-1 ring-estado-pendiente/20">
               Este cliente está inactivo. Actívalo antes de otorgarle un nuevo crédito.
             </p>
           )}
@@ -127,7 +127,7 @@ export function BuscadorClienteSolicitud() {
         </div>
       )}
       <label className="block text-sm">
-        <span className="mb-1 block text-slate-600">Número de documento del cliente</span>
+        <span className="mb-1 block text-content-muted">Número de documento del cliente</span>
         <div className="flex gap-2">
           <input
             value={documento}
@@ -146,7 +146,7 @@ export function BuscadorClienteSolicitud() {
 
       {noExiste && (
         <div className="mt-3 rounded-xl bg-surface-2 p-4 text-sm ring-1 ring-border-token">
-          <p className="text-slate-600">No hay ningún cliente con el documento <b>{documento}</b>.</p>
+          <p className="text-content-muted">No hay ningún cliente con el documento <b>{documento}</b>.</p>
           <button onClick={() => setCrear(true)} className="btn-primary btn-sm mt-2">
             Registrar cliente nuevo
           </button>

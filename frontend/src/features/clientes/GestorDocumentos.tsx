@@ -65,7 +65,7 @@ export function GestorDocumentos({ clienteId }: { clienteId: number }) {
       {/* Subir nuevo */}
       <div className="mb-4 flex flex-wrap items-end gap-2 rounded-xl bg-surface-2 p-3 ring-1 ring-border-token">
         <label className="text-sm">
-          <span className="mb-1 block text-slate-600">Categoría</span>
+          <span className="mb-1 block text-content-muted">Categoría</span>
           <select value={categoria} onChange={(e) => setCategoria(e.target.value)} className="input">
             {CATEGORIAS.map((c) => <option key={c.v} value={c.v}>{c.t}</option>)}
           </select>
@@ -77,7 +77,7 @@ export function GestorDocumentos({ clienteId }: { clienteId: number }) {
           {subir.isPending ? 'Subiendo…' : 'Subir documento'}
         </button>
       </div>
-      {error && <p className="mb-2 text-xs text-rose-600">{error}</p>}
+      {error && <p className="mb-2 text-xs text-estado-mora">{error}</p>}
 
       {isLoading ? (
         <p className="text-sm text-content-muted">Cargando documentos…</p>
@@ -149,21 +149,21 @@ function FilaDocumento({ clienteId, doc }: { clienteId: number; doc: DocumentoMe
           <input ref={inputReemplazo} type="file" accept="image/*,application/pdf" className="hidden"
             onChange={(e) => { const f = e.target.files?.[0]; if (f) onReemplazar(f); e.target.value = ''; }} />
           <button onClick={() => inputReemplazo.current?.click()} disabled={reemplazar.isPending}
-            className="font-medium text-amber-600 hover:underline disabled:opacity-50">
+            className="font-medium text-estado-pendiente hover:underline disabled:opacity-50">
             {reemplazar.isPending ? '…' : 'Reemplazar'}
           </button>
           {!confirmar ? (
-            <button onClick={() => setConfirmar(true)} className="font-medium text-rose-600 hover:underline">Eliminar</button>
+            <button onClick={() => setConfirmar(true)} className="font-medium text-estado-mora hover:underline">Eliminar</button>
           ) : (
             <span className="flex items-center gap-1">
               <button onClick={() => eliminar.mutate(doc.id)} disabled={eliminar.isPending}
-                className="font-medium text-rose-700 hover:underline">Confirmar</button>
+                className="font-medium text-estado-mora hover:underline">Confirmar</button>
               <button onClick={() => setConfirmar(false)} className="text-content-muted hover:underline">✕</button>
             </span>
           )}
         </div>
       </div>
-      {error && <p className="mt-1 text-xs text-rose-600">{error}</p>}
+      {error && <p className="mt-1 text-xs text-estado-mora">{error}</p>}
     </li>
   );
 }

@@ -68,10 +68,10 @@ export function ClientesList({ onNuevo, onVerPerfil }: { onNuevo: () => void; on
                     <div className="truncate font-semibold text-ink">{c.nombres} {c.apellidos}</div>
                     <div className="mt-0.5 text-xs text-content-muted">{c.tipo_documento} {c.numero_documento}</div>
                   </div>
-                  <span className="shrink-0 rounded-full bg-surface-3 px-2 py-0.5 text-xs text-slate-600">{c.area ?? 'Sin área'}</span>
+                  <span className="shrink-0 rounded-full bg-surface-3 px-2 py-0.5 text-xs text-content-muted">{c.area ?? 'Sin área'}</span>
                 </div>
                 <div className="mt-2 flex items-center justify-between text-sm">
-                  <span className="text-slate-600">{c.telefono_principal ?? 'Sin teléfono'}</span>
+                  <span className="text-content-muted">{c.telefono_principal ?? 'Sin teléfono'}</span>
                   {c.latitud && c.longitud && (
                     <a onClick={(e) => e.stopPropagation()} className="font-medium text-brand" target="_blank" rel="noreferrer"
                       href={`https://www.google.com/maps?q=${c.latitud},${c.longitud}`}>Ver en mapa</a>

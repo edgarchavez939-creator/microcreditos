@@ -87,8 +87,8 @@ export function ProductosFinancieros() {
                 {p.usa_tasa && <span className="rounded-full bg-brand-50 px-2 py-0.5 text-brand-700">Tasa {Number(p.tasa_defecto) * 100}%</span>}
                 {p.usa_seguro && <span className="rounded-full bg-brand-50 px-2 py-0.5 text-brand-700">Seguro {Number(p.seguro_defecto) * 100}%</span>}
                 {p.usa_valor_pactado && <span className="rounded-full bg-money-50 px-2 py-0.5 text-money-700">Valor pactado</span>}
-                {p.aprobacion_automatica && <span className="rounded-full bg-amber-50 px-2 py-0.5 text-amber-800">Aprobación automática</span>}
-                {p.requiere_administrador && <span className="rounded-full bg-amber-50 px-2 py-0.5 text-amber-800">Requiere administrador</span>}
+                {p.aprobacion_automatica && <span className="rounded-full bg-estado-pendiente-bg px-2 py-0.5 text-estado-pendiente">Aprobación automática</span>}
+                {p.requiere_administrador && <span className="rounded-full bg-estado-pendiente-bg px-2 py-0.5 text-estado-pendiente">Requiere administrador</span>}
                 <span className="rounded-full bg-surface-3 px-2 py-0.5 text-content-muted">
                   Capital {money(p.capital_minimo)}–{money(p.capital_maximo)}
                 </span>

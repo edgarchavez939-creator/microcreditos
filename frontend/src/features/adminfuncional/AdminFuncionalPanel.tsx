@@ -254,7 +254,7 @@ function Mantenimiento() {
   if (!est) return <p className="text-sm text-content-muted">Cargando…</p>;
   return (
     <div className="card card-pad max-w-xl space-y-4">
-      <div className={`rounded-xl px-3.5 py-2.5 text-sm ${est.activo ? 'bg-amber-50 text-amber-800 ring-1 ring-amber-100' : 'bg-money-50 text-money-700 ring-1 ring-money-100'}`}>
+      <div className={`rounded-xl px-3.5 py-2.5 text-sm ${est.activo ? 'bg-estado-pendiente-bg text-estado-pendiente ring-1 ring-estado-pendiente/20' : 'bg-money-50 text-money-700 ring-1 ring-money-100'}`}>
         Estado actual: <b>{est.activo ? 'EN MANTENIMIENTO' : 'Operativo'}</b>
       </div>
       <label className="flex items-center gap-2 text-sm">

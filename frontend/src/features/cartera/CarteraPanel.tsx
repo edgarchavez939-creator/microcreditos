@@ -107,7 +107,7 @@ function CreditoCard({ c }: { c: Solicitud }) {
           <div className="flex items-center gap-2">
             <EstadoBadge estado={c.estado} />
             {c.credito_origen && (
-              <span className="rounded-full bg-violet-100 px-2 py-0.5 text-xs text-violet-800">
+              <span className="rounded-full bg-estado-validacion-bg px-2 py-0.5 text-xs text-estado-validacion">
                 Renovación de {c.credito_origen}
               </span>
             )}
@@ -160,12 +160,12 @@ function CreditoCard({ c }: { c: Solicitud }) {
       {esPagable && (
         <div className="mt-3 border-t border-border-token pt-3">
           {!anulandoDes ? (
-            <button onClick={() => setAnulandoDes(true)} className="text-xs text-rose-600 hover:underline">
+            <button onClick={() => setAnulandoDes(true)} className="text-xs text-estado-mora hover:underline">
               Anular desembolso
             </button>
           ) : (
-            <div className="rounded-xl bg-rose-50 p-3 ring-1 ring-rose-100">
-              <p className="mb-2 text-xs text-rose-700">
+            <div className="rounded-xl bg-estado-mora-bg p-3 ring-1 ring-estado-mora/20">
+              <p className="mb-2 text-xs text-estado-mora">
                 El efectivo volverá a tu caja, se borrará el plan de pagos y el crédito quedará APROBADO.
                 Solo es posible si el crédito no tiene pagos registrados.
               </p>
@@ -196,7 +196,7 @@ function CreditoCard({ c }: { c: Solicitud }) {
           <button onClick={() => setAbierto(!abierto)}
             className={`inline-flex items-center gap-1.5 rounded-lg px-3.5 py-2 text-sm font-medium transition ${
               abierto
-                ? 'bg-surface-3 text-slate-600 hover:bg-slate-200'
+                ? 'bg-surface-3 text-content-muted hover:bg-slate-200'
                 : 'bg-brand-500 text-white shadow-card hover:bg-brand-600'
             }`}>
             {abierto ? (
@@ -212,7 +212,7 @@ function CreditoCard({ c }: { c: Solicitud }) {
       {rolActual === 'ADMINISTRADOR' && (
         <div className="mt-4 border-t border-slate-100 pt-3">
           {!borrando ? (
-            <button onClick={() => { setError(null); setBorrando(true); }} className="text-xs text-rose-600 hover:underline">
+            <button onClick={() => { setError(null); setBorrando(true); }} className="text-xs text-estado-mora hover:underline">
               Eliminar crédito
             </button>
           ) : (
@@ -316,7 +316,7 @@ function FichaCredito({ creditoId }: { creditoId: number }) {
       <div>
         <h4 className="mb-2 text-sm font-semibold text-content">Plan de pagos</h4>
         {sinCuotas ? (
-          <div className="rounded-xl bg-amber-50 px-3.5 py-2.5 text-sm text-amber-800 ring-1 ring-amber-100">
+          <div className="rounded-xl bg-estado-pendiente-bg px-3.5 py-2.5 text-sm text-estado-pendiente ring-1 ring-estado-pendiente/20">
             <p>Este crédito no tiene cuotas generadas.</p>
             {puedeGenerar && (
               <button onClick={() => {
@@ -334,7 +334,7 @@ function FichaCredito({ creditoId }: { creditoId: number }) {
               </button>
             )}
             {error && <p className="mt-2 alert-error">{error}</p>}
-            {msg && <p className="mt-2 text-sm text-green-700">{msg}</p>}
+            {msg && <p className="mt-2 text-sm text-estado-activo">{msg}</p>}
           </div>
         ) : (
         <div className="table-wrap">
@@ -401,7 +401,7 @@ function FichaCredito({ creditoId }: { creditoId: number }) {
               <input value={referencia} onChange={(e) => setReferencia(e.target.value)}
                 placeholder="N° de referencia" className="input max-w-[190px] py-1.5 text-sm" />
             </div>
-            <label className="inline-flex cursor-pointer items-center gap-2 rounded-lg px-3 py-1.5 text-xs font-medium text-brand ring-1 ring-brand-200 hover:bg-brand-50">
+            <label className="inline-flex cursor-pointer items-center gap-2 rounded-lg px-3 py-1.5 text-xs font-medium text-brand ring-1 ring-brand-200 hover:bg-estado-info-bg">
               {comprobante ? 'Cambiar comprobante' : 'Adjuntar comprobante (imagen, máx 2 MB)'}
               <input type="file" accept="image/jpeg,image/png,image/webp" className="hidden"
                 onChange={(e) => setComprobante(e.target.files?.[0] ?? null)} />
@@ -410,8 +410,8 @@ function FichaCredito({ creditoId }: { creditoId: number }) {
           </div>
         )}
 
-        {msg && <p className="mt-2 text-sm text-green-700">{msg}</p>}
-        {error && <p className="mt-2 text-sm text-red-700">{error}</p>}
+        {msg && <p className="mt-2 text-sm text-estado-activo">{msg}</p>}
+        {error && <p className="mt-2 text-sm text-estado-mora">{error}</p>}
         <p className="mt-1 text-xs text-content-muted">El pago se aplica a las cuotas pendientes, de la más antigua a la más reciente.</p>
       </div>
 
@@ -438,7 +438,7 @@ function FichaCredito({ creditoId }: { creditoId: number }) {
                     <td className="px-3 py-2">
                       {p.metodo}
                       {p.aplicado === false && (
-                        <span className="ml-1.5 rounded-full bg-amber-50 px-2 py-0.5 text-[11px] text-amber-800 ring-1 ring-amber-100">
+                        <span className="ml-1.5 rounded-full bg-estado-pendiente-bg px-2 py-0.5 text-[11px] text-estado-pendiente ring-1 ring-estado-pendiente/20">
                           En validación
                         </span>
                       )}
@@ -473,8 +473,8 @@ function Item({ label, value }: { label: string; value: string }) {
 }
 
 const EVENTO_COLOR: Record<string, string> = {
-  CREACION: 'bg-slate-400', APROBACION: 'bg-brand', RECHAZO: 'bg-rose-500',
-  DESEMBOLSO: 'bg-money-600', PAGO: 'bg-money-600', REAMORTIZACION: 'bg-amber-500', CIERRE: 'bg-ink',
+  CREACION: 'bg-slate-400', APROBACION: 'bg-brand', RECHAZO: 'bg-estado-mora',
+  DESEMBOLSO: 'bg-money-600', PAGO: 'bg-money-600', REAMORTIZACION: 'bg-estado-pendiente', CIERRE: 'bg-ink',
 };
 
 function HistorialCredito({ creditoId }: { creditoId: number }) {
@@ -499,7 +499,7 @@ function HistorialCredito({ creditoId }: { creditoId: number }) {
                 <li key={i} className="relative">
                   <span className={`absolute -left-[27px] top-1 h-3 w-3 rounded-full ring-4 ring-white ${EVENTO_COLOR[e.tipo] ?? 'bg-slate-400'}`} />
                   <div className="text-sm font-semibold text-content-strong">{e.titulo}</div>
-                  {e.detalle && <div className="text-sm text-slate-600">{e.detalle}</div>}
+                  {e.detalle && <div className="text-sm text-content-muted">{e.detalle}</div>}
                   <div className="mt-0.5 text-xs text-content-muted">
                     {fechaHora(e.fecha)}{e.usuario ? ` · ${e.usuario}` : ''}
                   </div>
@@ -526,13 +526,13 @@ function AccionesPago({ p, credito, creditoId }:
     <div className="flex flex-col items-end gap-1">
       <div className="flex gap-1.5 whitespace-nowrap">
         {wa && (
-          <a href={wa} target="_blank" rel="noreferrer" className="text-xs font-medium text-money-700 hover:underline">
+          <a href={wa} target="_blank" rel="noreferrer" className="text-xs font-medium text-estado-activo hover:underline">
             Recibo
           </a>
         )}
         {rol === 'ADMINISTRADOR' && !pidiendo && (
           <button onClick={() => { setErr(null); setPidiendo(true); }}
-            className="text-xs text-rose-600 hover:underline">Anular</button>
+            className="text-xs text-estado-mora hover:underline">Anular</button>
         )}
       </div>
       {pidiendo && (
@@ -551,7 +551,7 @@ function AccionesPago({ p, credito, creditoId }:
           onCancelar={() => setPidiendo(false)}
         />
       )}
-      {err && <span className="text-[11px] text-rose-600">{err}</span>}
+      {err && <span className="text-[11px] text-estado-mora">{err}</span>}
     </div>
   );
 }
@@ -600,7 +600,7 @@ function ExtractoPdf({ credito }: { credito: Solicitud }) {
           <Icon.transferencias /> Enviar extracto por WhatsApp
         </button>
       </div>
-      {error && <p className="mt-2 text-xs text-rose-600">{error}</p>}
+      {error && <p className="mt-2 text-xs text-estado-mora">{error}</p>}
     </div>
   );
 }

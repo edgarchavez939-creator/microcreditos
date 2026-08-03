@@ -25,8 +25,8 @@ interface Scoring {
 const NIVEL_INFO: Record<string, { cls: string; barra: string }> = {
   EXCELENTE: { cls: 'bg-money-50 text-money-700 ring-money-100', barra: 'bg-money-500' },
   BUENO: { cls: 'bg-brand-50 text-brand-700 ring-brand-100', barra: 'bg-brand-500' },
-  REGULAR: { cls: 'bg-amber-50 text-amber-800 ring-amber-100', barra: 'bg-amber-500' },
-  RIESGOSO: { cls: 'bg-rose-50 text-rose-700 ring-rose-100', barra: 'bg-rose-500' },
+  REGULAR: { cls: 'bg-estado-pendiente-bg text-estado-pendiente ring-estado-pendiente/20', barra: 'bg-estado-pendiente' },
+  RIESGOSO: { cls: 'bg-estado-mora-bg text-estado-mora ring-estado-mora/20', barra: 'bg-estado-mora' },
 };
 
 /** Evaluación de renovación con scoring de comportamiento de pago. */

@@ -288,7 +288,7 @@ function AsistenteImportacion() {
             ))}
           </div>
           {faltanObligatorios.length > 0 && (
-            <p className="mt-3 text-xs text-amber-700">
+            <p className="mt-3 text-xs text-estado-pendiente">
               Faltan campos obligatorios por mapear: {faltanObligatorios.map((c) => ETIQUETAS_CAMPO[c]).join(', ')}
             </p>
           )}
@@ -355,8 +355,8 @@ function AsistenteImportacion() {
               {[
                 ['Registros', resumen.total, ''],
                 ['Válidos', resumen.validos, 'text-money-700'],
-                ['Con advertencias', resumen.con_advertencias, 'text-amber-700'],
-                ['Con errores', resumen.con_errores, 'text-rose-600'],
+                ['Con advertencias', resumen.con_advertencias, 'text-estado-pendiente'],
+                ['Con errores', resumen.con_errores, 'text-estado-mora'],
                 ['Clientes a crear', resumen.clientes_a_crear, ''],
                 ['Clientes a completar', resumen.clientes_a_actualizar, ''],
                 ['Créditos a crear', resumen.creditos_a_crear, 'text-brand-700'],
@@ -401,7 +401,7 @@ function AsistenteImportacion() {
                     return (
                       <tr key={r.fila} className="border-t border-border-token">
                         <td className="py-1 pr-3">{r.fila}</td>
-                        <td className={`py-1 pr-3 font-medium ${r.resultado === 'ERROR' ? 'text-rose-600' : r.resultado === 'ADVERTENCIA' ? 'text-amber-700' : 'text-money-700'}`}>{r.resultado}</td>
+                        <td className={`py-1 pr-3 font-medium ${r.resultado === 'ERROR' ? 'text-estado-mora' : r.resultado === 'ADVERTENCIA' ? 'text-estado-pendiente' : 'text-money-700'}`}>{r.resultado}</td>
                         <td className="py-1 pr-3">{String(d.numero_documento ?? '')}</td>
                         <td className="py-1 pr-3">{String(d.nombres ?? '')} {String(d.apellidos ?? '')}</td>
                         <td className="py-1 pr-3 tabular-nums">{money(Number(d.saldo_pendiente ?? 0))}</td>
@@ -448,7 +448,7 @@ function AsistenteImportacion() {
                 <tr key={l.id} className="border-t border-border-token">
                   <td className="py-1 pr-3">{fecha(l.created_at)}</td>
                   <td className="py-1 pr-3">{l.nombre_archivo}</td>
-                  <td className={`py-1 pr-3 font-medium ${l.estado === 'IMPORTADA' ? 'text-money-700' : 'text-amber-700'}`}>{l.estado}</td>
+                  <td className={`py-1 pr-3 font-medium ${l.estado === 'IMPORTADA' ? 'text-money-700' : 'text-estado-pendiente'}`}>{l.estado}</td>
                   <td className="py-1 pr-3">{l.total_registros}</td>
                   <td className="py-1 pr-3">{l.validos}</td>
                   <td className="py-1 pr-3">{l.con_errores}</td>

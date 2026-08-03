@@ -1,30 +1,56 @@
-import type { EstadoSolicitud } from '@/types';
+import { EstadoSolicitud } from '@/types';
 
-// color del punto + fondo/textos suaves por estado
-const estilos: Record<string, { wrap: string; dot: string }> = {
-  BORRADOR:                { wrap: 'bg-surface-3 text-slate-600', dot: 'bg-slate-400' },
-  PENDIENTE_SUPERVISOR:    { wrap: 'bg-amber-50 text-amber-700 ring-1 ring-amber-200', dot: 'bg-amber-500' },
-  PENDIENTE_ADMINISTRADOR: { wrap: 'bg-orange-50 text-orange-700 ring-1 ring-orange-200', dot: 'bg-orange-500' },
-  APROBADO:                { wrap: 'bg-brand-50 text-brand-700 ring-1 ring-brand-100', dot: 'bg-brand-500' },
-  RECHAZADO:               { wrap: 'bg-rose-50 text-rose-700 ring-1 ring-rose-200', dot: 'bg-rose-500' },
-  DESEMBOLSADO:            { wrap: 'bg-indigo-50 text-indigo-700 ring-1 ring-indigo-200', dot: 'bg-indigo-500' },
-  ACTIVO:                  { wrap: 'bg-money-50 text-money-700 ring-1 ring-money-100', dot: 'bg-money-500' },
-  MIGRADO:                 { wrap: 'bg-cyan-50 text-cyan-700 ring-1 ring-cyan-200', dot: 'bg-cyan-500' },
-  EN_MORA:                 { wrap: 'bg-amber-50 text-amber-800 ring-1 ring-amber-200', dot: 'bg-amber-600' },
-  PAGADO:                  { wrap: 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200', dot: 'bg-emerald-500' },
-  FINALIZADO:              { wrap: 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200', dot: 'bg-emerald-500' },
-  REAMORTIZADO:            { wrap: 'bg-violet-50 text-violet-700 ring-1 ring-violet-200', dot: 'bg-violet-500' },
-  REFINANCIADO:            { wrap: 'bg-purple-50 text-purple-700 ring-1 ring-purple-200', dot: 'bg-purple-500' },
-  CANCELADO:               { wrap: 'bg-surface-3 text-slate-600', dot: 'bg-slate-400' },
-  CASTIGADO:               { wrap: 'bg-rose-100 text-rose-800', dot: 'bg-rose-600' },
+/**
+ * ESTADO DEL CRÉDITO.
+ *
+ * Los quince estados del negocio se expresan con solo SIETE colores, los mismos
+ * de toda la plataforma. Antes cada estado tenía su propio tono (ámbar, naranja,
+ * índigo, cian, violeta, púrpura…) y una lista de créditos parecía un semáforo
+ * roto: el usuario terminaba leyendo cada etiqueta igualmente.
+ *
+ * Ahora el color responde a una sola pregunta —¿esto está bien, requiere acción,
+ * o está cerrado?— y el texto precisa el resto.
+ */
+
+type Tono = 'activo' | 'info' | 'pendiente' | 'mora' | 'validacion' | 'inactivo' | 'bloqueado';
+
+const TONOS: Record<Tono, string> = {
+  activo:     'bg-estado-activo-bg text-estado-activo',
+  info:       'bg-estado-info-bg text-estado-info',
+  pendiente:  'bg-estado-pendiente-bg text-estado-pendiente',
+  mora:       'bg-estado-mora-bg text-estado-mora',
+  validacion: 'bg-estado-validacion-bg text-estado-validacion',
+  inactivo:   'bg-estado-inactivo-bg text-estado-inactivo',
+  bloqueado:  'bg-estado-bloqueado-bg text-estado-bloqueado',
+};
+
+/** Cada estado del negocio con su significado visual y su nombre legible. */
+const ESTADOS: Record<string, { tono: Tono; texto: string }> = {
+  BORRADOR:                { tono: 'inactivo',   texto: 'Borrador' },
+  PENDIENTE_SUPERVISOR:    { tono: 'pendiente',  texto: 'Espera supervisor' },
+  PENDIENTE_ADMINISTRADOR: { tono: 'pendiente',  texto: 'Espera administrador' },
+  APROBADO:                { tono: 'info',       texto: 'Aprobado' },
+  RECHAZADO:               { tono: 'mora',       texto: 'Rechazado' },
+  DESEMBOLSADO:            { tono: 'info',       texto: 'Desembolsado' },
+  ACTIVO:                  { tono: 'activo',     texto: 'Al día' },
+  MIGRADO:                 { tono: 'validacion', texto: 'Migrado' },
+  EN_MORA:                 { tono: 'mora',       texto: 'En mora' },
+  PAGADO:                  { tono: 'activo',     texto: 'Pagado' },
+  FINALIZADO:              { tono: 'activo',     texto: 'Finalizado' },
+  REAMORTIZADO:            { tono: 'validacion', texto: 'Reamortizado' },
+  REFINANCIADO:            { tono: 'validacion', texto: 'Refinanciado' },
+  CANCELADO:               { tono: 'inactivo',   texto: 'Cancelado' },
+  CASTIGADO:               { tono: 'bloqueado',  texto: 'Castigado' },
 };
 
 export function EstadoBadge({ estado }: { estado: EstadoSolicitud }) {
-  const s = estilos[estado] ?? estilos.BORRADOR;
+  const e = ESTADOS[estado] ?? { tono: 'inactivo' as Tono, texto: String(estado).replace(/_/g, ' ') };
+
   return (
-    <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium ${s.wrap}`}>
-      <span className={`h-1.5 w-1.5 rounded-full ${s.dot}`} />
-      {estado.replace(/_/g, ' ')}
+    <span className={`inline-flex items-center gap-1.5 whitespace-nowrap rounded-full
+      px-2.5 py-1 text-xs font-medium ${TONOS[e.tono]}`}>
+      <span className="h-1.5 w-1.5 rounded-full bg-current opacity-60" aria-hidden />
+      {e.texto}
     </span>
   );
 }

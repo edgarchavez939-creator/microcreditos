@@ -23,9 +23,9 @@ interface Inbox {
 }
 
 const TONO: Record<string, { chip: string; punto: string }> = {
-  atencion: { chip: 'bg-amber-100 text-amber-800', punto: 'bg-amber-500' },
-  info: { chip: 'bg-sky-100 text-sky-700', punto: 'bg-sky-500' },
-  alerta: { chip: 'bg-rose-100 text-rose-700', punto: 'bg-rose-500' },
+  atencion: { chip: 'bg-estado-pendiente-bg text-estado-pendiente', punto: 'bg-estado-pendiente' },
+  info: { chip: 'bg-estado-info-bg text-estado-info', punto: 'bg-estado-info' },
+  alerta: { chip: 'bg-estado-mora-bg text-estado-mora', punto: 'bg-estado-mora' },
 };
 
 /**

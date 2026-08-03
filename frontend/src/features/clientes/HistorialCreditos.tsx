@@ -30,10 +30,10 @@ const VIGENTES = ['ACTIVO', 'DESEMBOLSADO', 'EN_MORA', 'MIGRADO', 'APROBADO'];
 
 function etiquetaEstado(c: CreditoHistorial): { txt: string; cls: string } {
   if (c.es_ultimo_pagado) return { txt: 'Último crédito cancelado', cls: 'bg-money-50 text-money-700 ring-money-100' };
-  if (c.estado === 'PAGADO') return { txt: 'Crédito cancelado', cls: 'bg-surface-3 text-slate-600 ring-border-token' };
+  if (c.estado === 'PAGADO') return { txt: 'Crédito cancelado', cls: 'bg-surface-3 text-content-muted ring-border-token' };
   if (VIGENTES.includes(c.estado)) return { txt: 'Crédito vigente', cls: 'bg-brand-50 text-brand-700 ring-brand-100' };
-  if (c.estado === 'RECHAZADO') return { txt: 'Rechazado', cls: 'bg-rose-50 text-rose-700 ring-rose-100' };
-  return { txt: c.estado.replaceAll('_', ' ').toLowerCase(), cls: 'bg-amber-50 text-amber-800 ring-amber-100' };
+  if (c.estado === 'RECHAZADO') return { txt: 'Rechazado', cls: 'bg-estado-mora-bg text-estado-mora ring-estado-mora/20' };
+  return { txt: c.estado.replaceAll('_', ' ').toLowerCase(), cls: 'bg-estado-pendiente-bg text-estado-pendiente ring-estado-pendiente/20' };
 }
 
 /** HISTORIAL DE CRÉDITOS: todos los créditos del cliente, de cualquier estado. */

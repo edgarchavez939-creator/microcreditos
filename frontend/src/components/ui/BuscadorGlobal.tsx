@@ -14,8 +14,8 @@ interface Resultado {
 const TIPO_META: Record<string, { label: string; color: string }> = {
   cliente:  { label: 'Cliente', color: 'bg-brand-100 text-brand-700' },
   credito:  { label: 'Crédito', color: 'bg-money-100 text-money-700' },
-  usuario:  { label: 'Usuario', color: 'bg-amber-100 text-amber-800' },
-  producto: { label: 'Producto', color: 'bg-sky-100 text-sky-700' },
+  usuario:  { label: 'Usuario', color: 'bg-estado-pendiente-bg text-estado-pendiente' },
+  producto: { label: 'Producto', color: 'bg-estado-info-bg text-estado-info' },
 };
 
 /**

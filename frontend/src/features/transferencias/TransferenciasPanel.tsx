@@ -118,14 +118,14 @@ function TarjetaTransferencia({ t }: { t: Transferencia }) {
             <div className="mt-1 text-xs text-money-700">Aprobada{t.validado_por ? ` por ${t.validado_por}` : ''}{t.validado_at ? ` · ${fechaHora(t.validado_at)}` : ''}</div>
           )}
           {t.estado === 'RECHAZADO' && (
-            <div className="mt-1 text-xs text-rose-600">Rechazada{t.validado_por ? ` por ${t.validado_por}` : ''}: {t.motivo_rechazo}</div>
+            <div className="mt-1 text-xs text-estado-mora">Rechazada{t.validado_por ? ` por ${t.validado_por}` : ''}: {t.motivo_rechazo}</div>
           )}
         </div>
         <div className="text-right">
           <div className="font-display text-xl font-bold">{money(t.valor)}</div>
           <span className={`rounded-full px-2 py-0.5 text-xs ${
-            pendiente ? 'bg-amber-50 text-amber-800' :
-            t.estado === 'APROBADO' ? 'bg-money-50 text-money-700' : 'bg-rose-50 text-rose-700'
+            pendiente ? 'bg-estado-pendiente-bg text-estado-pendiente' :
+            t.estado === 'APROBADO' ? 'bg-money-50 text-money-700' : 'bg-estado-mora-bg text-estado-mora'
           }`}>
             {pendiente ? 'Pendiente' : t.estado === 'APROBADO' ? 'Aprobada' : 'Rechazada'}
           </span>
@@ -141,7 +141,7 @@ function TarjetaTransferencia({ t }: { t: Transferencia }) {
             {cargandoComp ? (
               <p className="text-sm text-content-muted">Cargando comprobante…</p>
             ) : sinComp || !comprobante ? (
-              <p className="text-sm text-amber-700">Esta transferencia no tiene comprobante adjunto.</p>
+              <p className="text-sm text-estado-pendiente">Esta transferencia no tiene comprobante adjunto.</p>
             ) : (
               <div>
                 <img src={`data:${comprobante.mime};base64,${comprobante.base64}`} alt={comprobante.nombre}
@@ -182,7 +182,7 @@ function TarjetaTransferencia({ t }: { t: Transferencia }) {
             <div className="flex gap-2">
               <button onClick={() => { setError(null); rechazar.mutate(); }}
                 disabled={rechazar.isPending || motivo.trim().length < 5}
-                className="btn btn-sm bg-rose-600 text-white hover:bg-rose-700 disabled:opacity-50">
+                className="btn btn-sm bg-estado-mora text-white hover:bg-estado-mora disabled:opacity-50">
                 {rechazar.isPending ? 'Rechazando…' : 'Confirmar rechazo'}
               </button>
               <button onClick={() => setRechazando(false)} className="btn-outline btn-sm">Cancelar</button>

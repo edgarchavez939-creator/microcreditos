@@ -26,10 +26,10 @@ interface EstadoGeneral {
 }
 
 const ESTADO_INFO: Record<string, { txt: string; cls: string }> = {
-  CERRADA: { txt: 'Cerrada', cls: 'bg-surface-3 text-slate-600' },
-  PENDIENTE_ENTREGA: { txt: 'Pendiente de entrega', cls: 'bg-amber-50 text-amber-800' },
-  RECIBIDA: { txt: 'Recibida', cls: 'bg-money-50 text-money-700' },
-  CONSOLIDADA: { txt: 'Consolidada', cls: 'bg-brand-50 text-brand-700' },
+  CERRADA: { txt: 'Cerrada', cls: 'bg-surface-3 text-content-muted' },
+  PENDIENTE_ENTREGA: { txt: 'Pendiente de entrega', cls: 'bg-estado-pendiente-bg text-estado-pendiente' },
+  RECIBIDA: { txt: 'Recibida', cls: 'bg-estado-activo-bg text-estado-activo' },
+  CONSOLIDADA: { txt: 'Consolidada', cls: 'bg-estado-info-bg text-brand-700' },
 };
 
 interface CajasPendientes {
@@ -91,7 +91,7 @@ export function CajaGeneralPanel() {
           <h3 className="mb-3 text-sm font-semibold text-content">Cajas pendientes · seguimiento del día</h3>
           <div className="grid gap-4 lg:grid-cols-3">
             <div>
-              <div className="mb-1.5 text-xs font-medium uppercase tracking-wide text-rose-600">
+              <div className="mb-1.5 text-xs font-medium uppercase tracking-wide text-estado-mora">
                 Sin abrir hoy ({pend.sin_abrir.length})
               </div>
               {pend.sin_abrir.length === 0
@@ -101,7 +101,7 @@ export function CajaGeneralPanel() {
                   ))}
             </div>
             <div>
-              <div className="mb-1.5 text-xs font-medium uppercase tracking-wide text-amber-700">
+              <div className="mb-1.5 text-xs font-medium uppercase tracking-wide text-estado-pendiente">
                 Abiertas sin cerrar ({pend.abiertas.length})
               </div>
               {pend.abiertas.length === 0
@@ -126,7 +126,7 @@ export function CajaGeneralPanel() {
                       {x.nombre}
                       <span className="ml-1.5 text-xs text-content-muted">
                         {fecha(x.fecha)} · {money(x.efectivo_esperado)}
-                        {Math.abs(x.diferencia ?? 0) >= 0.01 && <b className={x.diferencia < 0 ? ' text-rose-600' : ' text-amber-700'}> · dif {money(x.diferencia)}</b>}
+                        {Math.abs(x.diferencia ?? 0) >= 0.01 && <b className={x.diferencia < 0 ? ' text-estado-mora' : ' text-estado-pendiente'}> · dif {money(x.diferencia)}</b>}
                       </span>
                     </div>
                   ))}
@@ -141,10 +141,10 @@ export function CajaGeneralPanel() {
       {/* Conteo de cajas por estado */}
       <div className="mb-5 grid grid-cols-2 gap-3 sm:grid-cols-5">
         {[
-          ['Abiertas', c.abiertas, 'text-slate-600'],
-          ['Cerradas', c.cerradas, 'text-slate-600'],
-          ['Pendientes', c.pendientes, 'text-amber-700'],
-          ['Recibidas', c.recibidas, 'text-money-700'],
+          ['Abiertas', c.abiertas, 'text-content-muted'],
+          ['Cerradas', c.cerradas, 'text-content-muted'],
+          ['Pendientes', c.pendientes, 'text-estado-pendiente'],
+          ['Recibidas', c.recibidas, 'text-estado-activo'],
           ['Consolidadas', c.consolidadas, 'text-brand-700'],
         ].map(([label, val, cls]) => (
           <div key={label as string} className="card card-pad text-center">
@@ -181,13 +181,13 @@ export function CajaGeneralPanel() {
                   ({t.cajas_con_faltante ?? 0} faltante(s) · {t.cajas_con_sobrante ?? 0} sobrante(s))
                 </span>
               </span>
-              <span className={`font-bold tabular-nums ${Math.abs(t.diferencias_arqueo ?? 0) >= 0.01 ? ((t.diferencias_arqueo ?? 0) < 0 ? 'text-rose-600' : 'text-amber-700') : 'text-money-700'}`}>
+              <span className={`font-bold tabular-nums ${Math.abs(t.diferencias_arqueo ?? 0) >= 0.01 ? ((t.diferencias_arqueo ?? 0) < 0 ? 'text-estado-mora' : 'text-estado-pendiente') : 'text-estado-activo'}`}>
                 {money(t.diferencias_arqueo ?? 0)}
               </span>
             </div>
             <div className="flex justify-between py-1 text-sm">
               <span className="font-semibold text-content">Diferencia general (recibido vs esperado)</span>
-              <span className={`font-bold tabular-nums ${Math.abs(t.diferencia) >= 0.01 ? (t.diferencia < 0 ? 'text-rose-600' : 'text-amber-700') : 'text-money-700'}`}>
+              <span className={`font-bold tabular-nums ${Math.abs(t.diferencia) >= 0.01 ? (t.diferencia < 0 ? 'text-estado-mora' : 'text-estado-pendiente') : 'text-estado-activo'}`}>
                 {money(t.diferencia)}
               </span>
             </div>
@@ -211,17 +211,17 @@ export function CajaGeneralPanel() {
       <div className="card card-pad">
         <h3 className="text-sm font-semibold text-content">Cierre General del negocio</h3>
         {data.ya_consolidado ? (
-          <p className="mt-2 rounded-xl bg-brand-50 px-3.5 py-2.5 text-sm text-brand-700">El cierre general de hoy ya fue realizado.</p>
+          <p className="mt-2 rounded-xl bg-estado-info-bg px-3.5 py-2.5 text-sm text-brand-700">El cierre general de hoy ya fue realizado.</p>
         ) : (
           <>
             {c.abiertas > 0 || c.pendientes > 0 ? (
-              <p className="mt-2 rounded-xl bg-amber-50 px-3.5 py-2.5 text-sm text-amber-800">
+              <p className="mt-2 rounded-xl bg-estado-pendiente-bg px-3.5 py-2.5 text-sm text-estado-pendiente">
                 No es posible cerrar: hay {c.abiertas} caja(s) abierta(s) y {c.pendientes} pendiente(s) de entrega.
               </p>
             ) : (
               <>
                 {hayDiferencias && (
-                  <p className="mt-2 rounded-xl bg-amber-50 px-3.5 py-2.5 text-sm text-amber-800">
+                  <p className="mt-2 rounded-xl bg-estado-pendiente-bg px-3.5 py-2.5 text-sm text-estado-pendiente">
                     ⚠ Hay cajas con diferencias de efectivo. Revísalas antes de consolidar. Puedes continuar y dejar la novedad registrada.
                   </p>
                 )}
@@ -252,7 +252,7 @@ function FilaCaja({ caja }: { caja: CajaDia }) {
   const [abierto, setAbierto] = useState(false);
   const [entregado, setEntregado] = useState<number | null>(null);
   const [obs, setObs] = useState('');
-  const info = ESTADO_INFO[caja.estado] ?? { txt: caja.estado, cls: 'bg-surface-3 text-slate-600' };
+  const info = ESTADO_INFO[caja.estado] ?? { txt: caja.estado, cls: 'bg-surface-3 text-content-muted' };
 
   const recibir = useMutation({
     mutationFn: async () => (await api.post(`/caja-general/recibir/${caja.id}`, { efectivo_entregado: entregado ?? 0, observacion: obs || undefined })).data,
@@ -270,7 +270,7 @@ function FilaCaja({ caja }: { caja: CajaDia }) {
           <span className="ml-2 text-xs text-content-muted">{caja.rol_usuario?.toLowerCase()}</span>
         </div>
         <div className="flex items-center gap-3">
-          <span className="text-sm tabular-nums text-slate-600">{money(caja.efectivo_esperado)}</span>
+          <span className="text-sm tabular-nums text-content-muted">{money(caja.efectivo_esperado)}</span>
           <span className={`rounded-full px-2 py-0.5 text-xs ${info.cls}`}>{info.txt}</span>
           <span className="text-slate-300">{abierto ? '▲' : '▼'}</span>
         </div>
@@ -301,15 +301,15 @@ function FilaCaja({ caja }: { caja: CajaDia }) {
           </div>
           {caja.observacion && <p className="mt-2 text-xs text-content-muted">Obs. cierre: {caja.observacion}</p>}
           {caja.estado === 'RECIBIDA' && (
-            <p className="mt-2 text-sm text-money-700">
+            <p className="mt-2 text-sm text-estado-activo">
               Recibido: {money(caja.efectivo_entregado ?? 0)}
-              {Math.abs(caja.diferencia_entrega ?? 0) >= 0.01 && <span className={caja.diferencia_entrega! < 0 ? 'text-rose-600' : 'text-amber-700'}> · Dif. {money(caja.diferencia_entrega ?? 0)}</span>}
+              {Math.abs(caja.diferencia_entrega ?? 0) >= 0.01 && <span className={caja.diferencia_entrega! < 0 ? 'text-estado-mora' : 'text-estado-pendiente'}> · Dif. {money(caja.diferencia_entrega ?? 0)}</span>}
             </p>
           )}
 
           {puedeRecibir && (
             <div className="mt-3 rounded-xl bg-surface-2 p-3">
-              <p className="mb-2 text-xs font-semibold text-slate-600">Confirmar recepción del dinero</p>
+              <p className="mb-2 text-xs font-semibold text-content-muted">Confirmar recepción del dinero</p>
               <div className="flex flex-wrap items-end gap-2">
                 <div>
                   <label className="label text-xs">
@@ -356,7 +356,7 @@ function HistorialGenerales() {
                   <td className="tabular-nums">{money(g.movimiento_total as number)}</td>
                   <td className="tabular-nums">{money(g.total_efectivo_esperado as number)}</td>
                   <td className="tabular-nums">{money(g.total_efectivo_recibido as number)}</td>
-                  <td className={`tabular-nums ${Math.abs(g.diferencia_general as number) >= 0.01 ? 'text-rose-600' : 'text-content-muted'}`}>{money(g.diferencia_general as number)}</td>
+                  <td className={`tabular-nums ${Math.abs(g.diferencia_general as number) >= 0.01 ? 'text-estado-mora' : 'text-content-muted'}`}>{money(g.diferencia_general as number)}</td>
                 </tr>
               ))}
             </tbody>

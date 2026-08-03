@@ -45,7 +45,7 @@ export function BuscadorReamortizacion() {
             <div>
               <div className="text-xs font-medium uppercase tracking-wide text-brand-700">Crédito a reamortizar</div>
               <div className="mt-0.5 font-semibold">{credito.numero_credito} · {credito.cliente}</div>
-              <div className="mt-1 grid gap-x-6 gap-y-1 text-sm text-slate-600 sm:grid-cols-2">
+              <div className="mt-1 grid gap-x-6 gap-y-1 text-sm text-content-muted sm:grid-cols-2">
                 <span>Saldo pendiente: <b>{money(credito.saldo_pendiente)}</b></span>
                 <span>Cupo disponible: <b>{money(credito.cupo_disponible)}</b></span>
                 <span>Modalidad actual: {credito.condiciones.modalidad}</span>
@@ -63,7 +63,7 @@ export function BuscadorReamortizacion() {
   return (
     <div className="max-w-md">
       <label className="block text-sm">
-        <span className="mb-1 block text-slate-600">Número del crédito</span>
+        <span className="mb-1 block text-content-muted">Número del crédito</span>
         <div className="flex gap-2">
           <input
             value={numero}

@@ -324,7 +324,7 @@ function UsuarioForm({ usuario, onCerrar }: { usuario: UsuarioAdmin | null; onCe
               className={`rounded-full px-3 py-1.5 text-sm ring-1 transition ${
                 areasSel.includes(a.id)
                   ? 'bg-brand text-white ring-brand'
-                  : 'bg-surface text-slate-600 ring-border-token hover:ring-brand-200'
+                  : 'bg-surface text-content-muted ring-border-token hover:ring-brand-200'
               }`}>
               {a.nombre}
             </button>
@@ -340,7 +340,7 @@ function UsuarioForm({ usuario, onCerrar }: { usuario: UsuarioAdmin | null; onCe
       )}
 
       {error && <p className="alert-error">{error}</p>}
-      {msg && <p className="text-sm text-green-700">{msg}</p>}
+      {msg && <p className="text-sm text-estado-activo">{msg}</p>}
 
       <div className="flex gap-2">
         <button onClick={guardar} disabled={pending} className="btn-primary">

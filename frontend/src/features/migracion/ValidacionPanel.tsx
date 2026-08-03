@@ -35,9 +35,9 @@ interface Opciones {
 }
 
 const ESTADOS: Record<string, { txt: string; emoji: string; cls: string }> = {
-  PENDIENTE: { txt: 'Pendiente', emoji: '🟡', cls: 'bg-amber-50 text-amber-800' },
-  CORREGIDO: { txt: 'Corregido', emoji: '🔵', cls: 'bg-brand-50 text-brand-700' },
-  VALIDADO: { txt: 'Validado', emoji: '🟢', cls: 'bg-money-50 text-money-700' },
+  PENDIENTE: { txt: 'Pendiente', emoji: '🟡', cls: 'bg-estado-pendiente-bg text-estado-pendiente' },
+  CORREGIDO: { txt: 'Corregido', emoji: '🔵', cls: 'bg-estado-info-bg text-brand-700' },
+  VALIDADO: { txt: 'Validado', emoji: '🟢', cls: 'bg-estado-activo-bg text-estado-activo' },
   BLOQUEADO: { txt: 'Bloqueado', emoji: '🔒', cls: 'bg-surface-3 text-content-muted' },
 };
 
@@ -92,7 +92,7 @@ export function ValidacionPanel() {
       <div className="mb-4 grid gap-3 sm:grid-cols-4">
         {(['PENDIENTE', 'CORREGIDO', 'VALIDADO', 'BLOQUEADO'] as const).map((e) => (
           <button key={e} onClick={() => setFiltroEstado(filtroEstado === e ? '' : e)}
-            className={`rounded-xl p-3 text-center ring-1 transition ${filtroEstado === e ? 'ring-brand-400 bg-brand-50' : 'ring-border-token bg-surface'}`}>
+            className={`rounded-xl p-3 text-center ring-1 transition ${filtroEstado === e ? 'ring-brand-400 bg-estado-info-bg' : 'ring-border-token bg-surface'}`}>
             <div className="font-display text-xl font-bold">{conteos[e] ?? 0}</div>
             <div className="text-xs text-content-muted">
               {e === 'BLOQUEADO'
@@ -135,7 +135,7 @@ export function ValidacionPanel() {
       </div>
 
       {error && <p className="alert-error mb-3">{error}</p>}
-      {msg && <p className="mb-3 text-sm text-money-700">{msg}</p>}
+      {msg && <p className="mb-3 text-sm text-estado-activo">{msg}</p>}
       {isLoading && <p className="text-sm text-content-muted">Cargando…</p>}
 
       {/* Bandeja */}

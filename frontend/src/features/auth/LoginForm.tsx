@@ -136,7 +136,7 @@ export function LoginForm() {
                 {DEMO.map((d) => (
                   <button key={d.rol} type="button"
                     onClick={() => { setValue('email', d.email); setValue('password', d.password); setError(null); }}
-                    className="flex-1 rounded-lg px-2 py-1.5 text-xs font-medium text-slate-600 ring-1 ring-border-token hover:bg-surface-2">
+                    className="flex-1 rounded-lg px-2 py-1.5 text-xs font-medium text-content-muted ring-1 ring-border-token hover:bg-surface-2">
                     {d.rol}
                   </button>
                 ))}

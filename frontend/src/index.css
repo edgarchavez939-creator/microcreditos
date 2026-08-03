@@ -9,23 +9,49 @@
    Cambiar aquí = cambiar toda la app.
    ============================================================ */
 :root {
+  /* SUPERFICIES. El fondo lleva un tinte azulado apenas perceptible: separa la
+     app del blanco puro del navegador y hace que las tarjetas blancas "floten"
+     sin necesidad de sombras pesadas. */
   --surface: 255 255 255;          /* tarjetas, modales */
-  --surface-2: 248 250 252;        /* fondo de la app (slate-50) */
-  --surface-3: 241 245 249;        /* hover, franjas (slate-100) */
-  --border: 226 232 240;           /* bordes (slate-200) */
-  --content-strong: 15 23 42;      /* títulos (slate-900) */
-  --content: 30 41 59;             /* texto normal (slate-800) */
-  --content-muted: 100 116 139;    /* secundario (slate-500) */
+  --surface-2: 247 248 252;        /* fondo de la app (blanco tintado) */
+  --surface-3: 240 242 249;        /* hover, franjas */
+  --border: 229 232 242;           /* bordes suaves */
+
+  /* TEXTO. Azulado en lugar de negro puro: menos dureza en pantalla, misma
+     legibilidad. El contraste de --content sobre --surface es 13:1 (AAA). */
+  --content-strong: 24 28 48;      /* títulos */
+  --content: 51 58 84;             /* texto normal */
+  --content-muted: 118 126 156;    /* secundario */
+
+  /* ACENTOS PASTEL. Cada estado tiene un fondo muy claro y un texto del mismo
+     matiz pero oscuro. Así el color informa de un vistazo sin gritar, y el
+     texto conserva contraste AA. */
+  --pastel-activo-bg: 231 247 239;      --pastel-activo-fg: 13 111 74;
+  --pastel-info-bg: 232 240 254;        --pastel-info-fg: 26 88 183;
+  --pastel-pendiente-bg: 254 243 226;   --pastel-pendiente-fg: 154 88 0;
+  --pastel-mora-bg: 253 236 239;        --pastel-mora-fg: 183 47 73;
+  --pastel-validacion-bg: 241 236 254;  --pastel-validacion-fg: 100 58 186;
+  --pastel-inactivo-bg: 240 242 247;    --pastel-inactivo-fg: 95 105 133;
+  --pastel-bloqueado-bg: 231 234 242;   --pastel-bloqueado-fg: 45 55 80;
 }
 
 .dark {
-  --surface: 30 41 59;             /* slate-800 */
-  --surface-2: 15 23 42;           /* slate-900 (fondo app) */
-  --surface-3: 51 65 85;           /* slate-700 (hover) */
-  --border: 51 65 85;              /* slate-700 */
-  --content-strong: 241 245 249;   /* casi blanco */
-  --content: 226 232 240;          /* slate-200 */
-  --content-muted: 148 163 184;    /* slate-400 */
+  --surface: 32 38 58;
+  --surface-2: 20 24 40;           /* fondo app */
+  --surface-3: 46 54 78;           /* hover */
+  --border: 50 58 84;
+  --content-strong: 240 243 250;
+  --content: 219 224 238;
+  --content-muted: 149 158 186;
+
+  /* En oscuro los pasteles se invierten: fondo tenue del matiz, texto claro. */
+  --pastel-activo-bg: 22 58 45;         --pastel-activo-fg: 134 226 185;
+  --pastel-info-bg: 25 45 82;           --pastel-info-fg: 158 195 253;
+  --pastel-pendiente-bg: 66 47 18;      --pastel-pendiente-fg: 250 204 133;
+  --pastel-mora-bg: 71 30 40;           --pastel-mora-fg: 250 168 186;
+  --pastel-validacion-bg: 51 38 84;     --pastel-validacion-fg: 199 174 252;
+  --pastel-inactivo-bg: 45 52 74;       --pastel-inactivo-fg: 163 172 198;
+  --pastel-bloqueado-bg: 38 44 64;      --pastel-bloqueado-fg: 200 208 226;
 }
 
 @layer base {
@@ -43,36 +69,38 @@
 }
 
 @layer components {
-  .card { @apply rounded-2xl bg-surface shadow-card ring-1 ring-border-token; }
+  /* La tarjeta se sostiene por su borde y un tinte de fondo, no por sombras
+     pesadas: en una pantalla con 30 tarjetas las sombras generan ruido. */
+  .card { @apply rounded-2xl bg-surface ring-1 ring-border-token shadow-[0_1px_2px_rgb(24_28_48/0.04)]; }
   .card-pad { @apply p-5; }
 
   .btn { @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-50; }
-  .btn-primary { @apply btn bg-brand text-white shadow-sm hover:bg-brand-600 active:bg-brand-700; }
-  .btn-money { @apply btn bg-money text-white shadow-sm hover:bg-money-700; }
+  .btn-primary { @apply btn bg-brand-600 text-white shadow-[0_1px_2px_rgb(24_28_48/0.10)] hover:bg-brand-700 active:bg-brand-700; }
+  .btn-money { @apply btn bg-money-600 text-white shadow-[0_1px_2px_rgb(24_28_48/0.10)] hover:bg-money-700; }
   .btn-outline { @apply btn bg-surface text-content ring-1 ring-border-token hover:bg-surface-3; }
-  .btn-danger { @apply btn bg-white text-rose-700 ring-1 ring-rose-200 hover:bg-rose-50; }
+  .btn-danger { @apply btn bg-estado-mora-bg text-estado-mora ring-1 ring-estado-mora/20 hover:brightness-95; }
   .btn-ghost { @apply btn text-content-muted hover:bg-surface-3; }
   .btn-sm { @apply px-3 py-1.5 text-xs rounded-lg; }
 
-  .input { @apply mt-1 w-full rounded-xl border-0 bg-surface px-3.5 py-2.5 text-sm text-content shadow-sm ring-1 ring-inset ring-border-token placeholder:text-content-muted focus:ring-2 focus:ring-inset focus:ring-brand-500; }
+  .input { @apply mt-1 w-full rounded-xl border-0 bg-surface px-3.5 py-2.5 text-sm text-content ring-1 ring-inset ring-border-token placeholder:text-content-muted/70 transition-shadow focus:ring-2 focus:ring-inset focus:ring-brand-500; }
   select.input { @apply pr-9; }
   .label { @apply block text-sm font-medium text-content; }
   .field-error { @apply mt-1 text-xs text-rose-600; }
 
-  .table-wrap { @apply overflow-x-auto rounded-xl ring-1 ring-border-token shadow-card; }
+  .table-wrap { @apply overflow-x-auto rounded-2xl ring-1 ring-border-token; }
   .table-base { @apply w-full text-sm; }
-  .table-base thead { @apply bg-surface-3 text-left text-xs font-semibold uppercase tracking-wide text-content-muted; }
+  .table-base thead { @apply bg-surface-2 text-left text-xs font-semibold uppercase tracking-wide text-content-muted; }
   .table-base thead th { @apply border-b border-border-token; }
   .table-base th, .table-base td { @apply px-3.5 py-3; }
-  .table-base tbody tr { @apply border-t border-border-token transition-colors hover:bg-surface-3; }
+  .table-base tbody tr { @apply border-t border-border-token/60 transition-colors odd:bg-surface-2/30 hover:bg-estado-info-bg/40; }
   .table-base tbody tr:last-child { @apply border-b-0; }
   .table-base td { @apply tabular-nums; }
 
-  .alert-error { @apply rounded-xl bg-rose-50 px-3.5 py-2.5 text-sm text-rose-700 ring-1 ring-rose-100; }
-  .alert-ok { @apply rounded-xl bg-money-50 px-3.5 py-2.5 text-sm text-money-700 ring-1 ring-money-100; }
+  .alert-error { @apply rounded-xl bg-estado-mora-bg px-3.5 py-2.5 text-sm text-estado-mora ring-1 ring-estado-mora/10; }
+  .alert-ok { @apply rounded-xl bg-estado-activo-bg px-3.5 py-2.5 text-sm text-estado-activo ring-1 ring-estado-activo/10; }
 
   /* --- Cambio 3: encabezado de módulo consistente en toda la app --- */
-  .page-title { @apply text-xl font-bold text-content-strong; }
+  .page-title { @apply font-display text-2xl font-bold tracking-tight text-content-strong; }
   .page-subtitle { @apply mt-0.5 text-sm text-content-muted; }
   .page-header { @apply mb-5; }
 

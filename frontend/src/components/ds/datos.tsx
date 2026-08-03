@@ -42,7 +42,7 @@ export function AppMoney({
 
   const color =
     signo === 'neutro'   ? 'text-content-strong'
-    : signo === 'positivo' ? 'text-money-700'
+    : signo === 'positivo' ? 'text-estado-activo'
     : signo === 'negativo' ? 'text-estado-mora'
     : num < 0              ? 'text-estado-mora'
     : 'text-content-strong';
@@ -104,17 +104,17 @@ export function AppStatCard({
 }) {
   const tonos = {
     neutro:    'text-content-strong',
-    activo:    'text-money-700',
+    activo:    'text-estado-activo',
     pendiente: 'text-estado-pendiente',
     mora:      'text-estado-mora',
-    info:      'text-brand-700',
+    info:      'text-estado-info',
   };
   const Elemento = onClick ? 'button' : 'div';
 
   return (
     <Elemento
       onClick={onClick}
-      className={`rounded-2xl bg-surface p-4 text-left ring-1 ring-border-token shadow-card
+      className={`rounded-2xl bg-surface p-4 text-left ring-1 ring-border-token shadow-[0_1px_2px_rgb(24_28_48/0.04)]
         ${onClick ? 'w-full transition-shadow duration-rapido hover:shadow-soft focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand-500' : ''}`}
     >
       <div className="flex items-start justify-between gap-2">
@@ -127,7 +127,7 @@ export function AppStatCard({
       {(detalle || tendencia) && (
         <div className="mt-1 flex items-baseline gap-2 text-xs text-content-muted">
           {tendencia && (
-            <span className={`font-medium tabular-nums ${tendencia.valor >= 0 ? 'text-money-700' : 'text-estado-mora'}`}>
+            <span className={`font-medium tabular-nums ${tendencia.valor >= 0 ? 'text-estado-activo' : 'text-estado-mora'}`}>
               {tendencia.valor >= 0 ? '↑' : '↓'} {Math.abs(tendencia.valor)}%
               {tendencia.etiqueta && <span className="ml-1 font-normal text-content-muted">{tendencia.etiqueta}</span>}
             </span>
@@ -153,7 +153,7 @@ export function AppSummaryCard({ titulo, lineas, total, nota }: {
   nota?: ReactNode;
 }) {
   return (
-    <div className="rounded-2xl bg-surface ring-1 ring-border-token shadow-card">
+    <div className="rounded-2xl bg-surface ring-1 ring-border-token shadow-[0_1px_2px_rgb(24_28_48/0.04)]">
       {titulo && (
         <div className="border-b border-border-token px-4 py-3">
           <h3 className="font-display text-sm font-semibold text-content-strong">{titulo}</h3>

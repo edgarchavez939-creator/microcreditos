@@ -223,7 +223,7 @@ export function ReportesPanel() {
       ) : (
         <>
           {typeof data?.total === 'number' && (
-            <p className="mb-3 text-sm text-slate-600">
+            <p className="mb-3 text-sm text-content-muted">
               Total: <b>{money(data.total)}</b> · {filas.length} registro{filas.length === 1 ? '' : 's'}
             </p>
           )}

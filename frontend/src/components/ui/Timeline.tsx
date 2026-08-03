@@ -14,8 +14,8 @@ export interface HitoTimeline {
 }
 
 const PUNTO: Record<string, string> = {
-  brand: 'bg-brand-500', money: 'bg-money-500', alerta: 'bg-rose-500',
-  atencion: 'bg-amber-500', info: 'bg-sky-500', neutro: 'bg-slate-400',
+  brand: 'bg-brand-500', money: 'bg-money-500', alerta: 'bg-estado-mora',
+  atencion: 'bg-estado-pendiente', info: 'bg-estado-info', neutro: 'bg-slate-400',
 };
 
 export function Timeline({ hitos, vacio = 'Sin actividad registrada.' }:

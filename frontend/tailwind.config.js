@@ -28,14 +28,24 @@ export default {
 
         // --- COLORES FUNCIONALES (el color comunica, no decora) ---
         // Cada uno tiene un significado fijo en TODA la plataforma.
+        // Cada estado es una PAREJA: un fondo pastel y un texto del mismo matiz.
+        // El color informa de un vistazo sin saturar la pantalla, y el texto
+        // conserva contraste AA. Se adaptan solos al modo oscuro.
         estado: {
-          activo:     '#059669',  // verde  · crédito al día, operación exitosa
-          info:       '#2563EB',  // azul   · información neutra
-          pendiente:  '#D97706',  // ámbar  · requiere acción / en espera
-          mora:       '#DC2626',  // rojo   · vencido, faltante, error
-          validacion: '#7C3AED',  // morado · en proceso de validación
-          inactivo:   '#64748B',  // gris   · deshabilitado, sin actividad
-          bloqueado:  '#1E293B',  // negro  · cerrado a cambios
+          'activo':         'rgb(var(--pastel-activo-fg) / <alpha-value>)',
+          'activo-bg':      'rgb(var(--pastel-activo-bg) / <alpha-value>)',
+          'info':           'rgb(var(--pastel-info-fg) / <alpha-value>)',
+          'info-bg':        'rgb(var(--pastel-info-bg) / <alpha-value>)',
+          'pendiente':      'rgb(var(--pastel-pendiente-fg) / <alpha-value>)',
+          'pendiente-bg':   'rgb(var(--pastel-pendiente-bg) / <alpha-value>)',
+          'mora':           'rgb(var(--pastel-mora-fg) / <alpha-value>)',
+          'mora-bg':        'rgb(var(--pastel-mora-bg) / <alpha-value>)',
+          'validacion':     'rgb(var(--pastel-validacion-fg) / <alpha-value>)',
+          'validacion-bg':  'rgb(var(--pastel-validacion-bg) / <alpha-value>)',
+          'inactivo':       'rgb(var(--pastel-inactivo-fg) / <alpha-value>)',
+          'inactivo-bg':    'rgb(var(--pastel-inactivo-bg) / <alpha-value>)',
+          'bloqueado':      'rgb(var(--pastel-bloqueado-fg) / <alpha-value>)',
+          'bloqueado-bg':   'rgb(var(--pastel-bloqueado-bg) / <alpha-value>)',
         },
       },
       fontFamily: {

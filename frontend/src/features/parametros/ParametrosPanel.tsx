@@ -97,7 +97,7 @@ function FilaParametro({ p }: { p: Parametro }) {
           </button>
         </div>
       </div>
-      {msg && <p className="mt-2 text-sm text-green-700">{msg}</p>}
+      {msg && <p className="mt-2 text-sm text-estado-activo">{msg}</p>}
       {error && <p className="mt-2 alert-error">{error}</p>}
     </div>
   );

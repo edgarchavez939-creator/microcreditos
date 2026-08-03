@@ -107,7 +107,7 @@ export function RutaPanel() {
         </div>
       </div>
       {vista === 'ruta' && estadoGps === 'ok' && (
-        <p className="mb-5 text-xs text-money-700">Ruta optimizada desde tu ubicación actual.</p>
+        <p className="mb-5 text-xs text-estado-activo">Ruta optimizada desde tu ubicación actual.</p>
       )}
       {vista === 'ruta' && (estadoGps === 'denegado' || estadoGps === 'no-disponible') && (
         <p className="mb-5 text-xs text-content-muted">
@@ -124,15 +124,15 @@ export function RutaPanel() {
       ) : (
         <div className="space-y-6">
           <div className="grid gap-4 sm:grid-cols-2">
-            <div className="rounded-2xl bg-brand-50 p-4 ring-1 ring-brand-100">
+            <div className="rounded-2xl bg-estado-info-bg p-4 ring-1 ring-estado-info/20">
               <div className="text-xs font-medium uppercase tracking-wide text-brand-700/70">Cobros de hoy</div>
               <div className="mt-1 font-display text-2xl font-bold text-brand-700">{money(data.resumen.cobros_hoy.total)}</div>
               <div className="text-xs text-brand-700/70">{data.resumen.cobros_hoy.cantidad} crédito{data.resumen.cobros_hoy.cantidad === 1 ? '' : 's'}</div>
             </div>
-            <div className="rounded-2xl bg-amber-50 p-4 ring-1 ring-amber-100">
-              <div className="text-xs font-medium uppercase tracking-wide text-amber-800/70">Mora por recuperar</div>
-              <div className="mt-1 font-display text-2xl font-bold text-amber-800">{money(data.resumen.en_mora.total)}</div>
-              <div className="text-xs text-amber-800/70">{data.resumen.en_mora.cantidad} crédito{data.resumen.en_mora.cantidad === 1 ? '' : 's'} en mora</div>
+            <div className="rounded-2xl bg-estado-pendiente-bg p-4 ring-1 ring-estado-pendiente/20">
+              <div className="text-xs font-medium uppercase tracking-wide text-estado-pendiente/70">Mora por recuperar</div>
+              <div className="mt-1 font-display text-2xl font-bold text-estado-pendiente">{money(data.resumen.en_mora.total)}</div>
+              <div className="text-xs text-estado-pendiente/70">{data.resumen.en_mora.cantidad} crédito{data.resumen.en_mora.cantidad === 1 ? '' : 's'} en mora</div>
             </div>
           </div>
 
@@ -160,7 +160,7 @@ function Seccion({ titulo, paradas, tramos, totalKm, tono }: {
   return (
     <div>
       <div className="mb-2 flex items-center justify-between">
-        <h3 className={`text-sm font-semibold ${tono === 'mora' ? 'text-amber-800' : 'text-content'}`}>{titulo}</h3>
+        <h3 className={`text-sm font-semibold ${tono === 'mora' ? 'text-estado-pendiente' : 'text-content'}`}>{titulo}</h3>
         {totalKm > 0 && (
           <span className="text-xs text-content-muted">{paradas.length} parada{paradas.length === 1 ? '' : 's'} · ~{totalKm} km</span>
         )}
@@ -196,7 +196,7 @@ function Parada({ p, orden, tramo }: { p: ParadaRuta; orden: number; tramo?: { k
           <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-content-muted">
             <span>{p.cuotas_vencidas} cuota{p.cuotas_vencidas === 1 ? '' : 's'} vencida{p.cuotas_vencidas === 1 ? '' : 's'}</span>
             {p.estado === 'VENCIDA' && (
-              <span className="rounded-full bg-amber-100 px-2 py-0.5 text-amber-800">{p.dias_mora} día{p.dias_mora === 1 ? '' : 's'} de mora</span>
+              <span className="rounded-full bg-estado-pendiente-bg px-2 py-0.5 text-estado-pendiente">{p.dias_mora} día{p.dias_mora === 1 ? '' : 's'} de mora</span>
             )}
             {tramo && tramo.km > 0 && (
               <span>· a {tramo.km < 1 ? `${Math.round(tramo.km * 1000)} m` : `${tramo.km.toFixed(1)} km`} (~{tramo.min} min)</span>

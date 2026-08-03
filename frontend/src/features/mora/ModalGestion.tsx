@@ -70,7 +70,7 @@ export function ModalGestion({ clienteId, solicitudId, nombre, saldo, onClose, i
         <div className="mb-3 grid grid-cols-2 gap-1.5">
           {TIPO_GESTION.map((t) => (
             <button key={t.v} onClick={() => setTipo(t.v)}
-              className={`rounded-lg px-3 py-2 text-sm font-medium ring-1 transition ${tipo === t.v ? 'bg-brand-500 text-white ring-brand-500' : 'bg-surface text-slate-600 ring-border-token hover:ring-brand-300'}`}>
+              className={`rounded-lg px-3 py-2 text-sm font-medium ring-1 transition ${tipo === t.v ? 'bg-brand-500 text-white ring-brand-500' : 'bg-surface text-content-muted ring-border-token hover:ring-brand-300'}`}>
               {t.t}
             </button>
           ))}
@@ -94,7 +94,7 @@ export function ModalGestion({ clienteId, solicitudId, nombre, saldo, onClose, i
         )}
 
         {tipo === 'VISITA' && (
-          <button onClick={capturarGps} className="mt-3 w-full rounded-lg bg-surface-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-200">
+          <button onClick={capturarGps} className="mt-3 w-full rounded-lg bg-surface-3 py-2 text-sm font-medium text-content-muted hover:bg-slate-200">
             {gps ? '✓ Ubicación capturada' : '📍 Capturar ubicación de la visita'}
           </button>
         )}

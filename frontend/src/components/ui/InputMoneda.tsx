@@ -93,7 +93,7 @@ export function InputMoneda({
       </div>
       {mostrarEquivalencia && (
         <p id={id ? `${id}-equiv` : undefined}
-          className={`mt-1 text-xs ${excede ? 'text-rose-600' : 'text-content-muted'}`}>
+          className={`mt-1 text-xs ${excede ? 'text-estado-mora' : 'text-content-muted'}`}>
           {pesosActuales === null
             ? 'Escribe el valor en miles (ej: 350 = $350.000)'
             : <>Se guardará: <b className="tabular-nums">${pesosActuales.toLocaleString('es-CO')}</b>

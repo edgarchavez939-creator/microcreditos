@@ -5,7 +5,7 @@ export function Placeholder({ titulo, descripcion, permisos }: Props) {
     <div>
       <div className="mb-5 flex items-center gap-3">
         <h2 className="text-xl font-bold">{titulo}</h2>
-        <span className="rounded-full bg-amber-50 px-2.5 py-1 text-xs font-medium text-amber-700 ring-1 ring-amber-200">
+        <span className="rounded-full bg-estado-pendiente-bg px-2.5 py-1 text-xs font-medium text-estado-pendiente ring-1 ring-estado-pendiente/20">
           En construcción
         </span>
       </div>

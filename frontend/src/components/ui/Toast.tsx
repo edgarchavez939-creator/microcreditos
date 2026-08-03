@@ -66,9 +66,9 @@ function ToastItem({ toast, onCerrar }: { toast: Toast; onCerrar: () => void }) 
       ),
     },
     error: {
-      barra: 'bg-rose-500',
+      barra: 'bg-estado-mora',
       icono: (
-        <svg viewBox="0 0 20 20" fill="none" className="h-5 w-5 text-rose-600">
+        <svg viewBox="0 0 20 20" fill="none" className="h-5 w-5 text-estado-mora">
           <circle cx="10" cy="10" r="9" fill="currentColor" opacity="0.12" />
           <path d="M7 7l6 6M13 7l-6 6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
         </svg>

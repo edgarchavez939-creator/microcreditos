@@ -195,9 +195,9 @@ export function MapaPanel() {
       </p>
       {puedeVerVivo && (
         <p className="mb-4 flex flex-wrap items-center gap-3 text-xs text-content-muted">
-          <span className="font-medium text-slate-600">Equipo en vivo:</span>
-          <span className="flex items-center gap-1"><span className="inline-block h-2.5 w-2.5 rounded-full bg-green-600" /> activo (&lt;3 min)</span>
-          <span className="flex items-center gap-1"><span className="inline-block h-2.5 w-2.5 rounded-full bg-amber-600" /> hace 3–15 min</span>
+          <span className="font-medium text-content-muted">Equipo en vivo:</span>
+          <span className="flex items-center gap-1"><span className="inline-block h-2.5 w-2.5 rounded-full bg-estado-activo" /> activo (&lt;3 min)</span>
+          <span className="flex items-center gap-1"><span className="inline-block h-2.5 w-2.5 rounded-full bg-estado-pendiente" /> hace 3–15 min</span>
           <span className="flex items-center gap-1"><span className="inline-block h-2.5 w-2.5 rounded-full bg-slate-400" /> sin señal reciente</span>
           <span className="text-content-muted">· La línea punteada es el recorrido de hoy. Se actualiza mientras el cobrador tenga la app abierta.</span>
         </p>
@@ -220,7 +220,7 @@ export function MapaPanel() {
             </button>
           ))}
         </div>
-        <div className="flex items-center gap-3 text-xs text-slate-600">
+        <div className="flex items-center gap-3 text-xs text-content-muted">
           <span className="flex items-center gap-1.5">
             <span className="h-3 w-3 rounded-full" style={{ background: '#e11d48' }} /> En mora ({conteo.mora})
           </span>
@@ -236,7 +236,7 @@ export function MapaPanel() {
       {isLoading && <p className="mb-2 text-sm text-content-muted">Cargando clientes…</p>}
       {isError && <p className="mb-2 alert-error">No se pudieron cargar los clientes del mapa.</p>}
       {!isLoading && clientes && clientes.length === 0 && (
-        <p className="mb-2 rounded-xl bg-amber-50 px-3.5 py-2.5 text-sm text-amber-800 ring-1 ring-amber-100">
+        <p className="mb-2 rounded-xl bg-estado-pendiente-bg px-3.5 py-2.5 text-sm text-estado-pendiente ring-1 ring-estado-pendiente/20">
           Ningún cliente tiene ubicación GPS registrada todavía. La ubicación se captura al crear o editar el cliente.
         </p>
       )}

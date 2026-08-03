@@ -157,10 +157,10 @@ function HistorialCierres() {
 
   const estadoCierre = (dif?: number) => {
     const d = dif ?? 0;
-    if (Math.abs(d) < 0.01) return { txt: 'Cuadrada', cls: 'text-money-700 bg-money-50' };
+    if (Math.abs(d) < 0.01) return { txt: 'Cuadrada', cls: 'text-estado-activo bg-estado-activo-bg' };
     return d < 0
-      ? { txt: 'Faltante', cls: 'text-rose-700 bg-rose-50' }
-      : { txt: 'Sobrante', cls: 'text-amber-800 bg-amber-50' };
+      ? { txt: 'Faltante', cls: 'text-estado-mora bg-estado-mora-bg' }
+      : { txt: 'Sobrante', cls: 'text-estado-pendiente bg-estado-pendiente-bg' };
   };
 
   return (
@@ -230,7 +230,7 @@ function HistorialCierres() {
                           {esAdmin && <td>{c.cerrado_por ?? '—'}{c.rol_usuario ? <span className="ml-1 text-xs text-content-muted">({c.rol_usuario.toLowerCase()})</span> : ''}</td>}
                           <td>{money(c.efectivo_esperado ?? 0)}</td>
                           <td>{c.efectivo_contado != null ? money(c.efectivo_contado) : '—'}</td>
-                          <td className={Math.abs(c.diferencia ?? 0) >= 0.01 ? ((c.diferencia ?? 0) < 0 ? 'text-rose-600' : 'text-amber-700') : 'text-content-muted'}>
+                          <td className={Math.abs(c.diferencia ?? 0) >= 0.01 ? ((c.diferencia ?? 0) < 0 ? 'text-estado-mora' : 'text-estado-pendiente') : 'text-content-muted'}>
                             {Math.abs(c.diferencia ?? 0) < 0.01 ? '—' : money(Math.abs(c.diferencia ?? 0))}
                           </td>
                           <td><span className={`rounded-full px-2 py-0.5 text-xs ${est.cls}`}>{est.txt}</span></td>
@@ -325,7 +325,7 @@ function ResumenCaja({ e }: { e: EstadoCaja }) {
         <dl className="divide-y divide-border-token">
           {filas.map(([label, val, dir, esEfectivo]) => (
             <div key={label} className="flex items-center justify-between py-2 text-sm">
-              <dt className="flex items-center gap-1.5 text-slate-600">
+              <dt className="flex items-center gap-1.5 text-content-muted">
                 {label}
                 {!esEfectivo && (
                   <span className="rounded bg-surface-3 px-1.5 py-0.5 text-[10px] font-medium text-content-muted"
@@ -334,7 +334,7 @@ function ResumenCaja({ e }: { e: EstadoCaja }) {
                   </span>
                 )}
               </dt>
-              <dd className={`font-semibold tabular-nums ${dir === 'out' ? 'text-rose-600' : 'text-content-strong'}`}>
+              <dd className={`font-semibold tabular-nums ${dir === 'out' ? 'text-estado-mora' : 'text-content-strong'}`}>
                 {dir === 'out' ? '− ' : '+ '}{money(val)}
               </dd>
             </div>
@@ -346,15 +346,15 @@ function ResumenCaja({ e }: { e: EstadoCaja }) {
         </dl>
       </div>
       <div className="flex flex-col gap-4">
-        <div className="rounded-2xl bg-money-50 p-4 ring-1 ring-money-100">
-          <div className="flex items-center gap-1 text-xs font-medium uppercase tracking-wide text-money-700/70">
+        <div className="rounded-2xl bg-estado-activo-bg p-4 ring-1 ring-estado-activo/20">
+          <div className="flex items-center gap-1 text-xs font-medium uppercase tracking-wide text-estado-activo/70">
             Efectivo esperado en caja
             <Tooltip texto="Base inicial + reposiciones + cobros en efectivo + anulaciones − desembolsos en efectivo − gastos. Las transferencias y el seguro no cuentan: no son dinero físico en tu mano.">
               <span className="cursor-help rounded-full bg-money-100 px-1.5 text-[10px] normal-case">?</span>
             </Tooltip>
           </div>
-          <div className="mt-1 font-display text-2xl font-bold text-money-700">{money(e.efectivo_esperado)}</div>
-          <div className="mt-1 text-xs text-money-700/60">Solo dinero físico (excluye transferencias)</div>
+          <div className="mt-1 font-display text-2xl font-bold text-estado-activo">{money(e.efectivo_esperado)}</div>
+          <div className="mt-1 text-xs text-estado-activo/60">Solo dinero físico (excluye transferencias)</div>
         </div>
         <div className="rounded-2xl bg-surface-2 p-4 ring-1 ring-border-token">
           <div className="text-xs text-content-muted">Movimiento total del día</div>
@@ -362,7 +362,7 @@ function ResumenCaja({ e }: { e: EstadoCaja }) {
           <div className="mt-1 text-xs text-content-muted">{e.numero_cobros} cobro(s) · {e.numero_seguros} seguro(s)</div>
         </div>
         {e.recaudo_seguros > 0 && (
-          <div className="rounded-2xl bg-brand-50 p-4 ring-1 ring-brand-100">
+          <div className="rounded-2xl bg-estado-info-bg p-4 ring-1 ring-estado-info/20">
             <div className="text-xs font-medium uppercase tracking-wide text-brand-700/70">Recaudo por seguros (comercial)</div>
             <div className="mt-1 font-display text-lg font-bold text-brand-700">{money(e.recaudo_seguros)}</div>
             <div className="mt-1 text-xs text-brand-700/60">De los créditos que desembolsaste hoy. No es efectivo en caja: la empresa te repone el neto.</div>
@@ -384,7 +384,7 @@ function AbrirCaja({ onOk, toast }: { onOk: () => void; toast: ToastApi }) {
     onError: (err) => toast.error((err as { response?: { data?: { message?: string } } })?.response?.data?.message ?? 'No se pudo abrir la caja.'),
   });
   return (
-    <div className="card card-pad border-2 border-brand-200 bg-brand-50/40">
+    <div className="card card-pad border-2 border-brand-200 bg-estado-info-bg/40">
       <div className="mb-1 flex items-center gap-2">
         <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-brand-500 text-sm font-bold text-white">1</span>
         <h3 className="text-base font-semibold text-content-strong">Abrir caja</h3>
@@ -528,11 +528,11 @@ function Movimientos({ movimientos, cerrada, onOk, toast }: {
                 </span>
               </div>
               <div className="flex items-center gap-2">
-                <span className={`font-semibold tabular-nums ${esEgreso ? 'text-rose-600' : 'text-money-700'}`}>
+                <span className={`font-semibold tabular-nums ${esEgreso ? 'text-estado-mora' : 'text-estado-activo'}`}>
                   {esEgreso ? '−' : '+'}{money(m.valor)}
                 </span>
                 {esGasto && !cerrada && (
-                  <button onClick={() => eliminar.mutate(m.id)} className="text-xs text-slate-300 hover:text-rose-500">✕</button>
+                  <button onClick={() => eliminar.mutate(m.id)} className="text-xs text-slate-300 hover:text-estado-mora">✕</button>
                 )}
               </div>
             </li>
@@ -565,9 +565,9 @@ function CierreArqueo({ e, onOk, toast }: { e: EstadoCaja; onOk: () => void; toa
       <p className="mb-3 text-xs text-content-muted">Cuenta el efectivo físico e ingrésalo. El sistema calculará la diferencia.</p>
 
       <div className="grid gap-3 sm:grid-cols-2">
-        <div className="rounded-xl bg-money-50 p-3 ring-1 ring-money-100">
-          <div className="text-xs text-money-700/70">Efectivo esperado</div>
-          <div className="font-display text-xl font-bold text-money-700">{money(e.efectivo_esperado)}</div>
+        <div className="rounded-xl bg-estado-activo-bg p-3 ring-1 ring-estado-activo/20">
+          <div className="text-xs text-estado-activo/70">Efectivo esperado</div>
+          <div className="font-display text-xl font-bold text-estado-activo">{money(e.efectivo_esperado)}</div>
         </div>
         <div>
           <label className="label">
@@ -578,7 +578,7 @@ function CierreArqueo({ e, onOk, toast }: { e: EstadoCaja; onOk: () => void; toa
       </div>
 
       {hayDif && (
-        <div className={`mt-3 rounded-xl px-3.5 py-2.5 text-sm ring-1 ${diferencia < 0 ? 'bg-rose-50 text-rose-700 ring-rose-100' : 'bg-amber-50 text-amber-800 ring-amber-100'}`}>
+        <div className={`mt-3 rounded-xl px-3.5 py-2.5 text-sm ring-1 ${diferencia < 0 ? 'bg-estado-mora-bg text-estado-mora ring-estado-mora/20' : 'bg-estado-pendiente-bg text-estado-pendiente ring-estado-pendiente/20'}`}>
           {diferencia < 0 ? 'Faltante' : 'Sobrante'} de caja: <b>{money(Math.abs(diferencia))}</b>.
           Debes registrar una observación explicando la novedad.
         </div>
@@ -586,7 +586,7 @@ function CierreArqueo({ e, onOk, toast }: { e: EstadoCaja; onOk: () => void; toa
 
       {(hayDif || contado !== null) && (
         <div className="mt-3">
-          <label className="label">Observación {hayDif && <span className="text-rose-500">*</span>}</label>
+          <label className="label">Observación {hayDif && <span className="text-estado-mora">*</span>}</label>
           <textarea value={obs} onChange={(ev) => setObs(ev.target.value)} className="input" rows={2}
             placeholder={hayDif ? 'Explica la diferencia (obligatorio)' : 'Observación del cierre (opcional)'} />
         </div>

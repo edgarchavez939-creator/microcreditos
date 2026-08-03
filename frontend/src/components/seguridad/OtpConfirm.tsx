@@ -44,7 +44,7 @@ export function OtpConfirm({ operacion, etiqueta, onConfirmar, onCancelar, pendi
         </button>
         <button onClick={cerrar} className="btn-ghost btn-sm">Cancelar</button>
       </div>
-      {error && !info && <p className="text-xs text-rose-600">{error}</p>}
+      {error && !info && <p className="text-xs text-estado-mora">{error}</p>}
 
       {/* Panel flotante fijo en la esquina superior derecha (responsivo) */}
       {info && (
@@ -63,13 +63,13 @@ export function OtpConfirm({ operacion, etiqueta, onConfirmar, onCancelar, pendi
           <div className="mt-2 flex items-center gap-2">
             <button onClick={() => { setError(null); onConfirmar(otp); }}
               disabled={pendiente || otp.length !== 6}
-              className="btn btn-sm flex-1 bg-rose-600 text-white hover:bg-rose-700 disabled:opacity-50">
+              className="btn btn-sm flex-1 bg-estado-mora text-white hover:bg-estado-mora disabled:opacity-50">
               {pendiente ? 'Procesando…' : etiqueta}
             </button>
             <button onClick={() => generar.mutate()} disabled={generar.isPending}
               className="text-xs text-content-muted hover:underline">Nuevo</button>
           </div>
-          {error && <p className="mt-2 text-xs text-rose-600">{error}</p>}
+          {error && <p className="mt-2 text-xs text-estado-mora">{error}</p>}
         </div>
       )}
     </div>

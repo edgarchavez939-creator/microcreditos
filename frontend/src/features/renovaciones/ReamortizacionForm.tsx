@@ -62,8 +62,8 @@ export function ReamortizacionForm({ solicitudId, clienteId, onHecho }: Props) {
   if (reamortizar.isSuccess) {
     const r = reamortizar.data?.renovacion;
     return (
-      <div className="rounded-lg border border-green-200 bg-green-50 p-4 space-y-2">
-        <p className="font-semibold text-green-800">Reamortización registrada ✓</p>
+      <div className="rounded-lg border border-estado-activo/20 bg-estado-activo-bg p-4 space-y-2">
+        <p className="font-semibold text-estado-activo">Reamortización registrada ✓</p>
         <Row label="Saldo refinanciado" value={money(r.saldo_refinanciado)} />
         <Row label="Nuevo capital aprobado" value={money(r.capital_aprobado)} />
         <Row label="Seguro descontado" value={money(r.valor_seguro)} />

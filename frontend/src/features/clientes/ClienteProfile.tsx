@@ -48,7 +48,7 @@ export function ClienteProfile({ clienteId, onVolver, onEditar }:
                 {c.area && <span className="rounded-full bg-surface-3 px-2 py-0.5 text-content-muted">{c.area}</span>}
                 {c.cobrador && <span className="rounded-full bg-brand-50 px-2 py-0.5 text-brand-700">Cobrador: {c.cobrador}</span>}
                 {data.mora.cantidad > 0
-                  ? <span className="rounded-full bg-rose-50 px-2 py-0.5 font-medium text-rose-700">En mora</span>
+                  ? <span className="rounded-full bg-estado-mora-bg px-2 py-0.5 font-medium text-estado-mora">En mora</span>
                   : <span className="rounded-full bg-money-50 px-2 py-0.5 font-medium text-money-700">Al día</span>}
               </div>
             </div>
@@ -142,8 +142,8 @@ function ResumenCard({ titulo, valor, detalle, tono }:
   const cls: Record<string, string> = {
     brand: 'bg-brand-50 ring-brand-100 text-brand-700',
     money: 'bg-money-50 ring-money-100 text-money-700',
-    alerta: 'bg-rose-50 ring-rose-100 text-rose-700',
-    atencion: 'bg-amber-50 ring-amber-100 text-amber-800',
+    alerta: 'bg-estado-mora-bg ring-estado-mora/20 text-estado-mora',
+    atencion: 'bg-estado-pendiente-bg ring-estado-pendiente/20 text-estado-pendiente',
     positivo: 'bg-money-50 ring-money-100 text-money-700',
     neutro: 'bg-surface ring-border-token text-content-strong',
   };

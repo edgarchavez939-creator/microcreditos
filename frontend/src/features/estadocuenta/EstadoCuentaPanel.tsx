@@ -74,7 +74,7 @@ export function EstadoCuentaPanel() {
         <>
           <div className="card card-pad mb-4 flex items-center justify-between">
             <span className="text-sm text-content-muted">Total pendiente por cobrar a empleados</span>
-            <span className="font-display text-xl font-bold text-rose-600">{money(data.total_pendiente)}</span>
+            <span className="font-display text-xl font-bold text-estado-mora">{money(data.total_pendiente)}</span>
           </div>
           <div className="space-y-2">
             {(data.data as Consolidado[]).map((e) => (
@@ -86,12 +86,12 @@ export function EstadoCuentaPanel() {
                     {e.rol?.toLowerCase()} · {e.obligaciones_activas} obligación(es) activa(s)
                   </div>
                   <div className="mt-1 flex gap-2 text-xs">
-                    {e.saldo_descuadres > 0 && <span className="rounded-full bg-amber-50 px-2 py-0.5 text-amber-800">Descuadres {money(e.saldo_descuadres)}</span>}
+                    {e.saldo_descuadres > 0 && <span className="rounded-full bg-estado-pendiente-bg px-2 py-0.5 text-estado-pendiente">Descuadres {money(e.saldo_descuadres)}</span>}
                     {e.saldo_prestamos > 0 && <span className="rounded-full bg-brand-50 px-2 py-0.5 text-brand-700">Préstamos {money(e.saldo_prestamos)}</span>}
                   </div>
                 </div>
                 <div className="text-right">
-                  <div className="font-display text-lg font-bold text-rose-600">{money(e.saldo_pendiente)}</div>
+                  <div className="font-display text-lg font-bold text-estado-mora">{money(e.saldo_pendiente)}</div>
                   <div className="text-xs text-content-muted">pendiente ▸</div>
                 </div>
               </div>
@@ -165,10 +165,10 @@ function DetalleEmpleado({ empleado, onVolver }: { empleado: Consolidado; onVolv
                 <div>
                   <div className="flex items-center gap-2">
                     <span className="font-medium text-content">{o.concepto}</span>
-                    <span className={`rounded-full px-2 py-0.5 text-xs ${o.estado === 'PAGADO' ? 'bg-money-50 text-money-700' : 'bg-amber-50 text-amber-800'}`}>
+                    <span className={`rounded-full px-2 py-0.5 text-xs ${o.estado === 'PAGADO' ? 'bg-money-50 text-money-700' : 'bg-estado-pendiente-bg text-estado-pendiente'}`}>
                       {o.estado === 'PAGADO' ? 'Pagado' : 'Pendiente'}
                     </span>
-                    <span className={`rounded-full px-2 py-0.5 text-xs ${o.tipo === 'DESCUADRE_CAJA' ? 'bg-amber-100 text-amber-800' : 'bg-brand-50 text-brand-700'}`}>
+                    <span className={`rounded-full px-2 py-0.5 text-xs ${o.tipo === 'DESCUADRE_CAJA' ? 'bg-estado-pendiente-bg text-estado-pendiente' : 'bg-brand-50 text-brand-700'}`}>
                       {o.tipo === 'DESCUADRE_CAJA' ? 'Descuadre' : 'Préstamo'}
                     </span>
                   </div>
@@ -201,7 +201,7 @@ function DetalleEmpleado({ empleado, onVolver }: { empleado: Consolidado; onVolv
                   <tr key={m.id}>
                     <td className="whitespace-nowrap text-xs">{fechaHora(m.created_at)}</td>
                     <td>{m.concepto}</td>
-                    <td className="text-right tabular-nums text-rose-600">{m.debito > 0 ? money(m.debito) : '—'}</td>
+                    <td className="text-right tabular-nums text-estado-mora">{m.debito > 0 ? money(m.debito) : '—'}</td>
                     <td className="text-right tabular-nums text-money-700">{m.credito > 0 ? money(m.credito) : '—'}</td>
                     <td className="text-right tabular-nums">{money(m.saldo_obligacion)}</td>
                     <td className="text-xs text-content-muted">{m.registrado_por ?? '—'}</td>
@@ -220,7 +220,7 @@ function DetalleEmpleado({ empleado, onVolver }: { empleado: Consolidado; onVolv
 }
 
 function Indicador({ titulo, valor, detalle, tono = 'neutro' }: { titulo: string; valor: string; detalle?: string; tono?: string }) {
-  const cls = { rose: 'text-rose-600', money: 'text-money-700', neutro: 'text-content-strong' }[tono] ?? 'text-content-strong';
+  const cls = { rose: 'text-estado-mora', money: 'text-money-700', neutro: 'text-content-strong' }[tono] ?? 'text-content-strong';
   return (
     <div className="card card-pad">
       <div className="text-xs uppercase tracking-wide text-content-muted">{titulo}</div>

@@ -57,11 +57,11 @@ function Cabecera({ subtitulo }: { subtitulo: string }) {
   const primerNombre = nombre.split(' ')[0];
   return (
     <div className="mb-5">
-      <div className="flex items-center gap-3">
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
         <h2 className="page-title">{saludo()}, {primerNombre}</h2>
         <EscalaMoneda />
       </div>
-      <p className="mt-0.5 text-sm text-content-muted">{subtitulo}</p>
+      <p className="mt-1 text-sm text-content-muted">{subtitulo}</p>
     </div>
   );
 }

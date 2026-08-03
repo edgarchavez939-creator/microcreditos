@@ -6,14 +6,20 @@ import { money } from '@/lib/format';
  * Muestra un indicador con icono + color de estado (nunca solo texto).
  * tono: neutro | brand | money | alerta | atencion | positivo | info
  */
+/**
+ * Tonos de los indicadores, sobre la paleta pastel de la plataforma.
+ * La tarjeta es blanca; el color vive en el icono y en la cifra. Así una fila
+ * de seis indicadores se lee como un conjunto ordenado y no como seis carteles
+ * compitiendo por atención.
+ */
 const TONOS: Record<string, { card: string; icon: string; valor: string }> = {
-  brand:    { card: 'bg-brand-50 ring-brand-100', icon: 'bg-brand-100 text-brand-700', valor: 'text-brand-700' },
-  money:    { card: 'bg-money-50 ring-money-100', icon: 'bg-money-100 text-money-700', valor: 'text-money-700' },
-  alerta:   { card: 'bg-rose-50 ring-rose-100', icon: 'bg-rose-100 text-rose-700', valor: 'text-rose-700' },
-  atencion: { card: 'bg-amber-50 ring-amber-100', icon: 'bg-amber-100 text-amber-800', valor: 'text-amber-800' },
-  positivo: { card: 'bg-money-50 ring-money-100', icon: 'bg-money-100 text-money-700', valor: 'text-money-700' },
-  info:     { card: 'bg-sky-50 ring-sky-100', icon: 'bg-sky-100 text-sky-700', valor: 'text-sky-700' },
-  neutro:   { card: 'bg-surface ring-border-token', icon: 'bg-surface-3 text-content-muted', valor: 'text-content-strong' },
+  brand:    { card: 'bg-surface ring-border-token', icon: 'bg-estado-info-bg text-estado-info',             valor: 'text-content-strong' },
+  money:    { card: 'bg-surface ring-border-token', icon: 'bg-estado-activo-bg text-estado-activo',         valor: 'text-estado-activo' },
+  positivo: { card: 'bg-surface ring-border-token', icon: 'bg-estado-activo-bg text-estado-activo',         valor: 'text-estado-activo' },
+  alerta:   { card: 'bg-surface ring-border-token', icon: 'bg-estado-mora-bg text-estado-mora',             valor: 'text-estado-mora' },
+  atencion: { card: 'bg-surface ring-border-token', icon: 'bg-estado-pendiente-bg text-estado-pendiente',   valor: 'text-estado-pendiente' },
+  info:     { card: 'bg-surface ring-border-token', icon: 'bg-estado-info-bg text-estado-info',             valor: 'text-estado-info' },
+  neutro:   { card: 'bg-surface ring-border-token', icon: 'bg-estado-inactivo-bg text-estado-inactivo',     valor: 'text-content-strong' },
 };
 
 export function KpiCard({ titulo, valor, detalle, tono = 'neutro', icon, onClick }:
@@ -22,7 +28,7 @@ export function KpiCard({ titulo, valor, detalle, tono = 'neutro', icon, onClick
   const Wrap = onClick ? 'button' : 'div';
   return (
     <Wrap onClick={onClick}
-      className={`flex items-start gap-3 rounded-2xl p-4 text-left shadow-card ring-1 transition ${t.card} ${onClick ? 'hover:shadow-soft hover:-translate-y-0.5' : ''}`}>
+      className={`flex items-start gap-3 rounded-2xl p-4 text-left ring-1 shadow-[0_1px_2px_rgb(24_28_48/0.04)] transition duration-rapido ${t.card} ${onClick ? 'hover:shadow-[0_4px_12px_rgb(24_28_48/0.07)]' : ''}`}>
       {icon && <span className={`grid h-10 w-10 shrink-0 place-items-center rounded-xl ${t.icon}`}>{icon}</span>}
       <div className="min-w-0 flex-1">
         <div className="text-xs font-medium uppercase tracking-wide text-content-muted">{titulo}</div>
@@ -46,7 +52,7 @@ export function AccionRapida({ titulo, detalle, icon, tono = 'brand', onClick, b
         {detalle && <div className="text-xs text-content-muted">{detalle}</div>}
       </div>
       {badge !== undefined && badge > 0 && (
-        <span className="grid min-w-[1.5rem] place-items-center rounded-full bg-rose-500 px-2 py-0.5 text-xs font-bold text-white">
+        <span className="grid min-w-[1.5rem] place-items-center rounded-full bg-estado-mora px-2 py-0.5 text-xs font-bold text-white">
           {badge > 99 ? '99+' : badge}
         </span>
       )}

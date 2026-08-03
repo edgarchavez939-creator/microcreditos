@@ -7,7 +7,7 @@ export function HistorialCredito({ solicitudId }: { solicitudId: number }) {
   const { data, isLoading, isError } = useHistorialCredito(solicitudId);
 
   if (isLoading) return <p className="text-sm text-content-muted">Cargando historial…</p>;
-  if (isError) return <p className="text-sm text-red-600">No se pudo cargar el historial.</p>;
+  if (isError) return <p className="text-sm text-estado-mora">No se pudo cargar el historial.</p>;
 
   const cadena = data ?? [];
   if (cadena.length === 0) return <p className="text-sm text-content-muted">Sin renovaciones.</p>;

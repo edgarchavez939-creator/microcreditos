@@ -15,9 +15,9 @@ interface CreditoMora {
 
 
 function nivelMora(dias: number) {
-  if (dias <= 15) return { txt: `${dias}d`, cls: 'bg-amber-50 text-amber-800' };
-  if (dias <= 30) return { txt: `${dias}d`, cls: 'bg-orange-100 text-orange-800' };
-  return { txt: `${dias}d`, cls: 'bg-rose-100 text-rose-700' };
+  if (dias <= 15) return { txt: `${dias}d`, cls: 'bg-estado-pendiente-bg text-estado-pendiente' };
+  if (dias <= 30) return { txt: `${dias}d`, cls: 'bg-estado-pendiente-bg text-estado-pendiente' };
+  return { txt: `${dias}d`, cls: 'bg-estado-mora-bg text-estado-mora' };
 }
 
 export function MoraPanel() {
@@ -38,7 +38,7 @@ export function MoraPanel() {
       {data?.resumen && (
         <div className="mb-5 grid grid-cols-3 gap-3">
           <div className="card card-pad text-center">
-            <div className="font-display text-2xl font-bold text-rose-600">{data.resumen.creditos_mora}</div>
+            <div className="font-display text-2xl font-bold text-estado-mora">{data.resumen.creditos_mora}</div>
             <div className="text-xs text-content-muted">Créditos en mora</div>
           </div>
           <div className="card card-pad text-center">
@@ -46,7 +46,7 @@ export function MoraPanel() {
             <div className="text-xs text-content-muted">Saldo vencido</div>
           </div>
           <div className="card card-pad text-center">
-            <div className="font-display text-2xl font-bold text-money-700">{data.resumen.con_promesa}</div>
+            <div className="font-display text-2xl font-bold text-estado-activo">{data.resumen.con_promesa}</div>
             <div className="text-xs text-content-muted">Con promesa de pago</div>
           </div>
         </div>
@@ -76,7 +76,7 @@ export function MoraPanel() {
                       {c.cobrador && ` · ${c.cobrador}`}
                     </div>
                     {c.promesa && (
-                      <div className="mt-1 inline-block rounded-lg bg-money-50 px-2 py-0.5 text-xs text-money-700">
+                      <div className="mt-1 inline-block rounded-lg bg-estado-activo-bg px-2 py-0.5 text-xs text-estado-activo">
                         Promesa: {money(c.promesa.monto_acuerdo)} para el {fecha(c.promesa.fecha_acuerdo)}
                       </div>
                     )}
@@ -87,13 +87,13 @@ export function MoraPanel() {
                     )}
                   </div>
                   <div className="text-right">
-                    <div className="font-display text-lg font-bold text-rose-600">{money(c.saldo_vencido)}</div>
+                    <div className="font-display text-lg font-bold text-estado-mora">{money(c.saldo_vencido)}</div>
                     <div className="mt-1 flex gap-1.5">
                       {c.telefono && (
                         <a href={`https://wa.me/57${c.telefono.replace(/\D/g, '')}`} target="_blank" rel="noopener noreferrer"
-                          className="rounded-lg bg-money-50 px-2 py-1 text-xs font-medium text-money-700 hover:bg-money-100">WhatsApp</a>
+                          className="rounded-lg bg-estado-activo-bg px-2 py-1 text-xs font-medium text-estado-activo hover:bg-money-100">WhatsApp</a>
                       )}
-                      <button onClick={() => setHistorialCliente(c)} className="rounded-lg bg-surface-3 px-2 py-1 text-xs font-medium text-slate-600 hover:bg-slate-200">Historial</button>
+                      <button onClick={() => setHistorialCliente(c)} className="rounded-lg bg-surface-3 px-2 py-1 text-xs font-medium text-content-muted hover:bg-slate-200">Historial</button>
                       <button onClick={() => setGestionCliente(c)} className="rounded-lg bg-brand-500 px-2 py-1 text-xs font-medium text-white hover:bg-brand-600">Gestionar</button>
                     </div>
                   </div>
@@ -130,9 +130,9 @@ function ModalHistorial({ credito, onClose }: { credito: CreditoMora; onClose: (
                   <span className="text-sm font-medium text-content">{ETIQUETA_TIPO(g.tipo as string)}</span>
                   <span className="text-xs text-content-muted">{fechaHora(g.created_at as string)}</span>
                 </div>
-                <p className="mt-1 text-sm text-slate-600">{g.observacion as string}</p>
+                <p className="mt-1 text-sm text-content-muted">{g.observacion as string}</p>
                 {g.fecha_acuerdo != null && (
-                  <p className="mt-1 text-xs text-money-700">Acuerdo: {money((g.monto_acuerdo as number) ?? 0)} para el {fecha(g.fecha_acuerdo as string)}</p>
+                  <p className="mt-1 text-xs text-estado-activo">Acuerdo: {money((g.monto_acuerdo as number) ?? 0)} para el {fecha(g.fecha_acuerdo as string)}</p>
                 )}
                 <p className="mt-1 text-xs text-content-muted">Por: {(g.registrado_por as string) ?? '—'}</p>
               </div>
