@@ -366,7 +366,10 @@ class CajaController extends Controller
         // Cobrador: SOLO sus propios cierres.
         // Supervisor: SOLO sus propios cierres (no de otros supervisores ni de cobradores).
         // Administrador / Administrador funcional: todos, con filtros.
-        $esAdmin = $u->esAdministrador() || (method_exists($u, 'esAdministradorFuncional') && $u->esAdministradorFuncional());
+        // NOTA: esAdministrador() ya cubre al Admin Funcional; la comprobación
+        // anterior invocaba 'esAdministradorFuncional()', un método que no existe
+        // (quedaba neutralizada por method_exists y nunca aportaba nada).
+        $esAdmin = $u->esAdministrador();
 
         if (! $esAdmin) {
             $q->where('cc.cerrado_por', $u->id);

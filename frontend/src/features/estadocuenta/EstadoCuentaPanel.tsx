@@ -74,7 +74,7 @@ export function EstadoCuentaPanel() {
         <>
           <div className="card card-pad mb-4 flex items-center justify-between">
             <span className="text-sm text-content-muted">Total pendiente por cobrar a empleados</span>
-            <span className="font-display text-xl font-bold text-estado-mora">{money(data.total_pendiente)}</span>
+            <span className="font-display text-dato-lg font-bold tabular-nums text-estado-mora">{money(data.total_pendiente)}</span>
           </div>
           <div className="space-y-2">
             {(data.data as Consolidado[]).map((e) => (
@@ -91,7 +91,7 @@ export function EstadoCuentaPanel() {
                   </div>
                 </div>
                 <div className="text-right">
-                  <div className="font-display text-lg font-bold text-estado-mora">{money(e.saldo_pendiente)}</div>
+                  <div className="font-display text-dato font-bold tabular-nums text-estado-mora">{money(e.saldo_pendiente)}</div>
                   <div className="text-xs text-content-muted">pendiente ▸</div>
                 </div>
               </div>
@@ -224,7 +224,7 @@ function Indicador({ titulo, valor, detalle, tono = 'neutro' }: { titulo: string
   return (
     <div className="card card-pad">
       <div className="text-xs uppercase tracking-wide text-content-muted">{titulo}</div>
-      <div className={`mt-1 font-display text-lg font-bold ${cls}`}>{valor}</div>
+      <div className={`mt-1 font-display text-dato font-bold tabular-nums ${cls}`}>{valor}</div>
       {detalle && <div className="text-xs text-content-muted">{detalle}</div>}
     </div>
   );

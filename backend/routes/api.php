@@ -18,14 +18,39 @@ use App\Http\Controllers\Api\OtpController;
 use App\Http\Controllers\Api\PermisoController;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/health', fn () => response()->json(['status' => 'ok', 'version' => 'v104-identidad-krypta', 'ts' => now()]));
+Route::get('/health', fn () => response()->json(['status' => 'ok', 'version' => 'v107-auditoria-roles', 'ts' => now()]));
 
-// Marca pública (sin auth): nombre y color para aplicar en login y en toda la app.
+// IDENTIDAD PÚBLICA (sin auth): la aplica el login y toda la app antes de que
+// exista sesión. Incluye colores, tipografías y los logos, para que la pantalla
+// de entrada ya se vea con la marca del cliente.
+// Se cachea 5 minutos: la piden todos los usuarios en cada arranque.
 Route::get('/marca-publica', function () {
-    return response()->json(['data' => [
-        'nombre' => \App\Models\Parametro::valor('marca.nombre', 'Microcréditos'),
-        'color'  => \App\Models\Parametro::valor('marca.color', '#4F46E5'),
-    ]]);
+    $data = \Illuminate\Support\Facades\Cache::remember('marca:publica', 300, function () {
+        $def = [
+            'nombre_plataforma' => 'KRYPTA', 'descriptor' => 'Business Suite',
+            'color_primario' => '#1A2B5F', 'color_secundario' => '#2563EB',
+            'color_exito' => '#10B981', 'color_advertencia' => '#F59E0B',
+            'color_peligro' => '#EF4444', 'color_oscuro' => '#0F172A',
+            'color_fondo' => '#F8FAFC',
+            'tipografia_titulos' => 'Sora', 'tipografia_texto' => 'Inter',
+            'radio' => 'redondeado',
+        ];
+        $marca = [];
+        foreach ($def as $k => $v) {
+            $marca[$k] = \App\Models\Parametro::valor("marca.{$k}", $v);
+        }
+        // Compatibilidad con la clave antigua de nombre
+        $marca['nombre'] = $marca['nombre_plataforma'];
+
+        $marca['logos'] = \Illuminate\Support\Facades\DB::table('marca_activos')
+            ->get(['variante', 'mime', 'contenido_base64'])
+            ->mapWithKeys(fn ($a) => [$a->variante => "data:{$a->mime};base64,{$a->contenido_base64}"])
+            ->all();
+
+        return $marca;
+    });
+
+    return response()->json(['data' => $data]);
 });
 
 // Extracto PDF: accesible por enlace firmado (para compartir por WhatsApp) o con JWT
@@ -75,6 +100,9 @@ Route::middleware(['auth:api', 'mantenimiento'])->group(function () {
         Route::put('flags', [\App\Http\Controllers\Api\AdminFuncionalController::class, 'guardarFlag']);
         Route::get('marca', [\App\Http\Controllers\Api\AdminFuncionalController::class, 'verMarca']);
         Route::put('marca', [\App\Http\Controllers\Api\AdminFuncionalController::class, 'guardarMarca']);
+        Route::post('marca/restaurar', [\App\Http\Controllers\Api\AdminFuncionalController::class, 'restaurarMarca']);
+        Route::post('marca/logo', [\App\Http\Controllers\Api\AdminFuncionalController::class, 'guardarLogo']);
+        Route::delete('marca/logo/{variante}', [\App\Http\Controllers\Api\AdminFuncionalController::class, 'eliminarLogo']);
         Route::post('cache/limpiar', [\App\Http\Controllers\Api\AdminFuncionalController::class, 'limpiarCache']);
         Route::get('monitoreo', [\App\Http\Controllers\Api\AdminFuncionalController::class, 'monitoreo']);
         Route::get('mantenimiento', [\App\Http\Controllers\Api\AdminFuncionalController::class, 'verMantenimiento']);

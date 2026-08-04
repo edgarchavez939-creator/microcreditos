@@ -3,7 +3,8 @@ import { ProductosFinancieros } from './ProductosFinancieros';
 import { useState } from 'react';
 import { api } from '@/lib/api/client';
 import { fechaHora } from '@/lib/format';
-import { aplicarColorMarca, aplicarNombreMarca } from '@/lib/marca';
+import { aplicarIdentidad, cargarIdentidad } from '@/lib/marca';
+import { Logo } from '@/components/ui/Logo';
 import { useToast } from '@/components/ui/Toast';
 
 
@@ -151,13 +152,22 @@ function Marca() {
   });
   const [form, setForm] = useState<Record<string, string> | null>(null);
   const marca = form ?? data ?? null;
+  const restaurar = useMutation({
+    mutationFn: async () => (await api.post('/admin-funcional/marca/restaurar')).data,
+    onSuccess: async () => {
+      toast.exito('Identidad restaurada ✓');
+      setForm(null);
+      await cargarIdentidad();
+      qc.invalidateQueries({ queryKey: ['af-marca'] });
+    },
+    onError: () => toast.error('No se pudo restaurar.'),
+  });
   const m = useMutation({
     mutationFn: async () => (await api.put('/admin-funcional/marca', marca)).data,
     onSuccess: () => {
-      toast.exito('Marca actualizada ✓');
+      toast.exito('Identidad actualizada ✓');
       // Aplicar de inmediato en la sesión actual (sin recargar)
-      if (marca?.color_primario) aplicarColorMarca(marca.color_primario);
-      if (marca?.nombre_plataforma) aplicarNombreMarca(marca.nombre_plataforma);
+      aplicarIdentidad(marca as never);
       qc.invalidateQueries({ queryKey: ['af-marca'] });
       setForm(null);
     },
@@ -165,27 +175,127 @@ function Marca() {
   });
   if (!marca) return <p className="text-sm text-content-muted">Cargando…</p>;
   const set = (k: string, v: string) => setForm({ ...marca, [k]: v });
+
+  const COLORES: [string, string, string][] = [
+    ['color_primario',    'Primario',    'Sidebar, encabezado y botón principal'],
+    ['color_secundario',  'Secundario',  'Acciones, enlaces, foco y estados activos'],
+    ['color_exito',       'Éxito',       'Pagos, caja cuadrada, créditos al día'],
+    ['color_advertencia', 'Advertencia', 'Pendientes y avisos'],
+    ['color_peligro',     'Peligro',     'Mora, faltantes y errores'],
+    ['color_fondo',       'Fondo',       'Fondo general de la aplicación'],
+  ];
+
   return (
-    <div className="card card-pad max-w-xl space-y-4">
-      <div>
-        <label className="label">Nombre de la plataforma</label>
-        <input value={marca.nombre_plataforma ?? ''} onChange={(e) => set('nombre_plataforma', e.target.value)} className="input" />
-      </div>
-      <div>
-        <label className="label">Color primario</label>
-        <div className="flex items-center gap-2">
-          <input type="color" value={marca.color_primario ?? '#1A2B5F'} onChange={(e) => set('color_primario', e.target.value)} className="h-10 w-16 rounded" />
-          <input value={marca.color_primario ?? ''} onChange={(e) => set('color_primario', e.target.value)} className="input flex-1" />
+    <div className="max-w-3xl space-y-4">
+      {/* Vista previa: el cambio se ve antes de guardar */}
+      <div className="card overflow-hidden">
+        <div className="px-4 py-3" style={{ backgroundColor: marca.color_primario ?? '#1A2B5F' }}>
+          <div className="flex items-center gap-2.5">
+            <Logo size={30} fondo="oscuro" className="rounded-lg" />
+            <div className="leading-tight">
+              <div className="text-sm font-bold text-white" style={{ fontFamily: `'${marca.tipografia_titulos ?? 'Sora'}'` }}>
+                {marca.nombre_plataforma || 'KRYPTA'}
+              </div>
+              <div className="text-[10px] uppercase tracking-[0.16em] text-white/50">
+                {marca.descriptor || 'Business Suite'}
+              </div>
+            </div>
+          </div>
+        </div>
+        <div className="p-4" style={{ backgroundColor: marca.color_fondo ?? '#F8FAFC' }}>
+          <div className="flex flex-wrap items-center gap-2">
+            {COLORES.slice(1, 5).map(([k]) => (
+              <span key={k} className="rounded-full px-2.5 py-1 text-xs font-medium"
+                style={{ backgroundColor: `${marca[k] ?? '#888'}1f`, color: marca[k] ?? '#888' }}>
+                Ejemplo
+              </span>
+            ))}
+            <span className="rounded-xl px-3 py-1.5 text-xs font-medium text-white"
+              style={{ backgroundColor: marca.color_primario ?? '#1A2B5F' }}>Botón</span>
+          </div>
+          <p className="mt-2 text-sm" style={{ fontFamily: `'${marca.tipografia_texto ?? 'Inter'}'` }}>
+            Así se leerá el texto de la aplicación.
+          </p>
         </div>
       </div>
-      <div>
-        <label className="label">Información de contacto</label>
-        <input value={marca.contacto ?? ''} onChange={(e) => set('contacto', e.target.value)} className="input" />
+
+      {/* Identidad */}
+      <div className="card card-pad space-y-4">
+        <h3 className="text-sm font-semibold text-content-strong">Identidad</h3>
+        <div className="grid gap-3 sm:grid-cols-2">
+          <div>
+            <label className="label">Nombre de la plataforma</label>
+            <input value={marca.nombre_plataforma ?? ''} onChange={(e) => set('nombre_plataforma', e.target.value)} className="input" />
+          </div>
+          <div>
+            <label className="label">Descriptor</label>
+            <input value={marca.descriptor ?? ''} onChange={(e) => set('descriptor', e.target.value)}
+              className="input" placeholder="Business Suite" />
+          </div>
+        </div>
+        <div>
+          <label className="label">Información de contacto</label>
+          <input value={marca.contacto ?? ''} onChange={(e) => set('contacto', e.target.value)} className="input" />
+        </div>
       </div>
-      <button onClick={() => m.mutate()} disabled={m.isPending || !form} className="btn-primary btn-sm">
-        {m.isPending ? 'Guardando…' : 'Guardar marca'}
-      </button>
-      <p className="text-xs text-content-muted">Nota: el logo y favicon como archivos requieren almacenamiento externo (R2); se habilitarán en una fase posterior.</p>
+
+      {/* Paleta */}
+      <div className="card card-pad space-y-3">
+        <h3 className="text-sm font-semibold text-content-strong">Paleta</h3>
+        <div className="grid gap-3 sm:grid-cols-2">
+          {COLORES.map(([clave, titulo, uso]) => (
+            <div key={clave}>
+              <label className="label">{titulo}</label>
+              <div className="flex items-center gap-2">
+                <input type="color" value={marca[clave] ?? '#1A2B5F'} onChange={(e) => set(clave, e.target.value)}
+                  className="h-10 w-12 shrink-0 cursor-pointer rounded-lg border border-border-token bg-surface" />
+                <input value={marca[clave] ?? ''} onChange={(e) => set(clave, e.target.value)}
+                  className="input flex-1 font-mono text-xs" placeholder="#000000" />
+              </div>
+              <p className="mt-1 text-xs text-content-muted">{uso}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Tipografía y forma */}
+      <div className="card card-pad space-y-3">
+        <h3 className="text-sm font-semibold text-content-strong">Tipografía y forma</h3>
+        <div className="grid gap-3 sm:grid-cols-3">
+          <div>
+            <label className="label">Títulos y cifras</label>
+            <select value={marca.tipografia_titulos ?? 'Sora'} onChange={(e) => set('tipografia_titulos', e.target.value)} className="input">
+              {(data?.tipografias ?? []).map((f: string) => <option key={f}>{f}</option>)}
+            </select>
+          </div>
+          <div>
+            <label className="label">Texto</label>
+            <select value={marca.tipografia_texto ?? 'Inter'} onChange={(e) => set('tipografia_texto', e.target.value)} className="input">
+              {(data?.tipografias ?? []).map((f: string) => <option key={f}>{f}</option>)}
+            </select>
+          </div>
+          <div>
+            <label className="label">Esquinas</label>
+            <select value={marca.radio ?? 'redondeado'} onChange={(e) => set('radio', e.target.value)} className="input">
+              <option value="recto">Rectas</option>
+              <option value="suave">Suaves</option>
+              <option value="redondeado">Redondeadas</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      {/* Logos */}
+      <GestorLogos variantes={data?.variantes_logo ?? {}} cargados={data?.logos ?? {}} toast={toast} onCambio={() => qc.invalidateQueries({ queryKey: ['af-marca'] })} />
+
+      <div className="flex flex-wrap gap-2">
+        <button onClick={() => m.mutate()} disabled={m.isPending || !form} className="btn-primary btn-sm">
+          {m.isPending ? 'Guardando…' : 'Guardar identidad'}
+        </button>
+        {form && <button onClick={() => setForm(null)} className="btn-secondary btn-sm">Descartar cambios</button>}
+        <button onClick={() => restaurar.mutate()} disabled={restaurar.isPending}
+          className="btn-ghost btn-sm text-content-muted">Restaurar identidad KRYPTA</button>
+      </div>
     </div>
   );
 }
@@ -411,6 +521,119 @@ function Parametros() {
           })}
         </tbody>
       </table>
+    </div>
+  );
+}
+
+/**
+ * GESTOR DE LOGOS.
+ *
+ * Cinco variantes, cada una con su uso. La vista previa se muestra sobre el
+ * fondo real donde se usará —blanco, navy u oscuro— porque un logo que se ve
+ * bien sobre blanco puede desaparecer sobre el sidebar.
+ *
+ * El archivo se lee en el navegador y viaja en base64: evita depender de un
+ * almacenamiento externo y mantiene la identidad dentro de la misma copia de
+ * seguridad que el resto de los datos.
+ */
+function GestorLogos({ variantes, cargados, toast, onCambio }: {
+  variantes: Record<string, string>;
+  cargados: Record<string, { mime: string; nombre_archivo?: string; updated_at?: string }>;
+  toast: { exito: (m: string) => void; error: (m: string) => void };
+  onCambio: () => void;
+}) {
+  const [subiendo, setSubiendo] = useState<string | null>(null);
+  const [previos, setPrevios] = useState<Record<string, string>>({});
+
+  // Fondo de la vista previa según el uso de cada variante
+  const FONDOS: Record<string, string> = {
+    ISOTIPO_COLOR: '#FFFFFF',
+    ISOTIPO_OSCURO: '#1A2B5F',
+    MONO_BLANCO: '#0F172A',
+    MONO_NEGRO: '#FFFFFF',
+    APP_ICON: '#F1F5F9',
+  };
+
+  const subir = async (variante: string, file: File) => {
+    if (file.size > 1_200_000) { toast.error('El archivo supera 1,2 MB. Optimízalo antes de subirlo.'); return; }
+    setSubiendo(variante);
+    try {
+      const base64 = await new Promise<string>((res, rej) => {
+        const r = new FileReader();
+        r.onload = () => res(String(r.result).split(',')[1] ?? '');
+        r.onerror = () => rej(new Error('lectura'));
+        r.readAsDataURL(file);
+      });
+      await api.post('/admin-funcional/marca/logo', {
+        variante, mime: file.type, contenido_base64: base64, nombre_archivo: file.name,
+      });
+      setPrevios((p) => ({ ...p, [variante]: `data:${file.type};base64,${base64}` }));
+      toast.exito('Logo actualizado ✓');
+      await cargarIdentidad();
+      onCambio();
+    } catch {
+      toast.error('No se pudo subir el logo.');
+    } finally {
+      setSubiendo(null);
+    }
+  };
+
+  const eliminar = async (variante: string) => {
+    try {
+      await api.delete(`/admin-funcional/marca/logo/${variante}`);
+      setPrevios((p) => { const n = { ...p }; delete n[variante]; return n; });
+      toast.exito('Logo eliminado ✓');
+      await cargarIdentidad();
+      onCambio();
+    } catch { toast.error('No se pudo eliminar.'); }
+  };
+
+  return (
+    <div className="card card-pad space-y-3">
+      <div>
+        <h3 className="text-sm font-semibold text-content-strong">Logos</h3>
+        <p className="mt-0.5 text-xs text-content-muted">
+          Formatos admitidos: PNG, SVG, WebP o JPG, hasta 1,2 MB. Cada variante se muestra
+          sobre el fondo donde realmente se usará.
+        </p>
+      </div>
+
+      <div className="grid gap-3 sm:grid-cols-2">
+        {Object.entries(variantes).map(([clave, uso]) => {
+          const yaHay = !!cargados[clave] || !!previos[clave];
+          const preview = previos[clave];
+          return (
+            <div key={clave} className="rounded-xl ring-1 ring-border-token">
+              <div className="grid h-24 place-items-center rounded-t-xl"
+                style={{ backgroundColor: FONDOS[clave] ?? '#FFFFFF' }}>
+                {preview
+                  ? <img src={preview} alt="" className="max-h-16 max-w-[70%] object-contain" />
+                  : yaHay
+                    ? <span className="text-xs" style={{ color: clave === 'MONO_BLANCO' || clave === 'ISOTIPO_OSCURO' ? '#ffffff90' : '#64748B' }}>Cargado ✓</span>
+                    : <span className="text-xs" style={{ color: clave === 'MONO_BLANCO' || clave === 'ISOTIPO_OSCURO' ? '#ffffff60' : '#94A3B8' }}>Sin logo</span>}
+              </div>
+              <div className="p-3">
+                <p className="text-xs font-medium text-content">{uso}</p>
+                {cargados[clave]?.nombre_archivo && (
+                  <p className="mt-0.5 truncate text-[11px] text-content-muted">{cargados[clave].nombre_archivo}</p>
+                )}
+                <div className="mt-2 flex items-center gap-2">
+                  <label className="cursor-pointer text-xs font-medium text-brand-700 hover:underline">
+                    {subiendo === clave ? 'Subiendo…' : yaHay ? 'Reemplazar' : 'Subir'}
+                    <input type="file" accept="image/png,image/jpeg,image/svg+xml,image/webp" className="hidden"
+                      onChange={(e) => e.target.files?.[0] && subir(clave, e.target.files[0])} />
+                  </label>
+                  {yaHay && (
+                    <button onClick={() => eliminar(clave)} className="text-xs text-content-muted hover:text-estado-mora">
+                      Quitar
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }

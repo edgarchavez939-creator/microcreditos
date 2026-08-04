@@ -62,8 +62,10 @@ export default {
         },
       },
       fontFamily: {
-        sans: ['Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'],
-        display: ['Sora', 'Inter', 'ui-sans-serif', 'sans-serif'],
+        // Las familias las elige el administrador funcional; estas variables
+        // se actualizan en caliente al aplicar la identidad.
+        sans: ['var(--fuente-texto)', 'Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+        display: ['var(--fuente-titulos)', 'Sora', 'Inter', 'ui-sans-serif', 'sans-serif'],
       },
       boxShadow: {
         card: '0 1px 2px rgba(16,24,40,.04), 0 1px 3px rgba(16,24,40,.06)',

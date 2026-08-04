@@ -38,11 +38,11 @@ export function ClienteProfile({ clienteId, onVolver, onEditar }:
       <div className="card card-pad">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="flex items-center gap-3">
-            <span className="grid h-14 w-14 shrink-0 place-items-center rounded-2xl bg-brand-100 font-display text-xl font-bold text-brand-700">
+            <span className="grid h-14 w-14 shrink-0 place-items-center rounded-2xl bg-brand-100 font-display text-dato-lg font-bold tabular-nums text-brand-700">
               {(c.nombres?.[0] ?? '') + (c.apellidos?.[0] ?? '')}
             </span>
             <div>
-              <h2 className="font-display text-xl font-bold text-content-strong">{c.nombres} {c.apellidos}</h2>
+              <h2 className="font-display text-dato-lg font-bold tabular-nums text-content-strong">{c.nombres} {c.apellidos}</h2>
               <p className="text-sm text-content-muted">{c.tipo_documento} {c.numero_documento}</p>
               <div className="mt-1.5 flex flex-wrap gap-1.5 text-xs">
                 {c.area && <span className="rounded-full bg-surface-3 px-2 py-0.5 text-content-muted">{c.area}</span>}
@@ -150,7 +150,7 @@ function ResumenCard({ titulo, valor, detalle, tono }:
   return (
     <div className={`rounded-2xl p-4 shadow-[0_1px_2px_rgb(24_28_48/0.04)] ring-1 ${cls[tono] ?? cls.neutro}`}>
       <div className="text-xs font-medium uppercase tracking-wide text-content-muted">{titulo}</div>
-      <div className="mt-1 font-display text-lg font-bold tabular-nums">{valor}</div>
+      <div className="mt-1 font-display text-dato font-bold tabular-nums ">{valor}</div>
       <div className="mt-0.5 text-xs text-content-muted">{detalle}</div>
     </div>
   );

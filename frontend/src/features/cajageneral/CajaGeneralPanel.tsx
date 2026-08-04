@@ -138,6 +138,37 @@ export function CajaGeneralPanel() {
         </div>
       )}
 
+      {/* Lo que la tesorería debe recibir hoy, antes del detalle por caja. */}
+      <div className="mb-4 overflow-hidden rounded-3xl bg-krypta-600 text-white shadow-[0_8px_28px_rgb(15_23_42/0.18)]">
+        <div className="px-5 pt-5 sm:px-6">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-white/40">
+            Efectivo esperado del día
+          </p>
+          <div className="mt-1 flex flex-wrap items-baseline gap-x-3">
+            <span className="font-display text-dato-2xl font-bold tabular-nums tracking-tight">
+              {money(t.efectivo_esperado)}
+            </span>
+            <span className="text-sm text-white/45">recibido {money(t.efectivo_recibido)}</span>
+          </div>
+        </div>
+        <div className="mt-4 grid grid-cols-3 divide-x divide-white/[0.08] border-t border-white/[0.08]">
+          <div className="px-3 py-3.5 text-center">
+            <p className="font-display text-dato-lg font-bold tabular-nums">{c.pendientes}</p>
+            <p className="text-[11px] text-white/55">Por recibir</p>
+          </div>
+          <div className="px-3 py-3.5 text-center">
+            <p className={`font-display text-dato-lg font-bold tabular-nums ${(t.diferencias_arqueo ?? 0) < -0.009 ? 'text-estado-mora' : 'text-money-400'}`}>
+              {money(t.diferencias_arqueo ?? 0)}
+            </p>
+            <p className="text-[11px] text-white/55">Dif. de arqueo</p>
+          </div>
+          <div className="px-3 py-3.5 text-center">
+            <p className="font-display text-dato-lg font-bold tabular-nums">{c.recibidas}</p>
+            <p className="text-[11px] text-white/55">Recibidas</p>
+          </div>
+        </div>
+      </div>
+
       {/* Conteo de cajas por estado */}
       <div className="mb-5 grid grid-cols-2 gap-3 sm:grid-cols-5">
         {[
@@ -148,7 +179,7 @@ export function CajaGeneralPanel() {
           ['Consolidadas', c.consolidadas, 'text-brand-700'],
         ].map(([label, val, cls]) => (
           <div key={label as string} className="card card-pad text-center">
-            <div className={`font-display text-2xl font-bold ${cls}`}>{val as number}</div>
+            <div className={`font-display text-dato-lg font-bold tabular-nums ${cls}`}>{val as number}</div>
             <div className="text-xs text-content-muted">{label as string}</div>
           </div>
         ))}

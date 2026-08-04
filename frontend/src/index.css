@@ -22,6 +22,11 @@
   --content: 30 41 59;             /* texto normal */
   --content-muted: 100 116 139;    /* texto secundario #64748B */
 
+  /* Tipografía y forma: las define el administrador funcional desde la app. */
+  --fuente-texto: 'Inter';
+  --fuente-titulos: 'Sora';
+  --radio-base: 0.875rem;
+
   /* ===== ESTADOS =====
      Pareja fondo/texto por significado. El fondo es tenue para que una lista
      con veinte badges no se convierta en un semáforo; el texto lleva el peso

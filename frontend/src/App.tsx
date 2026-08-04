@@ -139,7 +139,7 @@ function AppShell() {
 
   const brand = (
     <div className="flex items-center gap-3 px-2">
-      <Logo size={36} className="rounded-xl shadow-[0_2px_8px_rgb(0_0_0/0.35)]" />
+      <Logo size={36} fondo="oscuro" className="rounded-xl shadow-[0_2px_8px_rgb(0_0_0/0.35)]" />
       <div className="leading-tight">
         <div className="font-display text-[15px] font-bold tracking-[-0.02em] text-white" data-marca-nombre>KRYPTA</div>
         <div className="text-[10px] font-medium uppercase tracking-[0.16em] text-white/40">Business Suite</div>

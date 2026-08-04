@@ -93,7 +93,7 @@ export function ValidacionPanel() {
         {(['PENDIENTE', 'CORREGIDO', 'VALIDADO', 'BLOQUEADO'] as const).map((e) => (
           <button key={e} onClick={() => setFiltroEstado(filtroEstado === e ? '' : e)}
             className={`rounded-xl p-3 text-center ring-1 transition ${filtroEstado === e ? 'ring-brand-400 bg-estado-info-bg' : 'ring-border-token bg-surface'}`}>
-            <div className="font-display text-xl font-bold">{conteos[e] ?? 0}</div>
+            <div className="font-display text-dato-lg font-bold tabular-nums">{conteos[e] ?? 0}</div>
             <div className="text-xs text-content-muted">
               {e === 'BLOQUEADO'
                 ? <Tooltip texto="Se bloquea automáticamente al primer movimiento financiero (pago, renovación). Sus datos dejan de ser editables."><span>{ESTADOS[e].emoji} {ESTADOS[e].txt}</span></Tooltip>
@@ -143,17 +143,21 @@ export function ValidacionPanel() {
         {filas.map((f) => {
           const est = ESTADOS[f.estado_validacion ?? 'PENDIENTE'] ?? ESTADOS.PENDIENTE;
           return (
-            <div key={f.id} className="card card-pad">
+            <div key={f.id} className={`card card-pad border-l-4 ${
+              f.estado_validacion === 'VALIDADO' ? 'border-l-estado-activo'
+              : f.estado_validacion === 'CORREGIDO' ? 'border-l-estado-info'
+              : f.estado_validacion === 'BLOQUEADO' ? 'border-l-estado-bloqueado'
+              : 'border-l-estado-pendiente'}`}>
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <div className="min-w-0">
                   <div className="flex flex-wrap items-center gap-2">
-                    <span className="font-semibold">{f.nombres} {f.apellidos}</span>
+                    <span className="text-[15px] font-semibold text-content-strong">{f.nombres} {f.apellidos}</span>
                     <span className="text-xs text-content-muted">{f.numero_documento}</span>
                     <span className="text-xs font-medium text-brand-700">{f.numero_credito}</span>
                     <span className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${est.cls}`}>{est.emoji} {est.txt}</span>
                   </div>
                   <div className="mt-0.5 text-xs text-content-muted">
-                    Saldo <b className="tabular-nums">{money(Number(f.total_recaudar))}</b>
+                    Saldo <b className="tabular-nums text-content-strong">{money(Number(f.total_recaudar))}</b>
                     {' · '}{f.numero_cuotas} cuota(s) {f.modalidad.toLowerCase()}
                     {' · '}{f.producto ?? 'sin producto'} · {f.area ?? 'sin área'} · {f.cobrador ?? 'sin cobrador'}
                     {' · '}lote #{f.migracion_id}{f.importador ? ` (${f.importador})` : ''}

@@ -341,7 +341,7 @@ function ResumenCaja({ e }: { e: EstadoCaja }) {
           ))}
           <div className="flex items-center justify-between py-2.5">
             <dt className="font-semibold">Saldo final del día</dt>
-            <dd className="font-display text-lg font-bold tabular-nums text-brand-700">{money(e.saldo_final)}</dd>
+            <dd className="font-display text-dato font-bold tabular-nums  text-brand-700">{money(e.saldo_final)}</dd>
           </div>
         </dl>
       </div>
@@ -367,13 +367,13 @@ function ResumenCaja({ e }: { e: EstadoCaja }) {
         </div>
         <div className="rounded-2xl bg-surface-2 p-4 ring-1 ring-border-token">
           <div className="text-xs text-content-muted">Movimiento total del día</div>
-          <div className="mt-1 font-display text-lg font-bold text-content">{money(e.movimiento_total)}</div>
+          <div className="mt-1 font-display text-dato font-bold tabular-nums text-content">{money(e.movimiento_total)}</div>
           <div className="mt-1 text-xs text-content-muted">{e.numero_cobros} cobro(s) · {e.numero_seguros} seguro(s)</div>
         </div>
         {e.recaudo_seguros > 0 && (
           <div className="rounded-2xl bg-estado-info-bg p-4 ring-1 ring-estado-info/20">
             <div className="text-xs font-medium uppercase tracking-wide text-brand-700/70">Recaudo por seguros (comercial)</div>
-            <div className="mt-1 font-display text-lg font-bold text-brand-700">{money(e.recaudo_seguros)}</div>
+            <div className="mt-1 font-display text-dato font-bold tabular-nums text-brand-700">{money(e.recaudo_seguros)}</div>
             <div className="mt-1 text-xs text-brand-700/60">De los créditos que desembolsaste hoy. No es efectivo en caja: la empresa te repone el neto.</div>
           </div>
         )}
@@ -576,7 +576,7 @@ function CierreArqueo({ e, onOk, toast }: { e: EstadoCaja; onOk: () => void; toa
       <div className="grid gap-3 sm:grid-cols-2">
         <div className="rounded-xl bg-estado-activo-bg p-3 ring-1 ring-estado-activo/20">
           <div className="text-xs text-estado-activo/70">Efectivo esperado</div>
-          <div className="font-display text-xl font-bold text-estado-activo">{money(e.efectivo_esperado)}</div>
+          <div className="font-display text-dato-lg font-bold tabular-nums text-estado-activo">{money(e.efectivo_esperado)}</div>
         </div>
         <div>
           <label className="label">

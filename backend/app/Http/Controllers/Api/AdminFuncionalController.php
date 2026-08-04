@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 
 /**
  * Centro de administración técnica. Acceso EXCLUSIVO del Administrador Funcional.
@@ -106,31 +107,155 @@ class AdminFuncionalController extends Controller
 
     // ===================== PERSONALIZACIÓN / MARCA =====================
 
+    /** Variantes de logo admitidas, con su uso. */
+    public const VARIANTES_LOGO = [
+        'ISOTIPO_COLOR'  => 'Isotipo a color (fondos claros)',
+        'ISOTIPO_OSCURO' => 'Isotipo sobre fondo oscuro',
+        'MONO_BLANCO'    => 'Monocromático blanco',
+        'MONO_NEGRO'     => 'Monocromático negro',
+        'APP_ICON'       => 'Icono de aplicación',
+    ];
+
+    /** Tipografías disponibles (todas cargadas desde Google Fonts). */
+    public const TIPOGRAFIAS = ['Inter', 'Manrope', 'Sora', 'Plus Jakarta Sans', 'DM Sans', 'Outfit'];
+
+    /** Valores por defecto de la identidad: la marca KRYPTA de fábrica. */
+    private function marcaDefecto(): array
+    {
+        return [
+            'nombre_plataforma'  => 'KRYPTA',
+            'descriptor'         => 'Business Suite',
+            'color_primario'     => '#1A2B5F',
+            'color_secundario'   => '#2563EB',
+            'color_exito'        => '#10B981',
+            'color_advertencia'  => '#F59E0B',
+            'color_peligro'      => '#EF4444',
+            'color_oscuro'       => '#0F172A',
+            'color_fondo'        => '#F8FAFC',
+            'tipografia_titulos' => 'Sora',
+            'tipografia_texto'   => 'Inter',
+            'radio'              => 'redondeado',
+            'contacto'           => '',
+        ];
+    }
+
     public function verMarca(Request $request)
     {
         $this->soloFuncional($request);
-        return response()->json(['data' => [
-            'nombre_plataforma' => \App\Models\Parametro::valor('marca.nombre', 'Microcréditos'),
-            'color_primario'    => \App\Models\Parametro::valor('marca.color', '#4F46E5'),
-            'contacto'          => \App\Models\Parametro::valor('marca.contacto', ''),
+        return response()->json(['data' => $this->marcaActual() + [
+            'variantes_logo' => self::VARIANTES_LOGO,
+            'tipografias'    => self::TIPOGRAFIAS,
+            'logos'          => $this->logosResumen(),
         ]]);
+    }
+
+    /** Identidad vigente = valores guardados sobre los de fábrica. */
+    private function marcaActual(): array
+    {
+        $out = [];
+        foreach ($this->marcaDefecto() as $clave => $defecto) {
+            $out[$clave] = \App\Models\Parametro::valor("marca.{$clave}", $defecto);
+        }
+        return $out;
     }
 
     public function guardarMarca(Request $request)
     {
         $this->soloFuncional($request);
+
+        $color = ['nullable', 'string', 'regex:/^#[0-9A-Fa-f]{6}$/'];
         $data = $request->validate([
-            'nombre_plataforma' => ['required', 'string', 'max:80'],
-            'color_primario'    => ['required', 'string', 'max:9'],
-            'contacto'          => ['nullable', 'string', 'max:200'],
+            'nombre_plataforma'  => ['required', 'string', 'max:80'],
+            'descriptor'         => ['nullable', 'string', 'max:60'],
+            'color_primario'     => $color,
+            'color_secundario'   => $color,
+            'color_exito'        => $color,
+            'color_advertencia'  => $color,
+            'color_peligro'      => $color,
+            'color_oscuro'       => $color,
+            'color_fondo'        => $color,
+            'tipografia_titulos' => ['nullable', 'string', Rule::in(self::TIPOGRAFIAS)],
+            'tipografia_texto'   => ['nullable', 'string', Rule::in(self::TIPOGRAFIAS)],
+            'radio'              => ['nullable', Rule::in(['recto', 'suave', 'redondeado'])],
+            'contacto'           => ['nullable', 'string', 'max:200'],
         ]);
-        $anterior = $this->verMarca($request)->getData(true)['data'];
-        \App\Models\Parametro::setValor('marca.nombre', $data['nombre_plataforma']);
-        \App\Models\Parametro::setValor('marca.color', $data['color_primario']);
-        \App\Models\Parametro::setValor('marca.contacto', $data['contacto'] ?? '');
+
+        $anterior = $this->marcaActual();
+        foreach ($this->marcaDefecto() as $clave => $defecto) {
+            if (array_key_exists($clave, $data) && $data[$clave] !== null) {
+                \App\Models\Parametro::setValor("marca.{$clave}", $data[$clave]);
+            }
+        }
+        \Illuminate\Support\Facades\Cache::forget('marca:publica');
         $this->auditar($request, 'MARCA', $anterior, $data);
 
-        return response()->json(['message' => 'Marca actualizada.']);
+        return response()->json(['message' => 'Identidad visual actualizada.']);
+    }
+
+    /** Restaura la identidad de fábrica (KRYPTA), sin borrar los logos. */
+    public function restaurarMarca(Request $request)
+    {
+        $this->soloFuncional($request);
+        $anterior = $this->marcaActual();
+        foreach ($this->marcaDefecto() as $clave => $defecto) {
+            \App\Models\Parametro::setValor("marca.{$clave}", $defecto);
+        }
+        \Illuminate\Support\Facades\Cache::forget('marca:publica');
+        $this->auditar($request, 'MARCA_RESTAURADA', $anterior, $this->marcaDefecto());
+
+        return response()->json(['message' => 'Identidad restaurada a los valores de KRYPTA.']);
+    }
+
+    /** Metadatos de los logos cargados (sin el contenido, que pesa). */
+    private function logosResumen(): array
+    {
+        return DB::table('marca_activos')
+            ->get(['variante', 'mime', 'nombre_archivo', 'ancho', 'alto', 'updated_at'])
+            ->keyBy('variante')->toArray();
+    }
+
+    /** Sube o reemplaza una variante del logo. */
+    public function guardarLogo(Request $request)
+    {
+        $this->soloFuncional($request);
+        $data = $request->validate([
+            'variante' => ['required', Rule::in(array_keys(self::VARIANTES_LOGO))],
+            'mime'     => ['required', Rule::in(['image/png', 'image/jpeg', 'image/svg+xml', 'image/webp'])],
+            'contenido_base64' => ['required', 'string', 'max:2000000'],   // ~1.5 MB
+            'nombre_archivo'   => ['nullable', 'string', 'max:180'],
+            'ancho'  => ['nullable', 'integer'],
+            'alto'   => ['nullable', 'integer'],
+        ]);
+
+        DB::table('marca_activos')->updateOrInsert(
+            ['variante' => $data['variante']],
+            [
+                'mime'             => $data['mime'],
+                'nombre_archivo'   => $data['nombre_archivo'] ?? null,
+                'contenido_base64' => $data['contenido_base64'],
+                'ancho'            => $data['ancho'] ?? null,
+                'alto'             => $data['alto'] ?? null,
+                'actualizado_por'  => $request->user()->id,
+                'updated_at'       => now(),
+            ]
+        );
+
+        \Illuminate\Support\Facades\Cache::forget('marca:publica');
+        $this->auditar($request, 'MARCA_LOGO', ['variante' => $data['variante']], ['variante' => $data['variante'], 'archivo' => $data['nombre_archivo'] ?? '']);
+
+        return response()->json(['message' => 'Logo actualizado.']);
+    }
+
+    public function eliminarLogo(Request $request, string $variante)
+    {
+        $this->soloFuncional($request);
+        abort_unless(array_key_exists($variante, self::VARIANTES_LOGO), 422, 'Variante no válida.');
+
+        DB::table('marca_activos')->where('variante', $variante)->delete();
+        \Illuminate\Support\Facades\Cache::forget('marca:publica');
+        $this->auditar($request, 'MARCA_LOGO_ELIMINADO', ['variante' => $variante], []);
+
+        return response()->json(['message' => 'Logo eliminado. Se usará el de KRYPTA.']);
     }
 
     // ===================== HERRAMIENTAS TÉCNICAS =====================

@@ -105,16 +105,27 @@ function TarjetaAprobacion({ s, onAprobado }: { s: Solicitud; onAprobado: (s: So
   const cuota = s.numero_cuotas ? Math.round(totalRecaudar / s.numero_cuotas) : 0;
 
   return (
-    <div className="card card-pad">
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <div className="font-semibold">{s.numero_credito ?? `Crédito #${s.id}`} · {s.cliente ?? `Cliente ${s.cliente_id}`}</div>
-          <EstadoBadge estado={s.estado} />
-          {s.seguro_exonerado && (
-            <span className="ml-2 rounded-full bg-estado-pendiente-bg px-2 py-0.5 text-xs text-estado-pendiente">
-              Seguro exonerado · requiere administrador
-            </span>
-          )}
+    <div className="card card-pad border-l-4 border-l-estado-pendiente">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className="min-w-0">
+          <div className="text-[15px] font-semibold text-content-strong">
+            {s.cliente ?? `Cliente ${s.cliente_id}`}
+          </div>
+          <div className="mt-0.5 text-xs text-content-muted">{s.numero_credito ?? `Crédito #${s.id}`}</div>
+          <div className="mt-2 flex flex-wrap items-center gap-1.5">
+            <EstadoBadge estado={s.estado} />
+            {s.seguro_exonerado && (
+              <span className="rounded-full bg-estado-pendiente-bg px-2 py-0.5 text-xs font-medium text-estado-pendiente">
+                Seguro exonerado · requiere administrador
+              </span>
+            )}
+          </div>
+        </div>
+        <div className="shrink-0 text-right">
+          <div className="text-[11px] font-medium uppercase tracking-wide text-content-muted">Capital solicitado</div>
+          <div className="font-display text-dato-lg font-bold tabular-nums text-content-strong">
+            {money(s.capital_solicitado)}
+          </div>
         </div>
       </div>
 

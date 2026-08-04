@@ -60,12 +60,12 @@ export function EvaluacionRenovacion({ creditoId }: { creditoId: number }) {
       <div className="flex items-center justify-between">
         <div>
           <div className="text-xs font-medium uppercase tracking-wide opacity-70">Scoring de renovación</div>
-          <div className="font-display text-2xl font-bold">{data.score} / 100 · {data.nivel}</div>
+          <div className="font-display text-dato-xl font-bold tabular-nums">{data.score} / 100 · {data.nivel}</div>
         </div>
         {data.cupo_sugerido! > 0 && (
           <div className="text-right">
             <div className="text-xs opacity-70">Cupo sugerido</div>
-            <div className="font-display text-xl font-bold">{money(data.cupo_sugerido!)}</div>
+            <div className="font-display text-dato-lg font-bold tabular-nums">{money(data.cupo_sugerido!)}</div>
           </div>
         )}
       </div>

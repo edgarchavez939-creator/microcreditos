@@ -77,9 +77,9 @@ export function LoginForm() {
         <div className="absolute -bottom-40 -left-24 h-[26rem] w-[26rem] rounded-full bg-money-400/15 blur-3xl" />
 
         <div className="relative flex items-center gap-3">
-          <Logo size={44} className="rounded-xl shadow-[0_4px_16px_rgb(0_0_0/0.25)]" />
+          <Logo size={44} fondo="oscuro" className="rounded-xl shadow-[0_4px_16px_rgb(0_0_0/0.25)]" />
           <div className="leading-tight">
-            <div className="font-display text-lg font-bold tracking-[-0.02em] text-white" data-marca-nombre>KRYPTA</div>
+            <div className="font-display text-dato font-bold tabular-nums tracking-[-0.02em] text-white" data-marca-nombre>KRYPTA</div>
             <div className="text-[10px] font-medium uppercase tracking-[0.18em] text-white/60">Business Suite</div>
           </div>
         </div>
@@ -107,13 +107,13 @@ export function LoginForm() {
       <div className="flex min-h-screen items-center justify-center p-6 lg:min-h-0">
         <div className="w-full max-w-sm">
           <div className="mb-6 flex flex-col items-center lg:hidden">
-            <Logo size={56} className="rounded-2xl shadow-[0_4px_16px_rgb(15_23_42/0.15)]" />
-            <h1 className="mt-3 font-display text-xl font-bold tracking-[-0.02em]" data-marca-nombre>KRYPTA</h1>
+            <Logo size={56} fondo="claro" className="rounded-2xl shadow-[0_4px_16px_rgb(15_23_42/0.15)]" />
+            <h1 className="mt-3 font-display text-dato-lg font-bold tabular-nums tracking-[-0.02em]" data-marca-nombre>KRYPTA</h1>
             <p className="text-[10px] font-medium uppercase tracking-[0.18em] text-content-muted">Business Suite</p>
           </div>
 
           <div className="card card-pad">
-            <h2 className="font-display text-xl font-bold">Inicia sesión</h2>
+            <h2 className="font-display text-dato-lg font-bold tabular-nums">Inicia sesión</h2>
             <p className="mt-1 text-sm text-content-muted">Ingresa con tu cuenta para continuar.</p>
 
             <form onSubmit={handleSubmit(onSubmit)} className="mt-5 space-y-4">

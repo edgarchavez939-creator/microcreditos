@@ -122,7 +122,7 @@ function TarjetaTransferencia({ t }: { t: Transferencia }) {
           )}
         </div>
         <div className="text-right">
-          <div className="font-display text-xl font-bold">{money(t.valor)}</div>
+          <div className="font-display text-dato-lg font-bold tabular-nums">{money(t.valor)}</div>
           <span className={`rounded-full px-2 py-0.5 text-xs ${
             pendiente ? 'bg-estado-pendiente-bg text-estado-pendiente' :
             t.estado === 'APROBADO' ? 'bg-money-50 text-money-700' : 'bg-estado-mora-bg text-estado-mora'

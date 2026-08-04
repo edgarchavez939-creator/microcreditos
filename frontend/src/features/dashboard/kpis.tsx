@@ -32,7 +32,7 @@ export function KpiCard({ titulo, valor, detalle, tono = 'neutro', icon, onClick
       {icon && <span className={`grid h-10 w-10 shrink-0 place-items-center rounded-xl ${t.icon}`}>{icon}</span>}
       <div className="min-w-0 flex-1">
         <div className="text-xs font-medium uppercase tracking-wide text-content-muted">{titulo}</div>
-        <div className={`mt-0.5 font-display text-xl font-bold tabular-nums ${t.valor}`}>{valor}</div>
+        <div className={`mt-0.5 font-display text-dato-lg font-bold tabular-nums  ${t.valor}`}>{valor}</div>
         {detalle && <div className="mt-0.5 text-xs text-content-muted">{detalle}</div>}
       </div>
     </Wrap>

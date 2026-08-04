@@ -363,7 +363,7 @@ function AsistenteImportacion() {
                 ['Créditos omitidos', resumen.creditos_omitidos, 'text-content-muted'],
               ].map(([l, v, cls]) => (
                 <div key={l as string} className="rounded-xl bg-surface-2 p-3 text-center">
-                  <div className={`font-display text-xl font-bold ${cls}`}>{v as number}</div>
+                  <div className={`font-display text-dato-lg font-bold tabular-nums ${cls}`}>{v as number}</div>
                   <div className="text-xs text-content-muted">{l as string}</div>
                 </div>
               ))}

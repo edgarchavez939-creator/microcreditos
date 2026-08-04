@@ -35,19 +35,26 @@ export function MoraPanel() {
         <p className="page-subtitle">Cobranza y seguimiento de créditos en atraso.</p>
       </div>
 
+      {/* Lo que hay por recuperar, con el detalle de gestión debajo. */}
       {data?.resumen && (
-        <div className="mb-5 grid grid-cols-3 gap-3">
-          <div className="card card-pad text-center">
-            <div className="font-display text-2xl font-bold text-estado-mora">{data.resumen.creditos_mora}</div>
-            <div className="text-xs text-content-muted">Créditos en mora</div>
+        <div className="mb-5 overflow-hidden rounded-3xl bg-krypta-600 text-white shadow-[0_8px_28px_rgb(15_23_42/0.18)]">
+          <div className="px-5 pt-5 sm:px-6">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-white/40">
+              Saldo vencido por recuperar
+            </p>
+            <p className="mt-1 font-display text-dato-2xl font-bold tabular-nums tracking-tight">
+              {money(data.resumen.saldo_vencido)}
+            </p>
           </div>
-          <div className="card card-pad text-center">
-            <div className="font-display text-2xl font-bold text-content">{money(data.resumen.saldo_vencido)}</div>
-            <div className="text-xs text-content-muted">Saldo vencido</div>
-          </div>
-          <div className="card card-pad text-center">
-            <div className="font-display text-2xl font-bold text-estado-activo">{data.resumen.con_promesa}</div>
-            <div className="text-xs text-content-muted">Con promesa de pago</div>
+          <div className="mt-4 grid grid-cols-2 divide-x divide-white/[0.08] border-t border-white/[0.08]">
+            <div className="px-4 py-3.5 text-center">
+              <p className="font-display text-dato-lg font-bold tabular-nums">{data.resumen.creditos_mora}</p>
+              <p className="text-[11px] text-white/55">Créditos en mora</p>
+            </div>
+            <div className="px-4 py-3.5 text-center">
+              <p className="font-display text-dato-lg font-bold tabular-nums text-money-400">{data.resumen.con_promesa}</p>
+              <p className="text-[11px] text-white/55">Con promesa de pago</p>
+            </div>
           </div>
         </div>
       )}
@@ -64,11 +71,12 @@ export function MoraPanel() {
           {(data.data as CreditoMora[]).map((c) => {
             const nm = nivelMora(c.dias_mora);
             return (
-              <div key={c.solicitud_id} className="card card-pad">
+              <div key={c.solicitud_id}
+                className={`card card-pad border-l-4 ${c.dias_mora > 60 ? 'border-l-estado-bloqueado' : c.dias_mora > 30 ? 'border-l-estado-mora' : 'border-l-estado-pendiente'}`}>
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div className="min-w-0">
-                    <div className="flex items-center gap-2">
-                      <span className="font-semibold text-content-strong">{c.cliente}</span>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="text-[15px] font-semibold text-content-strong">{c.cliente}</span>
                       <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${nm.cls}`}>{nm.txt} mora</span>
                     </div>
                     <div className="mt-0.5 text-xs text-content-muted">
@@ -87,11 +95,11 @@ export function MoraPanel() {
                     )}
                   </div>
                   <div className="text-right">
-                    <div className="font-display text-lg font-bold text-estado-mora">{money(c.saldo_vencido)}</div>
+                    <div className="font-display text-dato-lg font-bold tabular-nums text-estado-mora">{money(c.saldo_vencido)}</div>
                     <div className="mt-1 flex gap-1.5">
                       {c.telefono && (
                         <a href={`https://wa.me/57${c.telefono.replace(/\D/g, '')}`} target="_blank" rel="noopener noreferrer"
-                          className="rounded-lg bg-estado-activo-bg px-2 py-1 text-xs font-medium text-estado-activo hover:bg-money-100">WhatsApp</a>
+                          className="rounded-lg bg-estado-activo-bg px-2 py-1 text-xs font-medium text-estado-activo hover:brightness-95">WhatsApp</a>
                       )}
                       <button onClick={() => setHistorialCliente(c)} className="rounded-lg bg-surface-3 px-2 py-1 text-xs font-medium text-content-muted hover:bg-slate-200">Historial</button>
                       <button onClick={() => setGestionCliente(c)} className="rounded-lg bg-brand-500 px-2 py-1 text-xs font-medium text-white hover:bg-brand-600">Gestionar</button>
