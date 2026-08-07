@@ -6,6 +6,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Cuota extends Model
 {
+    use \App\Models\Concerns\PerteneceAEmpresa;
+
     protected $table = 'cuotas';
     protected $fillable = [
         'solicitud_id','numero_cuota','fecha_vencimiento','valor',

@@ -14,6 +14,7 @@ class Usuario extends Authenticatable implements JWTSubject
         'direccion','fecha_nacimiento','contacto_emergencia_nombre','contacto_emergencia_telefono',
         'salario_base','banco','numero_cuenta',
         'google_id','google_email','google_vinculado_at',
+        'empresa_id','empresa_soporte_id',
         'twofa_secret','twofa_enabled','intentos_fallidos','bloqueado_hasta',
         'ultimo_login_at','ultimo_login_ip',
     ];
@@ -58,6 +59,13 @@ class Usuario extends Authenticatable implements JWTSubject
      * incluye al funcional. Donde ambos deben pasar (configuración técnica y
      * consultas de solo lectura) se usa `esAdministracion()`.
      */
+    /**
+     * Administrador Funcional GLOBAL: pertenece a KRYPTA, no a ninguna empresa.
+     * Administra la plataforma (empresas, planes, módulos) y nunca participa en
+     * la operación diaria de un cliente, salvo en Modo Soporte y con auditoría.
+     */
+    public function esAdminGlobal(): bool { return $this->rol === 'ADMIN_GLOBAL'; }
+
     public function esAdminFuncional(): bool { return $this->rol === 'ADMIN_FUNCIONAL'; }
 
     /** Administrador del negocio: responde por el dinero y por los créditos. */

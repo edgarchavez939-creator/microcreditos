@@ -6,6 +6,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class Area extends Model
 {
+    use \App\Models\Concerns\PerteneceAEmpresa;
+
     protected $table = 'areas';
     protected $fillable = ['nombre','descripcion','activa'];
     protected $casts = ['activa' => 'boolean'];

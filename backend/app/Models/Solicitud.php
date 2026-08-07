@@ -9,6 +9,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Solicitud extends Model
 {
+    use \App\Models\Concerns\PerteneceAEmpresa;
+
     protected $table = 'solicitudes';
     protected $fillable = [
         'cliente_id','area_id','cobrador_id','producto_id','es_venta_financiada',

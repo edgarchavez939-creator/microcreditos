@@ -6,6 +6,8 @@ use Illuminate\Support\Facades\Cache;
 
 class Parametro extends Model
 {
+    use \App\Models\Concerns\PerteneceAEmpresa;
+
     protected $table = 'parametros';
     public $timestamps = false;
     protected $fillable = ['clave','valor','descripcion','updated_at'];

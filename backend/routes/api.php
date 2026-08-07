@@ -18,7 +18,7 @@ use App\Http\Controllers\Api\OtpController;
 use App\Http\Controllers\Api\PermisoController;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/health', fn () => response()->json(['status' => 'ok', 'version' => 'v110-remate-administrativo', 'ts' => now()]));
+Route::get('/health', fn () => response()->json(['status' => 'ok', 'version' => 'v111-multiempresa-f1', 'ts' => now()]));
 
 // IDENTIDAD PÚBLICA (sin auth): la aplica el login y toda la app antes de que
 // exista sesión. Incluye colores, tipografías y los logos, para que la pantalla
@@ -65,7 +65,7 @@ Route::prefix('auth')->group(function () {
 });
 
 // --- Rutas protegidas ---
-Route::middleware(['auth:api', 'mantenimiento'])->group(function () {
+Route::middleware(['auth:api', 'empresa', 'mantenimiento'])->group(function () {
     Route::get('auth/me', [AuthController::class, 'me']);
 
     // Áreas y Clientes

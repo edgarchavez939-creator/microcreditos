@@ -20,6 +20,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'modulo' => ModuloPermitido::class,
             'accion' => AccionPermitida::class,
             'mantenimiento' => VerificarMantenimiento::class,
+            'empresa' => \App\Http\Middleware\ContextoEmpresaMiddleware::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
