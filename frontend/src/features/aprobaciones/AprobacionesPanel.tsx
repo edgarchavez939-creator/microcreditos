@@ -45,7 +45,7 @@ export function AprobacionesPanel() {
   return (
     <div>
       <h2 className="page-title">Aprobaciones</h2>
-      <p className="mb-5 text-sm text-content-muted">Revisa y resuelve las solicitudes que esperan tu decisión.</p>
+      <p className="page-subtitle">Revisa y resuelve las solicitudes que esperan tu decisión.</p>
 
       {aprobado && (
         <div className="mb-5 flex flex-wrap items-center justify-between gap-3 rounded-xl bg-estado-activo-bg p-4 ring-1 ring-estado-activo/20">

@@ -13,7 +13,7 @@ class AreaController extends Controller
         $query = Area::query()->where('activa', true)->orderBy('nombre');
 
         // El cobrador y el supervisor solo ven sus áreas; el admin todas.
-        if (! $u->esAdministrador()) {
+        if (! $u->esAdministracion()) {
             $query->whereIn('id', $u->areas()->pluck('areas.id'));
         }
 
@@ -26,7 +26,7 @@ class AreaController extends Controller
 
     public function store(Request $request)
     {
-        abort_unless($request->user()->esAdministrador(), 403, 'Solo el administrador puede crear áreas.');
+        abort_unless($request->user()->esAdministracion(), 403, 'Solo el administrador puede crear áreas.');
 
         $data = $request->validate([
             'nombre'      => ['required', 'string', 'max:100', 'unique:areas,nombre'],
@@ -44,7 +44,7 @@ class AreaController extends Controller
 
     public function update(Request $request, Area $area)
     {
-        abort_unless($request->user()->esAdministrador(), 403, 'Solo el administrador puede editar áreas.');
+        abort_unless($request->user()->esAdministracion(), 403, 'Solo el administrador puede editar áreas.');
 
         $data = $request->validate([
             'nombre'      => ['sometimes', 'string', 'max:100', \Illuminate\Validation\Rule::unique('areas', 'nombre')->ignore($area->id)],

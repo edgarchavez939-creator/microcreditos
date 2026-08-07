@@ -19,7 +19,7 @@ class DashboardController extends Controller
     public function gerencial(Request $request)
     {
         $u = $request->user();
-        abort_unless($u->esAdministrador(), 403, 'Solo administración.');
+        abort_unless($u->esAdministracion(), 403, 'Solo administración.');
 
         $hoy = now()->toDateString();
         $inicioMes = now()->startOfMonth()->toDateString();

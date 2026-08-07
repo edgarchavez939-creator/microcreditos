@@ -23,8 +23,13 @@ export function ParametrosPanel() {
 
   return (
     <div>
-      <h2 className="page-title">Parámetros</h2>
-      <p className="mb-5 text-sm text-content-muted">Configura las reglas generales del sistema. Los cambios aplican de inmediato.</p>
+      <div className="page-header">
+        <h2 className="page-title">Parámetros</h2>
+        <p className="page-subtitle">
+          Reglas generales del negocio. Los cambios aplican de inmediato y afectan
+          a los cálculos de créditos nuevos.
+        </p>
+      </div>
 
       {isLoading ? (
         <p className="text-sm text-content-muted">Cargando parámetros…</p>
@@ -67,10 +72,18 @@ function FilaParametro({ p }: { p: Parametro }) {
   const cambiado = Number(valor) !== aVista(p.valor);
 
   return (
-    <div className="card card-pad">
+    <div className={`card card-pad border-l-4 ${
+      p.tipo === 'dinero' ? 'border-l-estado-activo'
+      : p.tipo === 'porcentaje' ? 'border-l-estado-info'
+      : 'border-l-estado-inactivo'}`}>
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div className="min-w-0 flex-1">
-          <div className="font-semibold">{p.etiqueta}</div>
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="font-semibold text-content-strong">{p.etiqueta}</span>
+            <span className="rounded-full bg-estado-inactivo-bg px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-estado-inactivo">
+              {p.tipo === 'dinero' ? 'valor' : p.tipo === 'porcentaje' ? 'porcentaje' : 'número'}
+            </span>
+          </div>
           <div className="mt-0.5 text-sm text-content-muted">{p.descripcion}</div>
         </div>
         <div className="flex items-center gap-2">

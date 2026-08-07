@@ -19,7 +19,7 @@ class UsuarioController extends Controller
     {
         $u = $request->user();
         abort_unless(
-            $u && ($u->esAdministrador() || app(\App\Services\PermisoService::class)->autoriza($u, 'usuarios.gestionar')),
+            $u && ($u->esAdministracion() || app(\App\Services\PermisoService::class)->autoriza($u, 'usuarios.gestionar')),
             403,
             'No tienes permiso para gestionar usuarios.'
         );

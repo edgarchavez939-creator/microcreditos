@@ -1,7 +1,8 @@
 <?php
+
 return [
+
     'google_maps' => ['key' => env('GOOGLE_MAPS_API_KEY')],
-];
 
     /*
      | Ingreso con Google. El Client ID no es secreto (viaja al navegador), pero se

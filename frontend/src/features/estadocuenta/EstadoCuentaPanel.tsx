@@ -254,7 +254,7 @@ function ModalPrestamo({ empleadoId, onClose }: { empleadoId: number; onClose: (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={onClose}>
       <div className="animate-fade-in-scale w-full max-w-md rounded-2xl bg-surface p-5 shadow-xl" onClick={(e) => e.stopPropagation()}>
         <h3 className="text-base font-bold text-content-strong">Registrar préstamo interno</h3>
-        <p className="mb-4 text-sm text-content-muted">Sin intereses, sin plazo. El saldo se reduce con abonos.</p>
+        <p className="page-subtitle">Sin intereses, sin plazo. El saldo se reduce con abonos.</p>
         <label className="label">Monto</label>
         <InputMoneda valorPesos={monto} onChangePesos={setMonto} />
         <label className="label mt-3">Concepto</label>

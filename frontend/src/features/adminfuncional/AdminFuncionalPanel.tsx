@@ -25,16 +25,32 @@ export function AdminFuncionalPanel() {
 
   return (
     <div>
-      <h2 className="page-title">Administración de la plataforma</h2>
-      <p className="mb-4 text-sm text-content-muted">Centro técnico exclusivo del Administrador Funcional. Cada acción queda auditada.</p>
+      <div className="page-header">
+        <div className="flex flex-wrap items-center gap-2">
+          <h2 className="page-title">Administración de la plataforma</h2>
+          <span className="rounded-full bg-estado-validacion-bg px-2.5 py-0.5 text-[11px] font-medium text-estado-validacion">
+            Centro técnico
+          </span>
+        </div>
+        <p className="page-subtitle">
+          Configuración de la plataforma, sin acceso a operaciones financieras.
+          Cada acción queda auditada.
+        </p>
+      </div>
 
-      <div className="mb-5 flex flex-wrap gap-1.5 border-b border-border-token">
-        {tabs.map(([k, label]) => (
-          <button key={k} onClick={() => setTab(k)}
-            className={`rounded-t-lg px-3 py-2 text-sm font-medium ${tab === k ? 'border-b-2 border-brand-500 text-brand-700' : 'text-content-muted hover:text-content'}`}>
-            {label}
-          </button>
-        ))}
+      {/* Con diez secciones, el desplazamiento horizontal es preferible a
+          apilarlas: mantiene todo a un toque en móvil. */}
+      <div className="mb-5 -mx-4 overflow-x-auto px-4 pb-1 lg:mx-0 lg:px-0
+        [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        <div className="flex w-max gap-1 rounded-xl bg-surface-3 p-1">
+          {tabs.map(([k, label]) => (
+            <button key={k} onClick={() => setTab(k)}
+              className={`shrink-0 rounded-lg px-3.5 py-1.5 text-sm font-medium transition-colors duration-rapido
+                ${tab === k ? 'bg-surface text-content-strong shadow-[0_1px_2px_rgb(15_23_42/0.06)]' : 'text-content-muted hover:text-content'}`}>
+              {label}
+            </button>
+          ))}
+        </div>
       </div>
 
       {tab === 'licencia' && <Licencia />}
@@ -163,7 +179,17 @@ function Marca() {
     onError: () => toast.error('No se pudo restaurar.'),
   });
   const m = useMutation({
-    mutationFn: async () => (await api.put('/admin-funcional/marca', marca)).data,
+    mutationFn: async () => {
+      // Se envían únicamente los campos editables: 'logos', 'variantes_logo' y
+      // 'tipografias' son catálogos que llegan del servidor y no deben viajar
+      // de vuelta (harían crecer la petición sin necesidad).
+      const CAMPOS = ['nombre_plataforma','descriptor','contacto','color_primario','color_secundario',
+        'color_exito','color_advertencia','color_peligro','color_oscuro','color_fondo',
+        'tipografia_titulos','tipografia_texto','radio'];
+      const payload: Record<string, unknown> = {};
+      for (const c of CAMPOS) if (marca?.[c] !== undefined) payload[c] = marca[c];
+      return (await api.put('/admin-funcional/marca', payload)).data;
+    },
     onSuccess: () => {
       toast.exito('Identidad actualizada ✓');
       // Aplicar de inmediato en la sesión actual (sin recargar)
@@ -554,25 +580,71 @@ function GestorLogos({ variantes, cargados, toast, onCambio }: {
     APP_ICON: '#F1F5F9',
   };
 
+  /**
+   * Reduce una imagen grande antes de subirla. Un icono de app suele venir a
+   * 1024×1024 y pesar varios MB; a 512 px se ve idéntico en pantalla y la
+   * petición deja de ser un problema. Los SVG no se tocan: ya son vectoriales.
+   */
+  const optimizar = (file: File): Promise<{ base64: string; mime: string }> =>
+    new Promise((resolve, reject) => {
+      if (file.type === 'image/svg+xml') {
+        const r = new FileReader();
+        r.onload = () => resolve({ base64: String(r.result).split(',')[1] ?? '', mime: file.type });
+        r.onerror = () => reject(new Error('lectura'));
+        r.readAsDataURL(file);
+        return;
+      }
+
+      const img = new Image();
+      const url = URL.createObjectURL(file);
+      img.onload = () => {
+        URL.revokeObjectURL(url);
+        const MAX = 512;
+        const escala = Math.min(1, MAX / Math.max(img.width, img.height));
+        // Si ya es pequeña y liviana, se sube tal cual
+        if (escala === 1 && file.size < 400_000) {
+          const r = new FileReader();
+          r.onload = () => resolve({ base64: String(r.result).split(',')[1] ?? '', mime: file.type });
+          r.onerror = () => reject(new Error('lectura'));
+          r.readAsDataURL(file);
+          return;
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = Math.round(img.width * escala);
+        canvas.height = Math.round(img.height * escala);
+        const ctx = canvas.getContext('2d');
+        if (!ctx) { reject(new Error('canvas')); return; }
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        // PNG conserva la transparencia, imprescindible en un logo
+        const dataUrl = canvas.toDataURL('image/png');
+        resolve({ base64: dataUrl.split(',')[1] ?? '', mime: 'image/png' });
+      };
+      img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('imagen no válida')); };
+      img.src = url;
+    });
+
   const subir = async (variante: string, file: File) => {
-    if (file.size > 1_200_000) { toast.error('El archivo supera 1,2 MB. Optimízalo antes de subirlo.'); return; }
+    if (file.size > 8_000_000) { toast.error('El archivo supera 8 MB. Usa una versión más liviana.'); return; }
     setSubiendo(variante);
     try {
-      const base64 = await new Promise<string>((res, rej) => {
-        const r = new FileReader();
-        r.onload = () => res(String(r.result).split(',')[1] ?? '');
-        r.onerror = () => rej(new Error('lectura'));
-        r.readAsDataURL(file);
-      });
+      const { base64, mime } = await optimizar(file);
       await api.post('/admin-funcional/marca/logo', {
-        variante, mime: file.type, contenido_base64: base64, nombre_archivo: file.name,
+        variante, mime, contenido_base64: base64, nombre_archivo: file.name,
       });
-      setPrevios((p) => ({ ...p, [variante]: `data:${file.type};base64,${base64}` }));
+      setPrevios((p) => ({ ...p, [variante]: `data:${mime};base64,${base64}` }));
       toast.exito('Logo actualizado ✓');
       await cargarIdentidad();
       onCambio();
-    } catch {
-      toast.error('No se pudo subir el logo.');
+    } catch (e) {
+      // Mostrar el motivo real: sin esto, cualquier fallo se veía igual y no
+      // había forma de saber si era el tamaño, el formato o el permiso.
+      const err = e as { response?: { status?: number; data?: { message?: string; errors?: Record<string, string[]> } } };
+      const detalle = err?.response?.data?.errors
+        ? Object.values(err.response.data.errors).flat()[0]
+        : err?.response?.data?.message;
+      toast.error(detalle ?? (err?.response?.status === 413
+        ? 'La imagen es demasiado pesada para el servidor. Prueba con una más liviana.'
+        : 'No se pudo subir el logo.'));
     } finally {
       setSubiendo(null);
     }

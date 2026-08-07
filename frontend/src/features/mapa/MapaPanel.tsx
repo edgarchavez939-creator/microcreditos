@@ -214,7 +214,7 @@ export function MapaPanel() {
           {FILTROS.map((f) => (
             <button key={f.v} onClick={() => setFiltro(f.v)}
               className={`rounded-lg px-3.5 py-1.5 text-sm font-medium transition ${
-                filtro === f.v ? 'bg-surface text-ink shadow-[0_1px_2px_rgb(24_28_48/0.04)]' : 'text-content-muted hover:text-ink'
+                filtro === f.v ? 'bg-surface text-content-strong shadow-[0_1px_2px_rgb(24_28_48/0.04)]' : 'text-content-muted hover:text-content-strong'
               }`}>
               {f.t}
             </button>

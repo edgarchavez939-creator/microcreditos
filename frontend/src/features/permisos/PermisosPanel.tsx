@@ -15,18 +15,21 @@ export function PermisosPanel() {
 
   return (
     <div>
-      <h2 className="page-title">Permisos</h2>
-      <p className="mb-4 text-sm text-content-muted">
-        Habilita o restringe el acceso a cada módulo. Los cambios aplican de inmediato; el módulo desaparece del menú de quien no lo tenga.
-      </p>
+      <div className="page-header">
+        <h2 className="page-title">Permisos</h2>
+        <p className="page-subtitle">
+          Habilita o restringe el acceso a cada módulo. Los cambios aplican de inmediato:
+          el módulo desaparece del menú de quien no lo tenga.
+        </p>
+      </div>
 
       <div className="mb-4 flex rounded-xl bg-surface-3 p-1 w-fit">
         <button onClick={() => setVista('roles')}
-          className={`rounded-lg px-4 py-1.5 text-sm font-medium transition ${vista === 'roles' ? 'bg-surface text-ink shadow-[0_1px_2px_rgb(24_28_48/0.04)]' : 'text-content-muted hover:text-ink'}`}>
+          className={`rounded-lg px-4 py-1.5 text-sm font-medium transition-colors duration-rapido ${vista === 'roles' ? 'bg-surface text-content-strong shadow-[0_1px_2px_rgb(15_23_42/0.06)]' : 'text-content-muted hover:text-content'}`}>
           Por rol
         </button>
         <button onClick={() => setVista('usuario')}
-          className={`rounded-lg px-4 py-1.5 text-sm font-medium transition ${vista === 'usuario' ? 'bg-surface text-ink shadow-[0_1px_2px_rgb(24_28_48/0.04)]' : 'text-content-muted hover:text-ink'}`}>
+          className={`rounded-lg px-4 py-1.5 text-sm font-medium transition-colors duration-rapido ${vista === 'usuario' ? 'bg-surface text-content-strong shadow-[0_1px_2px_rgb(15_23_42/0.06)]' : 'text-content-muted hover:text-content'}`}>
           Por usuario
         </button>
       </div>
@@ -76,15 +79,23 @@ function MatrizRoles({ data, fijar }: { data: NonNullable<ReturnType<typeof useM
             </tr>
           ))}
           {(data.acciones ?? []).length > 0 && (
-            <tr className="border-t bg-surface-2">
-              <td colSpan={ROLES.length + 1} className="px-3 py-2 text-xs font-semibold uppercase tracking-wide text-content-muted">
-                Permisos por acción
+            <tr className="border-t-2 border-divider bg-estado-info-bg/40">
+              <td colSpan={ROLES.length + 1} className="px-3 py-2.5">
+                <span className="text-xs font-semibold uppercase tracking-wide text-estado-info">
+                  Permisos por acción
+                </span>
+                <span className="ml-2 text-xs font-normal text-content-muted">
+                  · operaciones concretas dentro de un módulo
+                </span>
               </td>
             </tr>
           )}
           {(data.acciones ?? []).filter((a) => a.id !== 'permisos.gestionar').map((a) => (
             <tr key={a.id} className="border-t">
-              <td className="px-3 py-2 font-medium">{a.etiqueta}</td>
+              <td className="px-3 py-2">
+                <span className="font-medium text-content-strong">{a.etiqueta}</span>
+                <span className="ml-1.5 font-mono text-[10px] text-content-muted">{a.id}</span>
+              </td>
               {ROLES.map((rol) => {
                 const activo = estadoRol(data, a.id, rol, a.defecto);
                 return (

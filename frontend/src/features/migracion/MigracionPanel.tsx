@@ -83,12 +83,12 @@ export function MigracionPanel() {
       <div className="mb-4 mt-2 flex rounded-xl bg-surface-3 p-1 w-fit">
         {esAdmin && (
           <button onClick={() => setTab('importar')}
-            className={`rounded-lg px-4 py-1.5 text-sm font-medium transition ${tab === 'importar' ? 'bg-surface text-ink shadow-[0_1px_2px_rgb(24_28_48/0.04)]' : 'text-content-muted hover:text-ink'}`}>
+            className={`rounded-lg px-4 py-1.5 text-sm font-medium transition-colors duration-rapido ${tab === 'importar' ? 'bg-surface text-content-strong shadow-[0_1px_2px_rgb(15_23_42/0.06)]' : 'text-content-muted hover:text-content'}`}>
             Importar
           </button>
         )}
         <button onClick={() => setTab('validacion')}
-          className={`rounded-lg px-4 py-1.5 text-sm font-medium transition ${tab === 'validacion' ? 'bg-surface text-ink shadow-[0_1px_2px_rgb(24_28_48/0.04)]' : 'text-content-muted hover:text-ink'}`}>
+          className={`rounded-lg px-4 py-1.5 text-sm font-medium transition-colors duration-rapido ${tab === 'validacion' ? 'bg-surface text-content-strong shadow-[0_1px_2px_rgb(15_23_42/0.06)]' : 'text-content-muted hover:text-content'}`}>
           Centro de validación
         </button>
       </div>
@@ -224,8 +224,8 @@ function AsistenteImportacion() {
   };
 
   const pasoTab = (n: number, t: string) => (
-    <div className={`flex items-center gap-1.5 text-xs font-medium ${paso === n ? 'text-brand-700' : paso > n ? 'text-money-700' : 'text-content-muted'}`}>
-      <span className={`flex h-5 w-5 items-center justify-center rounded-full text-[10px] ${paso === n ? 'bg-brand-600 text-white' : paso > n ? 'bg-money-100 text-money-700' : 'bg-surface-3'}`}>
+    <div className={`flex items-center gap-1.5 text-xs font-medium ${paso === n ? 'text-content-strong' : paso > n ? 'text-estado-activo' : 'text-content-muted'}`}>
+      <span className={`flex h-5 w-5 items-center justify-center rounded-full text-[10px] ${paso === n ? 'bg-krypta-600 text-white' : paso > n ? 'bg-estado-activo-bg text-estado-activo' : 'bg-surface-3 text-content-muted'}`}>
         {paso > n ? '✓' : n}
       </span>
       {t}
@@ -234,7 +234,7 @@ function AsistenteImportacion() {
 
   return (
     <div>
-      <p className="mb-4 text-sm text-content-muted">
+      <p className="page-subtitle">
         Importa clientes y créditos desde otra plataforma. Nada se guarda sin pasar por la simulación.
       </p>
 

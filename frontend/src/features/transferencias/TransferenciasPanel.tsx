@@ -41,13 +41,13 @@ export function TransferenciasPanel() {
   return (
     <div>
       <h2 className="page-title">Transferencias</h2>
-      <p className="mb-5 text-sm text-content-muted">Valida los pagos recibidos por transferencia: revisa el comprobante y aprueba o rechaza.</p>
+      <p className="page-subtitle">Valida los pagos recibidos por transferencia: revisa el comprobante y aprueba o rechaza.</p>
 
       <div className="mb-4 flex rounded-xl bg-surface-3 p-1 w-fit">
         {FILTROS.map((f) => (
           <button key={f.v} onClick={() => setEstado(f.v)}
             className={`rounded-lg px-4 py-1.5 text-sm font-medium transition ${
-              estado === f.v ? 'bg-surface text-ink shadow-[0_1px_2px_rgb(24_28_48/0.04)]' : 'text-content-muted hover:text-ink'
+              estado === f.v ? 'bg-surface text-content-strong shadow-[0_1px_2px_rgb(24_28_48/0.04)]' : 'text-content-muted hover:text-content-strong'
             }`}>
             {f.t}
           </button>

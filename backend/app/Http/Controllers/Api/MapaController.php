@@ -61,7 +61,7 @@ class MapaController extends Controller
     public function cobradoresEnVivo(Request $request, SeguimientoService $seguimiento)
     {
         $u = $request->user();
-        abort_unless($u->esAdministrador() || $u->esSupervisor(), 403, 'Sin acceso a la ubicación del equipo.');
+        abort_unless($u->esAdministracion() || $u->esSupervisor(), 403, 'Sin acceso a la ubicación del equipo.');
 
         // Empleados visibles: operativos que comparten área con el usuario (o todos si admin)
         $areas = $u->areasVisibles();

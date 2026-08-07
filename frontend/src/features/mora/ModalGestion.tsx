@@ -64,7 +64,7 @@ export function ModalGestion({ clienteId, solicitudId, nombre, saldo, onClose, i
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={onClose}>
       <div className="animate-fade-in-scale w-full max-w-md rounded-2xl bg-surface p-5 shadow-xl" onClick={(e) => e.stopPropagation()}>
         <h3 className="text-base font-bold text-content-strong">Gestión de cobranza</h3>
-        <p className="mb-4 text-sm text-content-muted">{nombre}{saldo != null ? ` · ${money(saldo)} vencido` : ''}</p>
+        <p className="page-subtitle">{nombre}{saldo != null ? ` · ${money(saldo)} vencido` : ''}</p>
 
         <label className="label">Tipo de gestión</label>
         <div className="mb-3 grid grid-cols-2 gap-1.5">

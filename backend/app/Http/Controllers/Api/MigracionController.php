@@ -18,7 +18,7 @@ class MigracionController extends Controller
     private function soloAdmin(Request $request): void
     {
         $u = $request->user();
-        abort_unless($u && ($u->esAdministrador() || $u->esAdminFuncional()), 403,
+        abort_unless($u && ($u->esAdministracion()), 403,
             'La migración de cartera es exclusiva del administrador.');
     }
 

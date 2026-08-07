@@ -17,16 +17,20 @@ export function UsuariosPanel() {
 
   return (
     <div>
-      <h2 className="page-title">Usuarios</h2>
-      <p className="mb-5 text-sm text-content-muted">Crea cobradores, supervisores y administradores, y asigna sus áreas.</p>
+      <div className="page-header flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h2 className="page-title">Usuarios</h2>
+          <p className="page-subtitle">Crea cobradores, supervisores y administradores, y asigna sus áreas.</p>
+        </div>
+        {!creando && !editando && (
+          <button onClick={() => setCreando(true)} className="btn-primary btn-sm">+ Nuevo usuario</button>
+        )}
+      </div>
 
       {creando || editando ? (
         <UsuarioForm usuario={editando} onCerrar={() => { setCreando(false); setEditando(null); }} />
       ) : (
         <>
-          <div className="mb-4">
-            <button onClick={() => setCreando(true)} className="btn-primary">+ Nuevo usuario</button>
-          </div>
 
           {isLoading ? (
             <p className="text-sm text-content-muted">Cargando usuarios…</p>
@@ -43,12 +47,28 @@ export function UsuariosPanel() {
                 <tbody>
                   {usuarios.map((u) => (
                     <tr key={u.id} className="border-t">
-                      <td className="font-medium">{u.nombre}</td>
-                      <td>{u.email}</td>
-                      <td>{ROL_LABEL[u.rol]}</td>
-                      <td className="max-w-[200px] truncate">{u.areas.map((a) => a.nombre).join(', ') || '—'}</td>
                       <td>
-                        <span className={`rounded-full px-2 py-0.5 text-xs ${u.activo ? 'bg-money-50 text-money-700' : 'bg-surface-3 text-content-muted'}`}>
+                        {/* Iniciales: en una lista de treinta personas ayudan a
+                            localizar a alguien más rápido que leer el nombre. */}
+                        <div className="flex items-center gap-2.5">
+                          <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full
+                            bg-estado-info-bg text-[11px] font-bold text-estado-info">
+                            {u.nombre.trim().split(/\s+/).slice(0, 2).map((x) => x[0]?.toUpperCase() ?? '').join('')}
+                          </span>
+                          <span className="font-medium text-content-strong">{u.nombre}</span>
+                        </div>
+                      </td>
+                      <td className="text-content-muted">{u.email}</td>
+                      <td>
+                        <span className="rounded-full bg-estado-inactivo-bg px-2 py-0.5 text-[11px] font-medium text-estado-inactivo">
+                          {ROL_LABEL[u.rol] ?? u.rol}
+                        </span>
+                      </td>
+                      <td className="max-w-[200px] truncate text-content-muted">{u.areas.map((a) => a.nombre).join(', ') || '—'}</td>
+                      <td>
+                        <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium
+                          ${u.activo ? 'bg-estado-activo-bg text-estado-activo' : 'bg-estado-inactivo-bg text-estado-inactivo'}`}>
+                          <span className="h-1.5 w-1.5 rounded-full bg-current opacity-60" aria-hidden />
                           {u.activo ? 'Activo' : 'Inactivo'}
                         </span>
                       </td>

@@ -172,14 +172,14 @@ export function ReportesPanel() {
   return (
     <div>
       <div className="flex items-center gap-3"><h2 className="page-title">Reportes</h2><EscalaMoneda /></div>
-      <p className="mb-5 text-sm text-content-muted">Consulta la cartera, los pagos y la mora, y expórtalos a Excel.</p>
+      <p className="page-subtitle">Consulta la cartera, los pagos y la mora, y expórtalos a Excel.</p>
 
       <div className="mb-4 flex flex-wrap items-end gap-3">
         <div className="flex rounded-xl bg-surface-3 p-1">
           {REPORTES.map((r) => (
             <button key={r.id} onClick={() => setTipo(r.id)}
               className={`rounded-lg px-4 py-1.5 text-sm font-medium transition ${
-                tipo === r.id ? 'bg-surface text-ink shadow-[0_1px_2px_rgb(24_28_48/0.04)]' : 'text-content-muted hover:text-ink'
+                tipo === r.id ? 'bg-surface text-content-strong shadow-[0_1px_2px_rgb(24_28_48/0.04)]' : 'text-content-muted hover:text-content-strong'
               }`}>
               {r.t}
             </button>

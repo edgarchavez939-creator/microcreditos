@@ -221,7 +221,9 @@ class AdminFuncionalController extends Controller
         $data = $request->validate([
             'variante' => ['required', Rule::in(array_keys(self::VARIANTES_LOGO))],
             'mime'     => ['required', Rule::in(['image/png', 'image/jpeg', 'image/svg+xml', 'image/webp'])],
-            'contenido_base64' => ['required', 'string', 'max:2000000'],   // ~1.5 MB
+            // El navegador reduce las imágenes a 512 px antes de enviarlas; este
+            // techo (~4 MB en base64) es solo la red de seguridad del servidor.
+            'contenido_base64' => ['required', 'string', 'max:5600000'],
             'nombre_archivo'   => ['nullable', 'string', 'max:180'],
             'ancho'  => ['nullable', 'integer'],
             'alto'   => ['nullable', 'integer'],

@@ -71,7 +71,7 @@ class BusquedaController extends Controller
         }
 
         // --- USUARIOS y PRODUCTOS: solo para administración ---
-        if ($u->esAdministrador() || $u->esAdminFuncional()) {
+        if ($u->esAdministracion()) {
             $usuarios = DB::table('usuarios')
                 ->where('activo', true)
                 ->where(fn ($w) => $w->where('nombre', 'ILIKE', $like)->orWhere('email', 'ILIKE', $like))

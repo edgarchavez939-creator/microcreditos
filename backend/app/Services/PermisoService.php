@@ -47,6 +47,27 @@ class PermisoService
      * Los defaults REPLICAN las validaciones vigentes: activar el motor no cambia
      * el comportamiento actual; solo lo vuelve configurable y auditable.
      */
+    /**
+     * Acciones que puede ejecutar el ADMINISTRADOR FUNCIONAL.
+     * Todo lo que no esté aquí (aprobar, desembolsar, pagos, caja, transferencias,
+     * parámetros del negocio) le queda vedado: mueve dinero o decide sobre crédito.
+     */
+    /** Módulos de operación financiera: fuera del alcance del funcional. */
+    public const MODULOS_FINANCIEROS = [
+        'caja', 'caja-general', 'aprobaciones', 'pagos', 'transferencias',
+        'reamortizacion', 'estado-cuenta', 'parametros',
+    ];
+
+    public const ACCIONES_TECNICAS = [
+        'usuarios.gestionar',   // altas y bajas de personal en la plataforma
+        'permisos.gestionar',   // configuración de la matriz
+        'migrados.validar',     // herramienta de migración de cartera
+        'migrados.editar',
+        'documentos.subir',
+        'documentos.eliminar',
+        'reportes.exportar',    // consulta, no operación
+    ];
+
     public const ACCIONES = [
         // Clientes
         'clientes.crear'        => ['etiqueta' => 'Crear clientes',                'defecto' => ['ADMINISTRADOR', 'SUPERVISOR', 'COBRADOR']],
@@ -89,8 +110,13 @@ class PermisoService
         if (! array_key_exists($accion, self::ACCIONES)) {
             return true; // acción no catalogada: no bloquear (compatibilidad)
         }
+        // SEPARACIÓN DE FUNCIONES: el Administrador Funcional configura la
+        // plataforma, pero no mueve dinero ni decide sobre créditos. Solo se le
+        // conceden las acciones técnicas listadas abajo; las financieras quedan
+        // reservadas al Administrador del negocio, aunque alguien intente
+        // asignárselas desde la matriz.
         if ($u->esAdminFuncional()) {
-            return true; // acceso técnico total
+            return in_array($accion, self::ACCIONES_TECNICAS, true);
         }
 
         $reglas = Cache::remember("acciones:u{$u->id}", 30, function () use ($u) {
@@ -154,9 +180,9 @@ class PermisoService
         }
         // La caja general es exclusiva del administrador (operativo o funcional).
         if ($modulo === 'caja-general') {
-            return $u->esAdministrador();
+            return $u->esAdministracion();
         }
-        if ($u->esAdministrador()) {
+        if ($u->esAdministracion()) {
             return true; // el administrador accede a todo lo operativo (salvo lo anterior)
         }
 
@@ -167,9 +193,11 @@ class PermisoService
     public function modulosDe(Usuario $u): array
     {
         if ($u->esAdminFuncional()) {
-            return array_keys(self::MODULOS); // acceso total, incluido admin-funcional
+            // El funcional accede a configuración y consulta, no a la operación
+            // financiera diaria (caja, aprobaciones, pagos, transferencias).
+            return array_values(array_diff(array_keys(self::MODULOS), self::MODULOS_FINANCIEROS));
         }
-        if ($u->esAdministrador()) {
+        if ($u->esAdministracion()) {
             // Admin operativo: todo MENOS la caja individual (no recauda) y el módulo del funcional.
             return array_values(array_filter(
                 array_keys(self::MODULOS),

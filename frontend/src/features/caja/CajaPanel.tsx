@@ -71,7 +71,7 @@ export function CajaPanel() {
     return (
       <div>
         <h2 className="page-title">Caja del día</h2>
-        <p className="mb-5 text-sm text-content-muted">Cargando el estado de tu caja…</p>
+        <p className="page-subtitle">Cargando el estado de tu caja…</p>
         <SkeletonIndicadores cantidad={6} />
       </div>
     );

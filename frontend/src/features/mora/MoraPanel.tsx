@@ -127,7 +127,7 @@ function ModalHistorial({ credito, onClose }: { credito: CreditoMora; onClose: (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={onClose}>
       <div className="animate-fade-in-scale w-full max-w-lg rounded-2xl bg-surface p-5 shadow-xl" onClick={(e) => e.stopPropagation()}>
         <h3 className="text-base font-bold text-content-strong">Historial de gestiones</h3>
-        <p className="mb-4 text-sm text-content-muted">{credito.cliente}</p>
+        <p className="page-subtitle">{credito.cliente}</p>
         {!data || data.length === 0 ? (
           <p className="py-6 text-center text-sm text-content-muted">Aún no hay gestiones registradas.</p>
         ) : (

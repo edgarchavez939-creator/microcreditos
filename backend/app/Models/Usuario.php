@@ -40,17 +40,39 @@ class Usuario extends Authenticatable implements JWTSubject
      */
     public function areasVisibles(): ?array
     {
-        if ($this->esAdministrador()) {
+        if ($this->esAdministracion()) {
             return null; // null = acceso global (sin filtrar por área)
         }
         return $this->areas()->pluck('areas.id')->map(fn ($id) => (int) $id)->all();
     }
 
+    /**
+     * SEPARACIÓN DE FUNCIONES.
+     *
+     * El Administrador Funcional es un rol TÉCNICO: configura la plataforma
+     * (parametrización, productos, identidad visual, herramientas). NO maneja
+     * dinero ni decide sobre créditos —esa es función del Administrador, que
+     * responde por el negocio.
+     *
+     * Por eso `esAdministrador()` designa al administrador del NEGOCIO y ya no
+     * incluye al funcional. Donde ambos deben pasar (configuración técnica y
+     * consultas de solo lectura) se usa `esAdministracion()`.
+     */
     public function esAdminFuncional(): bool { return $this->rol === 'ADMIN_FUNCIONAL'; }
-    public function esAdministrador(): bool { return $this->rol === 'ADMINISTRADOR' || $this->rol === 'ADMIN_FUNCIONAL'; }
+
+    /** Administrador del negocio: responde por el dinero y por los créditos. */
+    public function esAdministrador(): bool { return $this->rol === 'ADMINISTRADOR'; }
+
+    /** Cualquiera de los dos perfiles administrativos (configuración y lectura). */
+    public function esAdministracion(): bool
+    {
+        return $this->rol === 'ADMINISTRADOR' || $this->rol === 'ADMIN_FUNCIONAL';
+    }
+
     public function esSupervisor(): bool   { return $this->rol === 'SUPERVISOR'; }
     public function esCobrador(): bool      { return $this->rol === 'COBRADOR'; }
-    /** Solo el rol administrador operativo puro (sin incluir al funcional). */
+
+    /** Alias histórico de esAdministrador(); se conserva por compatibilidad. */
     public function esAdministradorOperativo(): bool { return $this->rol === 'ADMINISTRADOR'; }
 
     public function estaBloqueado(): bool

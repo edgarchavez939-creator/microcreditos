@@ -53,7 +53,7 @@ export function CarteraPanel() {
   return (
     <div>
       <div className="flex items-center gap-3"><h2 className="page-title">Cartera y pagos</h2><EscalaMoneda /></div>
-      <p className="mb-5 text-sm text-content-muted">Desembolsa créditos aprobados y registra los pagos de cada cuota.</p>
+      <p className="page-subtitle">Desembolsa créditos aprobados y registra los pagos de cada cuota.</p>
 
       <div className="mb-4">
         <input value={buscar} onChange={(e) => setBuscar(e.target.value)}
