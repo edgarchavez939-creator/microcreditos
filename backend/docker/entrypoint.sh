@@ -4,8 +4,16 @@ set -e
 : "${PORT:=8080}"
 sed "s/__PORT__/${PORT}/g" /etc/nginx/http.d/default.conf.template > /etc/nginx/http.d/default.conf
 
-# Migraciones en cada despliegue (idempotentes)
-php artisan migrate --force || echo "Aviso: migrate no se ejecutó (verifica DATABASE_URL)"
+# Migraciones en cada despliegue (idempotentes).
+# El error se muestra COMPLETO: antes se silenciaba con un aviso genérico y un
+# fallo de migración pasaba inadvertido hasta que algo fallaba mucho después.
+if ! php artisan migrate --force; then
+  echo "=========================================================="
+  echo "  ERROR: las migraciones no se aplicaron correctamente."
+  echo "  El servicio arrancará, pero puede faltar estructura de datos."
+  echo "  Revisa el detalle del error justo encima de este mensaje."
+  echo "=========================================================="
+fi
 
 # Datos demo (firstOrCreate -> idempotente, no duplica en reinicios)
 php artisan db:seed --force || echo "Aviso: seed no se ejecutó"

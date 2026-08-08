@@ -19,6 +19,10 @@ use Illuminate\Support\Facades\DB;
  */
 return new class extends Migration
 {
+    // Fuera de transacción: un fallo tardío no debe revertir los pasos ya
+    // completados. Todas las operaciones son idempotentes y reintentables.
+    public $withinTransaction = false;
+
     public function up(): void
     {
         // ---------- Catálogo global de módulos ----------

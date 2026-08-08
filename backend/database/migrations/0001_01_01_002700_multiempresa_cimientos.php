@@ -25,6 +25,16 @@ use Illuminate\Support\Facades\DB;
 return new class extends Migration
 {
     /**
+     * Fuera de transacción a propósito.
+     *
+     * Con transacción, un fallo en el último paso (por ejemplo, activar el
+     * aislamiento en una tabla concreta) revertía TODO —incluida la creación de
+     * `empresas`— y el despliegue quedaba a medias sin dejar rastro claro.
+     * Cada paso es idempotente, así que puede reintentarse sin efectos.
+     */
+    public $withinTransaction = false;
+
+    /**
      * Tablas de negocio: cada registro pertenece a una empresa.
      * Se incluyen también las tablas hijas (cuotas, pagos…) aunque podrían deducir
      * su empresa desde el padre: cada tabla necesita su propia política y deducirla
@@ -108,25 +118,38 @@ return new class extends Migration
         foreach (self::TABLAS_TENANT as $t) {
             if (! $this->existeTabla($t)) continue;
 
-            DB::statement("ALTER TABLE {$t} ADD COLUMN IF NOT EXISTS empresa_id BIGINT");
-            // Todo lo que ya existe pertenece a la Empresa 1
-            DB::statement("UPDATE {$t} SET empresa_id = 1 WHERE empresa_id IS NULL");
-            DB::statement("ALTER TABLE {$t} ALTER COLUMN empresa_id SET DEFAULT 1");
-            DB::statement("ALTER TABLE {$t} ALTER COLUMN empresa_id SET NOT NULL");
-
-            // Índice: toda consulta filtrará por esta columna
-            DB::statement("CREATE INDEX IF NOT EXISTS idx_{$t}_empresa ON {$t}(empresa_id)");
+            try {
+                DB::statement("ALTER TABLE {$t} ADD COLUMN IF NOT EXISTS empresa_id BIGINT");
+                // Todo lo que ya existe pertenece a la Empresa 1
+                DB::statement("UPDATE {$t} SET empresa_id = 1 WHERE empresa_id IS NULL");
+                DB::statement("ALTER TABLE {$t} ALTER COLUMN empresa_id SET DEFAULT 1");
+                DB::statement("ALTER TABLE {$t} ALTER COLUMN empresa_id SET NOT NULL");
+                DB::statement("CREATE INDEX IF NOT EXISTS idx_{$t}_empresa ON {$t}(empresa_id)");
+            } catch (\Throwable $e) {
+                // Una tabla problemática no debe impedir que el resto se aísle.
+                // Queda registrada para revisarla y reintentar.
+                \Illuminate\Support\Facades\Log::error("Multi-empresa: no se pudo preparar «{$t}». " . $e->getMessage());
+                echo "  [aviso] tabla {$t}: " . $e->getMessage() . PHP_EOL;
+            }
         }
 
         // Clave foránea solo donde no compromete el rendimiento de escritura masiva
         foreach (['areas', 'usuarios', 'clientes', 'solicitudes', 'parametros'] as $t) {
             if (! $this->existeTabla($t)) continue;
-            DB::statement("
-                DO $$ BEGIN
-                    ALTER TABLE {$t} ADD CONSTRAINT fk_{$t}_empresa
-                        FOREIGN KEY (empresa_id) REFERENCES empresas(id);
-                EXCEPTION WHEN duplicate_object THEN NULL; END $$;
-            ");
+            try {
+                // Se comprueba antes en lugar de capturar la excepción dentro de
+                // un bloque DO: menos dependiente del dialecto y más legible.
+                $existe = DB::selectOne(
+                    "SELECT 1 AS ok FROM pg_constraint WHERE conname = ?",
+                    ["fk_{$t}_empresa"]
+                );
+                if (! $existe) {
+                    DB::statement("ALTER TABLE {$t} ADD CONSTRAINT fk_{$t}_empresa
+                        FOREIGN KEY (empresa_id) REFERENCES empresas(id)");
+                }
+            } catch (\Throwable $e) {
+                \Illuminate\Support\Facades\Log::warning("Multi-empresa: clave foránea de «{$t}» omitida. " . $e->getMessage());
+            }
         }
 
         // ---------- 4. Aislamiento en la base de datos ----------
@@ -136,6 +159,7 @@ return new class extends Migration
         foreach (self::TABLAS_TENANT as $t) {
             if (! $this->existeTabla($t)) continue;
 
+            try {
             DB::statement("ALTER TABLE {$t} ENABLE ROW LEVEL SECURITY");
             // FORCE: aplica incluso al propietario de la tabla, que es con quien
             // se conecta la aplicación. Sin esto, RLS no protegería nada.
@@ -153,6 +177,13 @@ return new class extends Migration
                     OR empresa_id = NULLIF(current_setting('app.empresa_id', true), '')::bigint
                 )
             ");
+            } catch (\Throwable $e) {
+                // Si el rol no es propietario de la tabla, ENABLE/FORCE fallan.
+                // Se registra con claridad: sin esto, el aislamiento de esa tabla
+                // no existe y hay que corregirlo antes de dar de alta empresas.
+                \Illuminate\Support\Facades\Log::critical("Multi-empresa: SIN AISLAMIENTO en «{$t}». " . $e->getMessage());
+                echo "  [CRÍTICO] sin aislamiento en {$t}: " . $e->getMessage() . PHP_EOL;
+            }
         }
 
         // ---------- 5. Verificación del rol de conexión ----------
