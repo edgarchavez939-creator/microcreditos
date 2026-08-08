@@ -18,7 +18,7 @@ use App\Http\Controllers\Api\OtpController;
 use App\Http\Controllers\Api\PermisoController;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/health', fn () => response()->json(['status' => 'ok', 'version' => 'v115-seguridad', 'ts' => now()]));
+Route::get('/health', fn () => response()->json(['status' => 'ok', 'version' => 'v116-alta-admin', 'ts' => now()]));
 
 // IDENTIDAD PÚBLICA (sin auth): es la de la PLATAFORMA, no la de una empresa.
 // En la pantalla de acceso todavía no se sabe quién entra, así que se muestra la
