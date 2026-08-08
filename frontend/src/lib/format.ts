@@ -28,6 +28,15 @@ const aNumero = (n: number | string | null | undefined): number => {
  * Conserva precisión: si el valor no es múltiplo exacto de mil, muestra los decimales
  * necesarios (hasta 2) para no perder información; si es exacto, no muestra decimales.
  */
+/**
+ * Símbolo de moneda de la empresa en sesión. Cada empresa puede operar en su
+ * propia moneda (COP, MXN, PEN…), así que el símbolo no puede estar fijo en el
+ * código. Por defecto '$' hasta que la sesión lo defina.
+ */
+let simboloEmpresa = '$';
+export const fijarSimboloMoneda = (s: string) => { simboloEmpresa = s || '$'; };
+export const simboloMoneda = () => simboloEmpresa;
+
 export const money = (n: number | string | null | undefined) => {
   const pesos = aNumero(n);
   const enMiles = pesos / MONEY_DIVISOR;
@@ -37,7 +46,7 @@ export const money = (n: number | string | null | undefined) => {
     minimumFractionDigits: 0,
     maximumFractionDigits: tieneFraccion ? 2 : 0,
   });
-  return `$ ${s}`;
+  return `${simboloEmpresa} ${s}`;
 };
 
 /**
@@ -45,7 +54,7 @@ export const money = (n: number | string | null | undefined) => {
  * donde se necesite el valor real explícito (p. ej. un comprobante legal).
  */
 export const moneyPesos = (n: number | string | null | undefined) => {
-  return aNumero(n).toLocaleString('es-CO', {
+  return simboloEmpresa + ' ' + aNumero(n).toLocaleString('es-CO', {
     style: 'currency', currency: 'COP', maximumFractionDigits: 0,
   });
 };

@@ -9,6 +9,7 @@ class Usuario extends Authenticatable implements JWTSubject
 {
     protected $table = 'usuarios';
     protected $fillable = [
+        'debe_cambiar_password','password_cambiado_at',
         'nombre','nombres','apellidos','tipo_documento','numero_documento',
         'email','password','rol','telefono','activo',
         'direccion','fecha_nacimiento','contacto_emergencia_nombre','contacto_emergencia_telefono',
@@ -25,6 +26,12 @@ class Usuario extends Authenticatable implements JWTSubject
         'bloqueado_hasta' => 'datetime',
         'ultimo_login_at' => 'datetime',
         'twofa_secret' => 'encrypted',
+        // Datos personales sensibles: se cifran al guardar y se descifran al leer,
+        // de modo que en la base (y en los respaldos) nunca aparecen en claro.
+        'salario_base' => 'encrypted',
+        'numero_cuenta' => 'encrypted',
+        'debe_cambiar_password' => 'boolean',
+        'password_cambiado_at' => 'datetime',
     ];
 
     public function areas(): BelongsToMany

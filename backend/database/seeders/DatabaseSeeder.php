@@ -9,8 +9,40 @@ use Illuminate\Support\Facades\Hash;
 
 class DatabaseSeeder extends Seeder
 {
+    /**
+     * Datos imprescindibles para que una instalación limpia funcione: áreas
+     * básicas y límites de aprobación. Sin usuarios ni cartera de prueba.
+     */
+    private function soloDatosEsenciales(): void
+    {
+        collect(['Norte', 'Centro', 'Sur'])
+            ->each(fn ($n) => Area::firstOrCreate(['nombre' => $n], ['activa' => true]));
+    }
+
     public function run(): void
     {
+        // ============================================================
+        // USUARIOS DE DEMOSTRACIÓN · NUNCA EN PRODUCCIÓN
+        // ============================================================
+        // Este seeder se ejecuta en cada despliegue. Si creara las cuentas de
+        // prueba en producción, cualquiera que conozca el patrón entraría como
+        // administrador —y en una plataforma multi-empresa, a los datos de TODOS
+        // los clientes—. Borrarlas a mano no serviría: volverían al desplegar.
+        //
+        // Para poblar una instalación de demostración a propósito:
+        //     php artisan db:seed --force   con SEED_DEMO=true
+        $entorno = app()->environment();
+        $permitirDemo = $entorno !== 'production' || env('SEED_DEMO', false);
+
+        if (! $permitirDemo) {
+            $this->command?->warn('Entorno de producción: no se crean usuarios de demostración.');
+            $this->command?->line('Crea el primer administrador con: php artisan krypta:admin --email=... --nombre="..."');
+            $this->soloDatosEsenciales();
+            return;
+        }
+
+        $this->command?->warn('Creando datos de DEMOSTRACIÓN con contraseñas conocidas. No usar en producción.');
+
         $areas = collect(['Norte','Centro','Sur','Rural','Metropolitana'])
             ->map(fn ($n) => Area::firstOrCreate(['nombre' => $n], ['activa' => true]));
 

@@ -23,6 +23,14 @@ class ContextoEmpresaMiddleware
         $u = $request->user();
 
         if ($u) {
+            // Contraseña pendiente de cambio: solo se permite consultar el perfil
+            // y cambiarla. Sin este corte, la marca sería una sugerencia y el
+            // usuario seguiría operando con la clave que le puso otra persona.
+            if ($u->debe_cambiar_password
+                && ! $request->is('api/auth/password', 'api/auth/me', 'api/auth/logout')) {
+                abort(428, 'Debes cambiar tu contraseña antes de continuar.');
+            }
+
             ContextoEmpresa::establecerDesde($u);
             ContextoEmpresa::confirmar();
 
@@ -36,6 +44,23 @@ class ContextoEmpresaMiddleware
                 }
                 if ($estado === 'INACTIVA') {
                     abort(403, 'Esta empresa ya no está activa en la plataforma.');
+                }
+
+                // Licencia vencida: se avisa pero no se corta el acceso de golpe.
+                // Cortar el servicio a una empresa que está cobrando en la calle
+                // causaría más daño que el impago que se pretende evitar; el
+                // bloqueo efectivo es la suspensión, que es una decisión humana.
+                $plan = \Illuminate\Support\Facades\DB::table('empresa_planes')
+                    ->where('empresa_id', $u->empresa_id)
+                    ->first(['estado', 'fecha_vencimiento']);
+
+                if ($plan?->fecha_vencimiento && $plan->fecha_vencimiento < now()->toDateString()) {
+                    $respuesta = $next($request);
+                    if (method_exists($respuesta, 'header')) {
+                        $respuesta->header('X-Licencia-Vencida', $plan->fecha_vencimiento);
+                    }
+                    ContextoEmpresa::limpiar();
+                    return $respuesta;
                 }
             }
         }

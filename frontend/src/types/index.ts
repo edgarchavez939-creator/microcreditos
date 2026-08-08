@@ -1,8 +1,11 @@
-export type Rol = 'ADMINISTRADOR' | 'SUPERVISOR' | 'COBRADOR' | 'ADMIN_FUNCIONAL';
+export type Rol = 'ADMINISTRADOR' | 'SUPERVISOR' | 'COBRADOR' | 'ADMIN_FUNCIONAL' | 'ADMIN_GLOBAL';
 
 export interface Usuario {
   id: number; uuid: string; nombre: string; email: string;
   rol: Rol; twofa_enabled: boolean; areas?: string[];
+  /** Contraseña asignada por otra persona: hay que cambiarla antes de operar. */
+  debe_cambiar_password?: boolean;
+  empresa_id?: number | null;
 }
 
 export type EstadoSolicitud =

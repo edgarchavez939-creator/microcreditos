@@ -18,10 +18,11 @@ use App\Http\Controllers\Api\OtpController;
 use App\Http\Controllers\Api\PermisoController;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/health', fn () => response()->json(['status' => 'ok', 'version' => 'v111-multiempresa-f1', 'ts' => now()]));
+Route::get('/health', fn () => response()->json(['status' => 'ok', 'version' => 'v115-seguridad', 'ts' => now()]));
 
-// IDENTIDAD PÚBLICA (sin auth): la aplica el login y toda la app antes de que
-// exista sesión. Incluye colores, tipografías y los logos, para que la pantalla
+// IDENTIDAD PÚBLICA (sin auth): es la de la PLATAFORMA, no la de una empresa.
+// En la pantalla de acceso todavía no se sabe quién entra, así que se muestra la
+// marca KRYPTA; la identidad de la empresa se aplica al iniciar sesión (/mi-marca). Incluye colores, tipografías y los logos, para que la pantalla
 // de entrada ya se vea con la marca del cliente.
 // Se cachea 5 minutos: la piden todos los usuarios en cada arranque.
 Route::get('/marca-publica', function () {
@@ -134,6 +135,61 @@ Route::middleware(['auth:api', 'empresa', 'mantenimiento'])->group(function () {
     Route::get('reportes/caja', [ReporteController::class, 'caja'])->middleware('modulo:reportes');
     Route::get('reportes/cierres-caja', [ReporteController::class, 'cierresCaja'])->middleware('modulo:reportes');
     Route::get('reportes/migrados', [ReporteController::class, 'migrados'])->middleware('modulo:reportes');
+
+    // Identidad visual de la empresa del usuario. Se sirve ya con el contexto
+    // activo, así que el aislamiento devuelve la marca correcta sin filtrar nada.
+    Route::post('auth/password', [AuthController::class, 'cambiarPassword']);
+
+    Route::get('mi-marca', function (\Illuminate\Http\Request $request) {
+        $def = [
+            'nombre_plataforma' => 'KRYPTA', 'descriptor' => 'Business Suite',
+            'color_primario' => '#1A2B5F', 'color_secundario' => '#2563EB',
+            'color_exito' => '#10B981', 'color_advertencia' => '#F59E0B',
+            'color_peligro' => '#EF4444', 'color_oscuro' => '#0F172A',
+            'color_fondo' => '#F8FAFC',
+            'tipografia_titulos' => 'Sora', 'tipografia_texto' => 'Inter',
+            'radio' => 'redondeado',
+        ];
+
+        $marca = [];
+        foreach ($def as $k => $v) {
+            $marca[$k] = \App\Models\Parametro::valor("marca.{$k}", $v);
+        }
+        $marca['nombre'] = $marca['nombre_plataforma'];
+
+        $marca['logos'] = \Illuminate\Support\Facades\DB::table('marca_activos')
+            ->get(['variante', 'mime', 'contenido_base64'])
+            ->mapWithKeys(fn ($a) => [$a->variante => "data:{$a->mime};base64,{$a->contenido_base64}"])
+            ->all();
+
+        // Datos de la empresa que la interfaz necesita para formatear valores
+        $empresa = $request->user()->empresa_id
+            ? \Illuminate\Support\Facades\DB::table('empresas')
+                ->where('id', $request->user()->empresa_id)
+                ->first(['id', 'nombre', 'moneda', 'simbolo_moneda', 'zona_horaria', 'formato_fecha', 'estado'])
+            : null;
+
+        return response()->json(['data' => $marca + ['empresa' => $empresa]]);
+    });
+
+    // --- PLATAFORMA · exclusivo del Administrador Funcional Global ---
+    // Estas rutas gobiernan el SaaS: empresas, módulos y planes. No tocan datos
+    // de negocio de ninguna empresa.
+    Route::prefix('plataforma')->group(function () {
+        Route::get('empresas', [\App\Http\Controllers\Api\EmpresaController::class, 'index']);
+        Route::post('empresas', [\App\Http\Controllers\Api\EmpresaController::class, 'store']);
+        Route::put('empresas/{empresa}', [\App\Http\Controllers\Api\EmpresaController::class, 'update']);
+        Route::post('empresas/{empresa}/estado', [\App\Http\Controllers\Api\EmpresaController::class, 'cambiarEstado']);
+        Route::get('empresas/{empresa}/modulos', [\App\Http\Controllers\Api\EmpresaController::class, 'modulos']);
+        Route::post('empresas/{empresa}/modulos', [\App\Http\Controllers\Api\EmpresaController::class, 'fijarModulo']);
+        Route::put('empresas/{empresa}/plan', [\App\Http\Controllers\Api\EmpresaController::class, 'guardarPlan']);
+
+        // Modo Soporte y monitoreo
+        Route::post('empresas/{empresa}/soporte', [\App\Http\Controllers\Api\PlataformaController::class, 'entrarSoporte']);
+        Route::post('soporte/salir', [\App\Http\Controllers\Api\PlataformaController::class, 'salirSoporte']);
+        Route::get('soporte/historial', [\App\Http\Controllers\Api\PlataformaController::class, 'historialSoporte']);
+        Route::get('monitoreo', [\App\Http\Controllers\Api\PlataformaController::class, 'monitoreo']);
+    });
 
     // --- MIGRACIÓN DE CARTERA (módulo exclusivo de administración) ---
     Route::prefix('migraciones')->middleware('modulo:migracion')->group(function () {

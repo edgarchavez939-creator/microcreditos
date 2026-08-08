@@ -1,4 +1,5 @@
 import { api } from '@/lib/api/client';
+import { fijarSimboloMoneda } from '@/lib/format';
 
 /** Aclara/oscurece un color hex por un factor (-1..1). */
 function ajustar(hex: string, factor: number): string {
@@ -216,4 +217,45 @@ export async function cargarIdentidad(): Promise<MarcaCompleta | null> {
     // Sin conexión o error: se conserva la identidad de fábrica del CSS.
   }
   return null;
+}
+
+/**
+ * Carga la identidad de MI EMPRESA (requiere sesión activa).
+ *
+ * La identidad pública es la de KRYPTA, porque en la pantalla de acceso todavía
+ * no se sabe quién entra. En cuanto hay sesión, cada empresa ve su propia marca:
+ * sus colores, su tipografía y su logo.
+ */
+export async function cargarIdentidadEmpresa(): Promise<MarcaCompleta | null> {
+  try {
+    const { data } = await api.get<{ data: MarcaCompleta & { empresa?: DatosEmpresa } }>('/mi-marca');
+    if (data?.data) {
+      identidadActual = data.data;
+      empresaActual = data.data.empresa ?? null;
+      // Cada empresa puede operar en su propia moneda
+      if (empresaActual?.simbolo_moneda) fijarSimboloMoneda(empresaActual.simbolo_moneda);
+      aplicarIdentidad(data.data);
+      return data.data;
+    }
+  } catch {
+    // Sin conexión: se conserva la identidad ya aplicada.
+  }
+  return null;
+}
+
+export interface DatosEmpresa {
+  id: number; nombre: string; moneda: string; simbolo_moneda: string;
+  zona_horaria: string; formato_fecha: string; estado: string;
+}
+
+let empresaActual: DatosEmpresa | null = null;
+
+/** Datos de la empresa en sesión (moneda, formato de fecha, nombre). */
+export function empresaEnSesion(): DatosEmpresa | null { return empresaActual; }
+
+/** Al cerrar sesión se vuelve a la identidad de la plataforma. */
+export function restablecerIdentidadPlataforma(): void {
+  empresaActual = null;
+  identidadActual = null;
+  cargarIdentidad();
 }

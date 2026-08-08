@@ -108,7 +108,9 @@ class ApprovalService
             $solicitud->fecha_aprobacion  = now();
             // Número de crédito único y no editable (CR-000123)
             if (empty($solicitud->numero_credito)) {
-                $solicitud->numero_credito = 'CR-' . str_pad((string) $solicitud->id, 6, '0', STR_PAD_LEFT);
+                // Serie propia de la empresa: dos empresas pueden tener a la vez
+                // su CR-000001 sin colisionar (antes el número salía del id global).
+                $solicitud->numero_credito = app(\App\Services\ConsecutivoService::class)->siguiente('CREDITO');
             }
             if ($solicitud->seguro_exonerado) {
                 $solicitud->exoneracion_aprobada_por = $aprobador->id;

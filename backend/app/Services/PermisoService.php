@@ -164,8 +164,36 @@ class PermisoService
     }
 
     /** ¿Puede el usuario acceder al módulo? Resolución: regla de usuario > regla de rol > defecto. */
+    /**
+     * Módulos que la empresa tiene habilitados. Se cachea por empresa: se
+     * consulta en cada verificación de acceso y cambia muy poco.
+     * Devuelve null cuando la empresa no tiene configuración (todo permitido),
+     * para no dejar fuera a instalaciones anteriores a esta funcionalidad.
+     */
+    public function modulosDeLaEmpresa(?int $empresaId): ?array
+    {
+        if (! $empresaId) return null;
+
+        return \Illuminate\Support\Facades\Cache::remember(
+            "empresa:{$empresaId}:modulos", 300,
+            function () use ($empresaId) {
+                $filas = DB::table('empresa_modulos')
+                    ->where('empresa_id', $empresaId)
+                    ->pluck('habilitado', 'modulo_codigo');
+                return $filas->isEmpty() ? null : $filas->all();
+            }
+        );
+    }
+
     public function permite(Usuario $u, string $modulo): bool
     {
+        // 1) ¿La EMPRESA tiene contratado este módulo? Si no, nadie lo ve,
+        //    por muchos permisos individuales que tenga.
+        $deLaEmpresa = $this->modulosDeLaEmpresa($u->empresa_id ? (int) $u->empresa_id : null);
+        if ($deLaEmpresa !== null && array_key_exists($modulo, $deLaEmpresa) && ! $deLaEmpresa[$modulo]) {
+            return false;
+        }
+
         if (! array_key_exists($modulo, self::MODULOS)) {
             return true; // módulo no catalogado: no bloquear
         }
@@ -206,6 +234,10 @@ class PermisoService
         }
 
         return Cache::remember("permisos:u{$u->id}", 30, function () use ($u) {
+            $deLaEmpresa = $this->modulosDeLaEmpresa($u->empresa_id ? (int) $u->empresa_id : null);
+            $filtrar = fn (array $m) => $deLaEmpresa === null ? $m : array_values(array_filter(
+                $m, fn ($cod) => ! array_key_exists($cod, $deLaEmpresa) || $deLaEmpresa[$cod]
+            ));
             $reglasUsuario = DB::table('permisos')
                 ->where('usuario_id', $u->id)->whereNull('rol')
                 ->pluck('permitido', 'modulo');
@@ -225,7 +257,9 @@ class PermisoService
                 }
                 if ($ok) $permitidos[] = $id;
             }
-            return $permitidos;
+            // Se descartan los módulos que la empresa no tiene contratados:
+            // aunque el permiso individual exista, el módulo no está disponible.
+            return $filtrar($permitidos);
         });
     }
 

@@ -160,6 +160,25 @@ class UsuarioController extends Controller
     /** Impide crear usuarios si se alcanzó el límite de la licencia (total o por rol). */
     private function validarLimiteLicencia(string $rol): void
     {
+        // ---- Plan contratado por la empresa (multi-empresa) ----
+        // Manda sobre la licencia interna: es el compromiso comercial con KRYPTA.
+        $empresaId = request()->user()?->empresa_id;
+        if ($empresaId) {
+            $plan = \Illuminate\Support\Facades\DB::table('empresa_planes')
+                ->where('empresa_id', $empresaId)->first(['max_usuarios', 'estado']);
+
+            if ($plan?->max_usuarios) {
+                $actuales = \Illuminate\Support\Facades\DB::table('usuarios')
+                    ->where('empresa_id', $empresaId)->where('activo', true)->count();
+
+                if ($actuales >= $plan->max_usuarios) {
+                    abort(422, "Tu plan permite {$plan->max_usuarios} usuarios activos y ya tienes {$actuales}. " .
+                        'Desactiva uno o solicita una ampliación del plan.');
+                }
+            }
+        }
+
+        // ---- Licencia interna (comportamiento anterior, se conserva) ----
         $lic = \Illuminate\Support\Facades\DB::table('licencia')->where('id', 1)->first();
         if (! $lic) return; // sin licencia configurada, no se restringe
 

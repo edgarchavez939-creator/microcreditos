@@ -10,12 +10,17 @@ import { Breadcrumb } from '@/components/ui/Breadcrumb';
 import { BuscadorGlobal } from '@/components/ui/BuscadorGlobal';
 import { AccionesRapidas } from '@/components/ui/AccionesRapidas';
 import { LoginForm } from '@/features/auth/LoginForm';
+import { CambioPasswordObligatorio } from '@/features/auth/CambioPasswordObligatorio';
 import { Placeholder } from '@/components/Placeholder';
 import { ClientesPanel } from '@/features/clientes/ClientesPanel';
 import { AprobacionesPanel } from '@/features/aprobaciones/AprobacionesPanel';
 import { CarteraPanel } from '@/features/cartera/CarteraPanel';
 import { DashboardPanel } from '@/features/dashboard/DashboardPanel';
 import { MigracionPanel } from '@/features/migracion/MigracionPanel';
+import { empresaEnSesion } from '@/lib/marca';
+import { AvisoSoporte } from '@/features/plataforma/AvisoSoporte';
+import { EmpresasPanel } from '@/features/plataforma/EmpresasPanel';
+import { MonitoreoPanel } from '@/features/plataforma/MonitoreoPanel';
 import { InboxPanel } from '@/features/inbox/InboxPanel';
 import { UsuariosPanel } from '@/features/usuarios/UsuariosPanel';
 import { ReportesPanel } from '@/features/reportes/ReportesPanel';
@@ -57,11 +62,13 @@ const MENU: MenuItem[] = [
   { id: 'parametros',     label: 'Parámetros',       icon: 'parametros',     roles: ['ADMINISTRADOR'] },
   { id: 'permisos',       label: 'Permisos',         icon: 'permisos',       roles: ['ADMINISTRADOR'] },
   { id: 'migracion',      label: 'Migración',        icon: 'reportes',       roles: ['ADMINISTRADOR', 'SUPERVISOR'] },
+  { id: 'empresas',       label: 'Empresas',         icon: 'usuarios',       roles: ['ADMIN_GLOBAL'] },
+  { id: 'monitoreo',      label: 'Monitoreo',        icon: 'reportes',       roles: ['ADMIN_GLOBAL'] },
   { id: 'admin-funcional', label: 'Administración',  icon: 'parametros',     roles: ['ADMIN_FUNCIONAL'] },
 ];
 
 const ROL_LABEL: Record<Rol, string> = {
-  ADMINISTRADOR: 'Administrador', SUPERVISOR: 'Supervisor', COBRADOR: 'Cobrador', ADMIN_FUNCIONAL: 'Admin. Funcional',
+  ADMINISTRADOR: 'Administrador', SUPERVISOR: 'Supervisor', COBRADOR: 'Cobrador', ADMIN_FUNCIONAL: 'Admin. Funcional', ADMIN_GLOBAL: 'Admin. Global KRYPTA',
 };
 
 // Módulos que el backend gobierna por permisos dinámicos. Un módulo del MENÚ que NO
@@ -78,12 +85,14 @@ const SECCIONES: { titulo: string; modulos: string[] }[] = [
   { titulo: 'Territorio',    modulos: ['mapa', 'transferencias', 'caja-general', 'estado-cuenta'] },
   { titulo: 'Análisis',      modulos: ['reportes'] },
   { titulo: 'Administración',modulos: ['usuarios', 'permisos', 'parametros', 'migracion', 'admin-funcional'] },
+  { titulo: 'Plataforma',    modulos: ['empresas', 'monitoreo'] },
 ];
 
 const MODULOS_CATALOGADOS = new Set<string>([
   'inicio', 'inbox', 'ruta', 'caja', 'caja-general', 'estado-cuenta', 'solicitud',
   'aprobaciones', 'pagos', 'reamortizacion', 'transferencias', 'clientes', 'mapa',
   'reportes', 'usuarios', 'parametros', 'permisos', 'migracion', 'admin-funcional',
+  // 'empresas' NO se cataloga: lo gobierna el rol global, no la matriz de permisos.
 ]);
 
 function iniciales(nombre: string) {
@@ -92,6 +101,10 @@ function iniciales(nombre: string) {
 
 export function App() {
   const usuario = useAuthStore((s) => s.usuario);
+  // Contraseña pendiente de cambio: no se entra a la aplicación hasta definirla.
+  // El servidor también lo impone, así que no basta con esquivar esta pantalla.
+  if (usuario?.debe_cambiar_password) return <CambioPasswordObligatorio />;
+
   return usuario ? <AppShell /> : <LoginForm />;
 }
 
@@ -210,7 +223,12 @@ function AppShell() {
       </div>
       <div className="min-w-0 flex-1 leading-tight">
         <div className="truncate text-sm font-semibold text-white">{usuario.nombre}</div>
-        <div className="truncate text-[11px] text-white/40">{ROL_LABEL[usuario.rol]}</div>
+        <div className="truncate text-[11px] text-white/40">
+          {ROL_LABEL[usuario.rol]}
+          {/* La empresa siempre a la vista: con varias empresas en la
+              plataforma, saber en cuál se está trabajando evita errores. */}
+          {empresaEnSesion()?.nombre && <> · {empresaEnSesion()!.nombre}</>}
+        </div>
       </div>
       <button onClick={logout} title="Cerrar sesión" aria-label="Cerrar sesión"
         className="rounded-lg p-2 text-white/40 transition-colors duration-rapido hover:bg-white/10 hover:text-white">
@@ -221,6 +239,7 @@ function AppShell() {
 
   return (
     <div className="min-h-screen bg-surface-2 lg:flex">
+      <AvisoSoporte />
       <aside className="fixed inset-y-0 hidden w-[15.5rem] flex-col bg-krypta-600 p-3
         shadow-[1px_0_0_rgb(255_255_255/0.06)] lg:flex">
         <div className="py-3">{brand}</div>
@@ -306,6 +325,8 @@ function Pantalla({ id }: { id: string }) {
     case 'inicio':         return <DashboardPanel />;
     case 'inbox':          return <InboxPanel />;
     case 'migracion':      return <MigracionPanel />;
+    case 'empresas':       return <EmpresasPanel />;
+    case 'monitoreo':      return <MonitoreoPanel />;
     case 'ruta':           return <RutaPanel />;
     case 'caja':           return <CajaPanel />;
     case 'caja-general':   return <CajaGeneralPanel />;

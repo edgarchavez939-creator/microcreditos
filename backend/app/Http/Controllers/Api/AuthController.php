@@ -54,6 +54,53 @@ class AuthController extends Controller
         return response()->json($tokens);
     }
 
+    /**
+     * Cambio de contraseña del propio usuario.
+     * Es la única vía para levantar la marca de cambio obligatorio: el
+     * administrador no puede hacerlo por él, que es justamente el punto.
+     */
+    public function cambiarPassword(Request $request)
+    {
+        $data = $request->validate([
+            'password_actual' => ['required', 'string'],
+            'password_nueva'  => ['required', 'string', 'min:10', 'confirmed'],
+        ]);
+
+        $u = $request->user();
+
+        if (! \Illuminate\Support\Facades\Hash::check($data['password_actual'], $u->password)) {
+            return response()->json(['message' => 'La contraseña actual no es correcta.'], 422);
+        }
+        if (\Illuminate\Support\Facades\Hash::check($data['password_nueva'], $u->password)) {
+            return response()->json(['message' => 'La contraseña nueva debe ser distinta de la actual.'], 422);
+        }
+
+        // Requisitos mínimos: longitud y variedad. Se explican en el mensaje para
+        // que el usuario sepa qué corregir, en vez de recibir un rechazo opaco.
+        $n = $data['password_nueva'];
+        if (! preg_match('/[A-Za-z]/', $n) || ! preg_match('/\d/', $n)) {
+            return response()->json([
+                'message' => 'La contraseña debe tener al menos 10 caracteres, con letras y números.',
+            ], 422);
+        }
+
+        $u->forceFill([
+            'password' => \Illuminate\Support\Facades\Hash::make($n),
+            'debe_cambiar_password' => false,
+            'password_cambiado_at' => now(),
+        ])->save();
+
+        \Illuminate\Support\Facades\DB::table('auditoria')->insert([
+            'empresa_id' => $u->empresa_id,
+            'usuario_id' => $u->id,
+            'accion' => 'PASSWORD_CAMBIADA',
+            'entidad' => 'usuario', 'entidad_id' => $u->id,
+            'ip' => $request->ip(), 'created_at' => now(),
+        ]);
+
+        return response()->json(['message' => 'Contraseña actualizada.']);
+    }
+
     public function refresh(Request $request)
     {
         $data = $request->validate(['refresh_token' => ['required','string']]);

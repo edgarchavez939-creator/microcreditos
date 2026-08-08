@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import axios from 'axios';
+import { cargarIdentidadEmpresa, restablecerIdentidadPlataforma } from '@/lib/marca';
 import { API_BASE } from '@/lib/api/config';
 import type { Usuario } from '@/types';
 
@@ -28,6 +29,8 @@ export const useAuthStore = create<AuthState>()(
           accessToken: data.access_token,
           refreshToken: data.refresh_token,
         });
+        // Cada empresa ve su propia identidad visual desde el primer instante.
+        cargarIdentidadEmpresa();
       },
 
       // Ingreso con Google: el navegador ya obtuvo el id_token; el backend lo
@@ -39,6 +42,8 @@ export const useAuthStore = create<AuthState>()(
           accessToken: data.access_token,
           refreshToken: data.refresh_token,
         });
+        // Cada empresa ve su propia identidad visual desde el primer instante.
+        cargarIdentidadEmpresa();
       },
 
       async refresh() {
@@ -56,6 +61,7 @@ export const useAuthStore = create<AuthState>()(
 
       logout() {
         set({ usuario: null, accessToken: null, refreshToken: null });
+        restablecerIdentidadPlataforma();
       },
     }),
     { name: 'auth' }
