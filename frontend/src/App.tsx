@@ -92,7 +92,8 @@ const MODULOS_CATALOGADOS = new Set<string>([
   'inicio', 'inbox', 'ruta', 'caja', 'caja-general', 'estado-cuenta', 'solicitud',
   'aprobaciones', 'pagos', 'reamortizacion', 'transferencias', 'clientes', 'mapa',
   'reportes', 'usuarios', 'parametros', 'permisos', 'migracion', 'admin-funcional',
-  // 'empresas' NO se cataloga: lo gobierna el rol global, no la matriz de permisos.
+  // 'empresas' y 'monitoreo' NO se catalogan: los gobierna el rol global,
+  // no la matriz de permisos de una empresa.
 ]);
 
 function iniciales(nombre: string) {
@@ -122,8 +123,18 @@ function AppShell() {
   const permitidosSet = permitidos ? new Set(permitidos) : null;
   const backendConoce = (id: string) =>
     !permitidosSet || permitidosSet.has(id) || !MODULOS_CATALOGADOS.has(id);
+  // Los módulos de plataforma (empresas, monitoreo) son exclusivos del
+  // Administrador Global: gobiernan el SaaS, no la operación de una empresa.
+  const MODULOS_PLATAFORMA = ['empresas', 'monitoreo'];
+
   const visibles = MENU
-    .filter((m) => usuario.rol === 'ADMIN_FUNCIONAL' || m.roles.includes(usuario.rol))
+    .filter((m) => {
+      if (MODULOS_PLATAFORMA.includes(m.id)) return usuario.rol === 'ADMIN_GLOBAL';
+      // El Administrador Funcional ve el resto de módulos de su empresa; lo que
+      // puede HACER en cada uno lo gobierna el motor de permisos del servidor.
+      if (usuario.rol === 'ADMIN_FUNCIONAL') return true;
+      return m.roles.includes(usuario.rol);
+    })
     .filter((m) => backendConoce(m.id));
   const moduloNav = useNavStore((s) => s.modulo);
   const setModuloNav = useNavStore((s) => s.setModulo);

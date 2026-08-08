@@ -115,6 +115,13 @@ class PermisoService
         // conceden las acciones técnicas listadas abajo; las financieras quedan
         // reservadas al Administrador del negocio, aunque alguien intente
         // asignárselas desde la matriz.
+        // El Administrador Global no ejecuta acciones de negocio: administra la
+        // plataforma. En Modo Soporte sí puede, para poder diagnosticar, y todo
+        // queda registrado en la sesión de soporte.
+        if ($u->esAdminGlobal()) {
+            return (bool) $u->empresa_soporte_id;
+        }
+
         if ($u->esAdminFuncional()) {
             return in_array($accion, self::ACCIONES_TECNICAS, true);
         }
@@ -187,6 +194,11 @@ class PermisoService
 
     public function permite(Usuario $u, string $modulo): bool
     {
+        if ($u->esAdminGlobal()) {
+            return in_array($modulo, self::MODULOS_PLATAFORMA, true)
+                || (bool) $u->empresa_soporte_id;   // en soporte accede a la empresa visitada
+        }
+
         // 1) ¿La EMPRESA tiene contratado este módulo? Si no, nadie lo ve,
         //    por muchos permisos individuales que tenga.
         $deLaEmpresa = $this->modulosDeLaEmpresa($u->empresa_id ? (int) $u->empresa_id : null);
@@ -218,8 +230,25 @@ class PermisoService
     }
 
     /** Lista de módulos permitidos para el usuario (con caché corto para efecto casi inmediato). */
+    /** Módulos exclusivos de la administración de la plataforma KRYPTA. */
+    public const MODULOS_PLATAFORMA = ['empresas', 'monitoreo'];
+
     public function modulosDe(Usuario $u): array
     {
+        // Administrador Funcional Global: gobierna la plataforma, no opera ninguna
+        // empresa. Ve sus módulos propios y, en Modo Soporte, los de la empresa
+        // que esté visitando.
+        if ($u->esAdminGlobal()) {
+            $base = self::MODULOS_PLATAFORMA;
+            if ($u->empresa_soporte_id) {
+                $base = array_merge($base, array_values(array_filter(
+                    array_keys(self::MODULOS),
+                    fn ($m) => $m !== 'admin-funcional'
+                )));
+            }
+            return $base;
+        }
+
         if ($u->esAdminFuncional()) {
             // El funcional accede a configuración y consulta, no a la operación
             // financiera diaria (caja, aprobaciones, pagos, transferencias).
